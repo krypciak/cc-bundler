@@ -8,20 +8,44 @@ importers:
 
   .:
     devDependencies:
+      '@types/crypto-js':
+        specifier: ^4.2.2
+        version: 4.2.2
+      '@types/jquery':
+        specifier: ^3.5.32
+        version: 3.5.32
+      '@types/node':
+        specifier: ^22.13.9
+        version: 22.13.9
       '@types/semver':
         specifier: ^7.5.8
         version: 7.5.8
+      core-js:
+        specifier: ^3.41.0
+        version: 3.41.0
+      crypto-js:
+        specifier: ^4.2.0
+        version: 4.2.0
+      jquery:
+        specifier: ^3.7.1
+        version: 3.7.1
       semver:
         specifier: ^7.7.1
         version: 7.7.1
       ultimate-crosscode-typedefs:
         specifier: github:krypciak/ultimate-crosscode-typedefs
-        version: https://codeload.github.com/krypciak/ultimate-crosscode-typedefs/tar.gz/d9bca584b6fabf97465fca44b4cbefb284ee64f9
+        version: https://codeload.github.com/krypciak/ultimate-crosscode-typedefs/tar.gz/af38da0619377322d6f1623488aed5d1da2b3d4a
 
 packages:
 
+  '@types/crypto-js@4.2.2':
+    resolution: {integrity: sha512-sDOLlVbHhXpAUAL0YHDUUwDZf3iN4Bwi4W6a0W0b+QcAezUbRtH4FVb+9J4h+XFPW7l/gQ9F8qC7P+Ec4k8QVQ==}
+
   '@types/jquery@1.10.45':
     resolution: {integrity: sha512-JvoVtPbu1wrcOldn5gvuyJqr7DLX6I657N68Fqj5S7AUutdYZqabQjfP7dY6Gee7/Afo1uajwcORVlQfnsjkLQ==}
+
+  '@types/jquery@3.5.32':
+    resolution: {integrity: sha512-b9Xbf4CkMqS02YH8zACqN1xzdxc3cO735Qe5AbSUFmyOiaWAbcpqh9Wna+Uk0vgACvoQHpWDg2rGdHkYPLmCiQ==}
 
   '@types/node@22.13.9':
     resolution: {integrity: sha512-acBjXdRJ3A6Pb3tqnw9HZmyR3Fiol3aGxRCK1x3d+6CDAMjl7I649wpSd+yNURCjbOUGu9tqtLKnTGxmK6CyGw==}
@@ -32,13 +56,25 @@ packages:
   '@types/semver@7.5.8':
     resolution: {integrity: sha512-I8EUhyrgfLrcTkzV3TSsGyl1tSuPrEDzr0yd5m90UgNxQkyDXULk3b6MlQqTCpZpNtWe1K0hzclnZkTcLBe2UQ==}
 
+  '@types/sizzle@2.3.9':
+    resolution: {integrity: sha512-xzLEyKB50yqCUPUJkIsrVvoWNfFUbIZI+RspLWt8u+tIW/BetMBZtgV2LY/2o+tYH8dRvQ+eoPf3NdhQCcLE2w==}
+
+  core-js@3.41.0:
+    resolution: {integrity: sha512-SJ4/EHwS36QMJd6h/Rg+GyR4A5xE0FSI3eZ+iBVpfqf1x0eTSg1smWLHrA+2jQThZSh97fmSgFSU8B61nxosxA==}
+
+  crypto-js@4.2.0:
+    resolution: {integrity: sha512-KALDyEYgpY+Rlob/iriUtjV6d5Eq+Y191A5g4UqLAi8CyGP9N1+FdVbkc1SxKc2r4YAYqG8JzO2KGL+AizD70Q==}
+
+  jquery@3.7.1:
+    resolution: {integrity: sha512-m4avr8yL8kmFN8psrbFFFmB/If14iN5o9nw/NgnnM+kybDJpRsAynV2BsfpTYrTRysYUdADVD7CkUUizgkpLfg==}
+
   semver@7.7.1:
     resolution: {integrity: sha512-hlq8tAfn0m/61p4BVRcPzIGr6LKiMwo4VM6dGi6pt4qcRkmNzTcWq6eCEjEh+qXjkMDvPlOFFSGwQjoEa6gyMA==}
     engines: {node: '>=10'}
     hasBin: true
 
-  ultimate-crosscode-typedefs@https://codeload.github.com/krypciak/ultimate-crosscode-typedefs/tar.gz/d9bca584b6fabf97465fca44b4cbefb284ee64f9:
-    resolution: {tarball: https://codeload.github.com/krypciak/ultimate-crosscode-typedefs/tar.gz/d9bca584b6fabf97465fca44b4cbefb284ee64f9}
+  ultimate-crosscode-typedefs@https://codeload.github.com/krypciak/ultimate-crosscode-typedefs/tar.gz/af38da0619377322d6f1623488aed5d1da2b3d4a:
+    resolution: {tarball: https://codeload.github.com/krypciak/ultimate-crosscode-typedefs/tar.gz/af38da0619377322d6f1623488aed5d1da2b3d4a}
     version: 0.0.1
     engines: {node: '>=10.0.0'}
 
@@ -47,7 +83,13 @@ packages:
 
 snapshots:
 
+  '@types/crypto-js@4.2.2': {}
+
   '@types/jquery@1.10.45': {}
+
+  '@types/jquery@3.5.32':
+    dependencies:
+      '@types/sizzle': 2.3.9
 
   '@types/node@22.13.9':
     dependencies:
@@ -57,9 +99,17 @@ snapshots:
 
   '@types/semver@7.5.8': {}
 
+  '@types/sizzle@2.3.9': {}
+
+  core-js@3.41.0: {}
+
+  crypto-js@4.2.0: {}
+
+  jquery@3.7.1: {}
+
   semver@7.7.1: {}
 
-  ultimate-crosscode-typedefs@https://codeload.github.com/krypciak/ultimate-crosscode-typedefs/tar.gz/d9bca584b6fabf97465fca44b4cbefb284ee64f9:
+  ultimate-crosscode-typedefs@https://codeload.github.com/krypciak/ultimate-crosscode-typedefs/tar.gz/af38da0619377322d6f1623488aed5d1da2b3d4a:
     dependencies:
       '@types/jquery': 1.10.45
       '@types/node': 22.13.9

@@ -1,13 +1,760 @@
 <html>
-	<head>
-		<title>CrossCode - CCLoader</title>
-		<link rel="stylesheet" href="index.css">
-		<meta name="viewport" content="width=320, initial-scale=0.5, maximum-scale=0.5, user-scalable=0">
-		<script type="module" src="plugin.js"></script>
-	</head>
-	<body>
-		<div id="overlay"></div>
-		<h1 id="status" class="title">Initializing CCBundler</h1>
-		<div id="ui" class="ui"></div>
-	</body>
+    <head>
+        <title>CrossCode - CCLoader</title>
+        <link rel="stylesheet" href="index.css" />
+        <meta
+            name="viewport"
+            content="width=320, initial-scale=0.5, maximum-scale=0.5, user-scalable=0"
+        />
+        <script type="module" src="plugin.js"></script>
+
+        <style>
+            * {
+                margin: 0;
+                padding: 0;
+            }
+
+            /* @font-face { */
+            /*     font-family: 'CrossCode'; */
+            /*     src: url('fonts/SourceHanSerifSC-Regular.otf') format('opentype'); */
+            /* } */
+            /**/
+            /* @font-face { */
+            /*     font-family: 'CrossCodeKR'; */
+            /*     src: url('fonts/NanumSquareB.ttf') format('truetype'); */
+            /* } */
+            /**/
+            /* @font-face { */
+            /*     font-family: 'CrossCodeJP'; */
+            /*     src: url('fonts/ume-tgo5.ttf') format('truetype'); */
+            /* } */
+
+            html,
+            body {
+                background-color: #080808;
+                color: #fff;
+                font-family: helvetica, arial, sans-serif;
+                margin: 0;
+                padding: 0;
+                font-size: 14pt;
+            }
+
+            #canvas {
+                position: absolute;
+                left: 0;
+                right: 0;
+                top: 0;
+                bottom: 0;
+                margin: auto;
+                border: 1px solid #333;
+                -webkit-transition: all 0.3s;
+                -moz-transition: all 0.3s;
+                box-sizing: content-box !important;
+            }
+
+            #canvas.borderHidden {
+                border: 0px solid #333;
+            }
+
+            #game {
+                position: absolute;
+                left: 0;
+                right: 0;
+                top: 0px;
+                bottom: 0px;
+            }
+
+            /* Options */
+
+            /* Options */
+
+            #options {
+                z-index: 1;
+                position: absolute;
+                top: 8px;
+                right: 8px;
+                width: 70px;
+                background: #222222;
+                border: 1px solid #222222;
+                text-align: center;
+                border-radius: 8px;
+                -moz-border-radius: 8px;
+                -webkit-border-radius: 8px;
+                padding: 6px;
+                overflow: hidden;
+                -webkit-transition: all 0.2s;
+                opacity: 0.5;
+            }
+            #options a {
+                cursor: pointer;
+                color: white;
+            }
+
+            #options > ul {
+                display: none;
+            }
+
+            #options:hover {
+                opacity: 0.8;
+            }
+
+            #options.shown {
+                opacity: 0.9;
+                border: 1px solid #aaa;
+                width: 100px;
+            }
+
+            #options.shown > ul {
+                display: block;
+            }
+
+            #options .optionList {
+                width: 100px;
+            }
+
+            #options ul {
+                padding: 0;
+                margin: 0;
+                list-style: none;
+            }
+            #options > ul > li {
+                padding-top: 10px;
+                border-bottom: 1px solid #aaa;
+            }
+            #options > ul > ul {
+                padding: 4px 0;
+            }
+
+            #options ul a.opt_button {
+                display: block;
+                width: 64px;
+                height: 38px;
+                margin: 8px auto;
+                opacity: 0.4;
+                position: relative;
+            }
+            #options ul div.slider {
+                font-size: 10pt;
+                margin: 8px 8px;
+            }
+
+            #options ul a span {
+                position: absolute;
+                top: 50%;
+                margin-top: -8px;
+                left: 0;
+                right: 0;
+                text-align: center;
+                font-size: 14px;
+                text-shadow: 0px 0px 5px #000;
+                display: none;
+                font-weight: bold;
+            }
+            #options ul a:hover {
+                opacity: 1;
+            }
+            #options ul a:hover span {
+                display: block;
+            }
+            #options ul a.active {
+                opacity: 1;
+            }
+
+            #options > a {
+                color: #ccc;
+            }
+            #options > a:hover {
+                color: white;
+            }
+
+            #options a.opt_screen_0 {
+                background: url(../img/screen-x1.png);
+            }
+            #options a.opt_screen_1 {
+                background: url(../img/screen-x2.png);
+            }
+            #options a.opt_screen_2 {
+                background: url(../img/screen-fit.png);
+            }
+            #options a.opt_screen_3 {
+                background: url(../img/screen-stretch.png);
+            }
+
+            #options a.opt_scale_1 {
+                background: url(../img/low-res.png);
+            }
+
+            #options a.opt_scale_2 {
+                background: url(../img/high-res.png);
+            }
+
+            .overlay {
+                z-index: 3;
+                background: black;
+                opacity: 0.5;
+                left: 0;
+                top: 0;
+                right: 0;
+                bottom: 0;
+                position: absolute;
+            }
+
+            .warnMessage {
+                z-index: 4;
+                position: absolute;
+                top: 0;
+                left: 0;
+                right: 0;
+                border-bottom: 1px solid white;
+                background: #111;
+                height: 0px;
+                -webkit-transition: all 0.3s;
+                -moz-transition: all 0.3s;
+                transition: all 0.3s;
+                overflow: hidden;
+            }
+            .warnMessage.shown {
+                height: 100px;
+            }
+            .warnMessage div {
+                width: 500px;
+                margin: 0 auto;
+            }
+
+            .warnMessage p {
+                margin: 8px 0;
+            }
+
+            .warnMessage button {
+                padding: 4px 8px;
+            }
+
+            /* LANGUAGE EDIT */
+
+            input,
+            textarea {
+                background-color: rgba(0, 0, 0, 1);
+                border: 1px solid rgb(50, 50, 50);
+                color: #fff;
+                margin-left: 5px;
+                margin-right: 5px;
+                font-family: sans-serif;
+                -webkit-font-smoothing: antialiased;
+                font-size: 10pt;
+                outline: none;
+                text-shadow: 0px 1px 1px rgba(0, 0, 0, 0.5);
+            }
+
+            .langEdit {
+                position: absolute;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+            }
+
+            .langEdit .container {
+                background: #080808;
+                border: 1px solid #444;
+                box-shadow: 0 0 4px black;
+                width: 700px;
+                height: 500px;
+                left: 50%;
+                top: 50%;
+                margin-left: -350px;
+                margin-top: -250px;
+                color: white;
+                position: absolute;
+            }
+            .langEdit .header {
+                height: 50px;
+                text-align: center;
+                padding: 4px 12px;
+                box-sizing: border-box;
+                border-bottom: 1px solid #444;
+            }
+            .langEdit .footer {
+                height: 40px;
+                text-align: center;
+                padding: 4px 12px;
+                position: absolute;
+                bottom: 0;
+                left: 0;
+                right: 0;
+                box-sizing: border-box;
+                border-top: 1px solid #444;
+            }
+
+            .langEdit h2 {
+                font-size: 16pt;
+                height: 25px;
+            }
+            .langEdit .header button {
+                float: left;
+            }
+
+            .langEdit .userInfo {
+                float: right;
+                font-size: 10pt;
+            }
+
+            .langEdit .userInfo a {
+                color: #0078a3;
+                cursor: pointer;
+            }
+
+            .langEdit .user {
+                position: absolute;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background: #080808;
+                text-align: center;
+                padding: 20px;
+            }
+
+            .langEdit .map,
+            .langEdit .recent {
+                position: absolute;
+                top: 50px;
+                bottom: 40px;
+                left: 0;
+                right: 0;
+                background: #111;
+                overflow: auto;
+                padding: 8px;
+                padding-bottom: 50px;
+            }
+
+            .langEdit li {
+                padding: 5px;
+            }
+
+            .langEdit li label {
+                font-size: 9pt;
+                background: #222;
+                display: block;
+                padding: 1px 8px 0 4px;
+                border-radius: 0 3px 0 0;
+                color: #aaa;
+                float: left;
+            }
+            .langEdit li input,
+            .langEdit li textarea {
+                clear: both;
+                width: 100%;
+                box-sizing: border-box;
+                margin: 0;
+                display: block;
+                padding: 4px;
+            }
+            .langEdit li textarea[readonly] {
+                border: none;
+                background: #222;
+                cursor: pointer;
+                border-radius: 0 5px 5px 0;
+                color: white;
+            }
+            .langEdit li textarea[readonly]:hover {
+                background: #333;
+            }
+
+            .langEdit li.edit input[readonly] {
+                border-bottom: 1px solid #ccc;
+                border-radius: 0 5px 0 0;
+            }
+
+            .langEdit li textarea.modification,
+            li textarea.comment {
+                display: none;
+            }
+            .langEdit li.edit textarea.modification,
+            li.edit textarea.comment {
+                display: block;
+            }
+
+            .langEdit button {
+                text-decoration: none;
+                padding-left: 13px;
+                padding-right: 13px;
+                padding-top: 5px;
+                padding-bottom: 5px;
+                margin: 0 5px;
+                color: #fff;
+                font-weight: bold;
+                background-color: rgba(255, 255, 255, 0.1);
+                border: none !important;
+                border-top: 1px solid rgba(255, 255, 255, 0.1) !important;
+                border-bottom: 1px solid rgba(0, 0, 0, 0.1) !important;
+                cursor: pointer;
+                -webkit-transition: 0.1s linear;
+            }
+
+            .langEdit .header button {
+                padding-bottom: 1px;
+                padding-top: 3px;
+                border-radius: 8px 8px 0 0;
+                outline: none;
+            }
+            .langEdit .header button.active {
+                background: #111;
+            }
+
+            .langEdit .saving,
+            .langEdit .error {
+                background: rgba(0, 0, 0, 0.9);
+                text-align: center;
+                display: block;
+                padding-top: 200px;
+                font-size: 20pt;
+                position: absolute;
+                top: 0;
+                left: 0;
+                bottom: 0;
+                right: 0;
+            }
+
+            .langEdit .error {
+                color: #ff8888;
+            }
+            .langEdit .error div {
+                font-size: 12pt;
+            }
+        </style>
+        <style>
+            .errorMessage.shown {
+                height: 400px;
+                margin-top: -200px;
+                transition: all 1s;
+            }
+
+            .errorMessage {
+                position: absolute;
+                height: 0;
+                overflow: hidden;
+                left: 0;
+                right: 0;
+                top: 50%;
+                background: #050505;
+                border-top: 3px solid red;
+                border-bottom: 3px solid red;
+                box-sizing: border-box;
+                padding: 8px;
+            }
+            .errorMessage h3 {
+                text-align: center;
+                padding: 8px 0;
+            }
+            .errorMessage p {
+                font-size: 12pt;
+                padding-bottom: 8px;
+            }
+            .errorMessage textarea {
+                display: block;
+                width: 100%;
+                box-sizing: border-box;
+                padding: 8px;
+                height: 200px;
+                background: black;
+                color: white;
+                border: 0;
+                margin-bottom: 8px;
+            }
+            .errorMessage a {
+                color: #0078a3;
+            }
+
+            .gameOverlayBox.shown {
+                opacity: 1;
+                height: 200px;
+                margin-top: -100px;
+            }
+            .gameOverlayBox {
+                transition: all 0.2s;
+                position: absolute;
+                height: 0;
+                overflow: hidden;
+                left: 0;
+                right: 0;
+                top: 50%;
+                background: #050505;
+                border-top: 1px solid white;
+                border-bottom: 1px solid white;
+                box-sizing: border-box;
+                padding: 8px;
+                text-align: center;
+                opacity: 0;
+            }
+
+            .gameOverlayBox h3 {
+                text-align: center;
+                padding: 8px 0;
+                margin: 0 !important;
+            }
+            .gameOverlayBox p {
+                font-size: 12pt;
+                padding-bottom: 8px;
+            }
+            .gameOverlayBox textarea {
+                display: block;
+                width: 100%;
+                box-sizing: border-box;
+                padding: 8px;
+                height: 200px;
+                background: black;
+                color: white;
+                border: 0;
+                margin-bottom: 8px;
+            }
+
+            .gameOverlayBox textarea[readonly] {
+                color: #888;
+            }
+
+            .gameOverlayBox a {
+                color: #0078a3;
+            }
+
+            .gameOverlayBox input {
+                font-size: 12pt;
+                padding: 8px;
+            }
+
+            .indiegogoMessage.shown {
+                height: 400px;
+                margin-top: -200px;
+            }
+
+            .saveMessage.shown {
+                height: 400px;
+                margin-top: -200px;
+            }
+
+            .gameOverlayBox.saveMessage textarea {
+                height: 100px;
+            }
+
+            a.indiegogo.logo {
+                display: inline-block;
+                width: 442px;
+                height: 244px;
+                background: url(img/indiegogo-logo.png) no-repeat;
+            }
+            a.indiegogo.logo span {
+                display: none;
+            }
+
+            .gamecodeMessage.shown {
+                height: 100px;
+                margin-top: -50px;
+            }
+
+            .twitterMessage.shown {
+                height: 400px;
+                margin-top: -200px;
+            }
+
+            .twitterMessage li {
+                padding: 3px 0;
+            }
+
+            .twitterMessage ul {
+                padding-bottom: 10px;
+            }
+
+            .twitterMessage a {
+                text-decoration: none;
+            }
+
+            .screenshotMessage.shown {
+                height: 400px;
+                margin-top: -200px;
+            }
+            .screenshotMessage img {
+                height: 320px;
+            }
+
+            .bigButton,
+            .biggerButton {
+                background: url(img/button1.png);
+                padding: 10px 16px;
+                color: white;
+                text-decoration: none;
+                text-align: center;
+                font-weight: bold;
+                font-size: 16pt;
+                display: inline-block;
+                margin: 0 8px 8px 8px;
+                width: 232px;
+                height: 45px;
+                box-sizing: border-box;
+            }
+            .bigButton:hover,
+            .biggerButton:hover {
+                background-position: 0 -64px;
+                text-decoration: none;
+                color: white;
+            }
+            .bigButton:active,
+            .biggerButton:active,
+            .bigButton:visited,
+            .biggerButton:visited {
+                color: white;
+            }
+
+            .biggerButton {
+                background: url(img/button2.png);
+                width: 300px;
+            }
+
+            @media (max-width: 639px) {
+                .biggerButton {
+                    width: 250px;
+                    background-size: 250px auto;
+                    height: 40px;
+                    font-size: 12pt;
+                }
+                .biggerButton:hover {
+                    background-position: 0 -53px;
+                }
+            }
+
+            #game.none {
+                cursor: none;
+            }
+
+            #game.cursorSize1.pointer {
+                cursor:
+                    url(img/cursor-1.png) 0 0,
+                    auto;
+            }
+            #game.cursorSize2.pointer {
+                cursor:
+                    url(img/cursor-2.png) 0 0,
+                    auto;
+            }
+            #game.cursorSize3.pointer {
+                cursor:
+                    url(img/cursor-3.png) 0 0,
+                    auto;
+            }
+            #game.cursorSize4.pointer {
+                cursor:
+                    url(img/cursor-4.png) 0 0,
+                    auto;
+            }
+            #game.cursorSize5.pointer {
+                cursor:
+                    url(img/cursor-5.png) 0 0,
+                    auto;
+            }
+            #game.cursorSize6.pointer {
+                cursor:
+                    url(img/cursor-6.png) 0 0,
+                    auto;
+            }
+            #game.cursorSize7.pointer {
+                cursor:
+                    url(img/cursor-7.png) 0 0,
+                    auto;
+            }
+            #game.cursorSize8.pointer {
+                cursor:
+                    url(img/cursor-8.png) 0 0,
+                    auto;
+            }
+
+            #game.cursorSize1.throw {
+                cursor:
+                    url(img/cursor-throw-1.png) 8 8,
+                    auto;
+            }
+            #game.cursorSize2.throw {
+                cursor:
+                    url(img/cursor-throw-2.png) 16 16,
+                    auto;
+            }
+            #game.cursorSize3.throw {
+                cursor:
+                    url(img/cursor-throw-3.png) 24 24,
+                    auto;
+            }
+            #game.cursorSize4.throw {
+                cursor:
+                    url(img/cursor-throw-4.png) 32 32,
+                    auto;
+            }
+            #game.cursorSize5.throw {
+                cursor:
+                    url(img/cursor-throw-5.png) 40 40,
+                    auto;
+            }
+            #game.cursorSize6.throw {
+                cursor:
+                    url(img/cursor-throw-6.png) 48 48,
+                    auto;
+            }
+            #game.cursorSize7.throw {
+                cursor:
+                    url(img/cursor-throw-7.png) 56 56,
+                    auto;
+            }
+            #game.cursorSize8.throw {
+                cursor:
+                    url(img/cursor-throw-8.png) 64 64,
+                    auto;
+            }
+
+            #game.cursorSize1.melee {
+                cursor:
+                    url(img/cursor-melee-1.png) 8 8,
+                    auto;
+            }
+            #game.cursorSize2.melee {
+                cursor:
+                    url(img/cursor-melee-2.png) 16 16,
+                    auto;
+            }
+            #game.cursorSize3.melee {
+                cursor:
+                    url(img/cursor-melee-3.png) 24 24,
+                    auto;
+            }
+            #game.cursorSize4.melee {
+                cursor:
+                    url(img/cursor-melee-4.png) 32 32,
+                    auto;
+            }
+            #game.cursorSize5.melee {
+                cursor:
+                    url(img/cursor-melee-5.png) 40 40,
+                    auto;
+            }
+            #game.cursorSize6.melee {
+                cursor:
+                    url(img/cursor-melee-6.png) 48 48,
+                    auto;
+            }
+            #game.cursorSize7.melee {
+                cursor:
+                    url(img/cursor-melee-7.png) 56 56,
+                    auto;
+            }
+            #game.cursorSize8.melee {
+                cursor:
+                    url(img/cursor-melee-8.png) 64 64,
+                    auto;
+            }
+        </style>
+    </head>
+    <body>
+        <!-- <div id="overlay"></div> -->
+        <!-- <h1 id="status" class="title">Initializing CCBundler</h1> -->
+        <!-- <div id="ui" class="ui"></div> -->
+
+        <div id="game">
+            <canvas id="canvas"></canvas>
+        </div>
+    </body>
 </html>
