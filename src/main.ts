@@ -21,39 +21,29 @@ window.IG_GAME_SCALE = 4
 // window.IG_GAME_DEBUG = false
 // window.IG_GAME_BETA = false
 
-import { Mod, type Modloader } from '../../ccloader/js/mod.js'
-
 import './vfs.js'
 import { initVfs } from './vfs.js'
-import { resizeFix } from './screen-fix.js'
+import { resizeFix } from './screen-fix'
+import './localstoarge-default'
+import * as modloader from './mods'
+import { requireFix } from './require-fix.js'
 
 async function run() {
     await import('../../assets/game/page/game-base.js')
     await import('../../assets/impact/page/js/seedrandom.js')
+    // @ts-expect-error
+    window.semver = (await import('../../ccloader/js/lib/semver.browser.js')).default
+    requireFix()
 
-    const modsDefault = await Promise.all([
-        import('../../assets/mods/cc-ts-template-esbuild/plugin.js'),
-    ])
-    const modloader = {
-        fileManager: {},
-    } as Modloader
-    const mods: Mod[] = []
-    for (const def of modsDefault) {
-        const mod = new Mod(modloader)
-        mods.push(mod)
-
-        const clazz = def.default
-        const plugin = new clazz(mod)
-        mod.pluginInstance = plugin as any
-    }
-    for (const mod of mods) await mod.loadPreload()
+    await modloader.init()
+    await modloader.runPreload()
 
     {
         const back = window.Worker
         // @ts-expect-error
         window.Worker = function () {}
 
-        // @ts-expect-error
+        // @ts-ignore
         await import('../../assets/js/game.compiled.js')
 
         window.Worker = back
@@ -75,13 +65,13 @@ async function run() {
     })
 
     window.onload = async () => {
-        for (const mod of mods) await mod.loadPrestart()
+        await modloader.runPrestart()
 
         startCrossCode()
 
         await waitForGamePromise
-        for (const mod of mods) await mod.loadPostload()
-        for (const mod of mods) await mod.load()
+        await modloader.runPostload()
+        await modloader.runPoststart()
     }
 }
 run()

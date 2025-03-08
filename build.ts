@@ -31,7 +31,7 @@ const ctx = await esbuild.context({
         // 'assign-to-define': 'silent'
     },
     write: false,
-    // minify: true,
+    minify: false,
     define: {
         'window.IG_GAME_CACHE': `""`,
         'window.IG_ROOT': `"/assets/"`,
@@ -84,7 +84,8 @@ const ctx = await esbuild.context({
 
                     await append(html.slice(html.indexOf('@JS_SCRIPT') + '@JS_SCRIPT'.length))
 
-                    const mb = html.length / 1_048_576
+                    const stat = await fs.promises.stat('./dist.html')
+                    const mb = stat.size / 1_048_576
                     console.log('build done, size:', mb.toFixed(2), 'MB')
                 })
             },

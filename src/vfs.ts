@@ -1,5 +1,6 @@
 import 'core-js/actual/typed-array/to-base64'
 import * as gzip from './compress'
+import type { Dirent } from 'fs'
 
 // import * as _vfs from './fttree.json'
 // const _vfsRaw = VFS_DATA
@@ -30,10 +31,15 @@ export function isRef(node: VfsNode): node is NodeRef {
     return node.t == 'r'
 }
 
-function resolvePath(path: string): VfsNode {
+function preparePath(path: string): string {
     path = path.trim()
+    if (path.startsWith('./')) path = path.substring('./'.length)
     if (path.startsWith('/')) path = path.substring('/'.length)
     if (path.startsWith('assets/')) path = path.substring('assets/'.length)
+    return path
+}
+function resolvePath(path: string): VfsNode {
+    path = preparePath(path)
     const sp = path.split('/')
     let obj = vfs
     for (let i = 0; i < sp.length - 1; i++) {
@@ -53,7 +59,7 @@ async function base64ToBufferAsync(base64: string) {
     return new Uint8Array(buf)
 }
 
-async function readFile(path: string, encoding: 'utf-8'): Promise<string>
+async function readFile(path: string, encoding: 'utf-8' | 'utf8'): Promise<string>
 async function readFile(path: string, encoding?: string): Promise<Uint8Array>
 async function readFile(path: string, encoding?: string): Promise<string | Uint8Array> {
     const node = resolvePath(path)
@@ -66,60 +72,101 @@ async function readFile(path: string, encoding?: string): Promise<string | Uint8
 
     const compressedBuf = await base64ToBufferAsync(compressedStr)
     let ret
-    if (encoding == 'utf-8') ret = await gzip.decompressToString(compressedBuf)
+    if (encoding == 'utf-8' || encoding == 'utf8') ret = await gzip.decompressToString(compressedBuf)
     else ret = await gzip.decompressToChunks(compressedBuf)
 
     return ret
 }
 
-async function readDir(
-    path: string,
-    options: {
-        withFileTypes?: false | undefined
-        recursive?: boolean | undefined
-    } = {}
-): Promise<string[]> {
-    if (options.withFileTypes) throw new Error(`vfs: readdir: unsupported option: withFileTypes`)
+class VfsDirent {
+    constructor(
+        private node: VfsNode,
+        public name: string
+    ) {}
+
+    isDirectory() {
+        return this.node.t == 'd'
+    }
+    isFile() {
+        return this.node.t == 'f'
+    }
+}
+// @ts-expect-error
+async function readdir(path: string, options: { withFileTypes: true; recursive?: boolean }): Promise<Dirent[]>
+async function readdir(path: string, options?: { withFileTypes?: false; recursive?: boolean }): Promise<string[]>
+async function readdir(path: string, options: { withFileTypes?: false; recursive?: boolean } = {}): Promise<string[] | Dirent[]> {
     if (options.recursive) throw new Error(`vfs: readdir: unsupported option: recursive`)
 
     const node = resolvePath(path)
     if (!isDir(node)) throw new Error(`vfs: Not a directory: ${path}`)
-    return Object.keys(node).filter(key => key != 't')
+    if (options.withFileTypes) {
+        const arr: Dirent[] = []
+        for (const [name, child] of Object.entries(node)) {
+            if (name == 't') continue
+            arr.push(new VfsDirent(child, name) as unknown as Dirent)
+        }
+        return arr
+    } else return Object.keys(node).filter(a => a != 't')
+}
+
+// @ts-expect-error
+async function mkdir(path: string, options: { recursive: true }): Promise<string | undefined>
+async function mkdir(path: string, options?: { recursive?: false }): Promise<void>
+async function mkdir(path: string, options: { recursive?: boolean } = {}) {
+    path = preparePath(path)
+    const sp = path.split('/')
+    let obj = vfs
+    for (let i = 0; i < sp.length; i++) {
+        let next = obj[sp[i]]
+        if (!next) {
+            if (options.recursive) {
+                next = obj[sp[i]] = {
+                    t: 'd',
+                } as NodeDir
+            } else throw new Error(`vfs: mkdir: cannot make a directory, parent doesn't exist: ${path} (consider options.recursive)`)
+        } else if (!isDir(next)) throw new Error(`vfs: mkdir: cannot make a directory, a file exists: ${path}`)
+        obj = next as VfsTree
+    }
+}
+
+async function stat(path: string, _opts?: {}): Promise<VfsDirent> {
+    const node = resolvePath(path)
+    return new VfsDirent(node, '')
+}
+
+async function access(path: string, _mode?: number): Promise<void> {
+    // just throw if the path doesnt exist
+    resolvePath(path)
 }
 
 export const fs = {
     promises: {
         // @ts-expect-error
-        readFile: readFile,
+        readFile,
         // @ts-expect-error
-        readdir: readDir,
+        readdir,
+        // @ts-expect-error
+        mkdir,
+        // @ts-expect-error
+        stat,
+        // @ts-expect-error
+        access,
     },
 } satisfies Partial<typeof import('fs')>
 
 function initAjax() {
     $.ajax = (settings?: JQuery.AjaxSettings | string): JQuery.jqXHR => {
         if (!settings) throw new Error(`vfs: $.ajax: settings not set`)
-        if (typeof settings == 'string')
-            throw new Error(`vfs: $.ajax: unsupported argument (string)`)
+        if (typeof settings == 'string') throw new Error(`vfs: $.ajax: unsupported argument (string)`)
         ;(async () => {
             if (!settings.url) throw new Error(`vfs: $.ajax: settings.url not set`)
-            if (!settings.success)
-                throw new Error(`vfs: $.ajax: settings.success not set, what are you doing??`)
-            if (typeof settings.success != 'function')
-                throw new Error(
-                    `vfs: $.ajax: unsupported settings.success type: ${typeof settings.error}`
-                )
-            if (typeof settings.error != 'function')
-                throw new Error(
-                    `vfs: $.ajax: unsupported settings.error type: ${typeof settings.error}`
-                )
+            if (!settings.success) throw new Error(`vfs: $.ajax: settings.success not set, what are you doing??`)
+            if (typeof settings.success != 'function') throw new Error(`vfs: $.ajax: unsupported settings.success type: ${typeof settings.error}`)
+            if (typeof settings.error != 'function') throw new Error(`vfs: $.ajax: unsupported settings.error type: ${typeof settings.error}`)
 
             let data
-            if (
-                settings.url ==
-                ig.root + 'page/api/get-extension-list.php?debug=' + (window.IG_GAME_DEBUG ? 1 : 0)
-            ) {
-                data = await readDir('extension')
+            if (settings.url == ig.root + 'page/api/get-extension-list.php?debug=' + (window.IG_GAME_DEBUG ? 1 : 0)) {
+                data = await readdir('extension')
                 data = data.filter(dir => dir != 'readme.txt')
             } else {
                 try {
@@ -127,19 +174,11 @@ function initAjax() {
 
                     if (settings.dataType == 'json') {
                         data = JSON.parse(dataStr)
-                    } else
-                        throw new Error(
-                            `vfs: $.ajax: unsupported settings.dataType: ${settings.dataType}`
-                        )
+                    } else throw new Error(`vfs: $.ajax: unsupported settings.dataType: ${settings.dataType}`)
                 } catch (e) {
                     console.error(e)
                     if (settings.error) {
-                        settings.error.call(
-                            settings.context,
-                            undefined as any,
-                            undefined as any,
-                            undefined as any
-                        )
+                        settings.error.call(settings.context, undefined as any, undefined as any, undefined as any)
                     }
                     return
                 }
@@ -201,8 +240,7 @@ function initXml() {
 
         constructor() {}
         open(_method: string, url: string | URL): void {
-            if (typeof url !== 'string')
-                throw new Error(`vfs: XmlHttpRequest: unsuppoted url type: ${typeof url}`)
+            if (typeof url !== 'string') throw new Error(`vfs: XmlHttpRequest: unsuppoted url type: ${typeof url}`)
             this.url = url
         }
         send(_body?: Document | XMLHttpRequestBodyInit | null): void {
@@ -212,18 +250,11 @@ function initXml() {
                     this.response = data.buffer
                     this.readyState = 200
                     if (this.onload) this.onload()
-                } else
-                    throw new Error(
-                        `vfs: XmlHttpRequest: unsupported responseType: ${this.responseType}`
-                    )
+                } else throw new Error(`vfs: XmlHttpRequest: unsupported responseType: ${this.responseType}`)
             })
         }
         setRequestHeader(_name: string, _value: string): void {}
-        addEventListener(
-            _type: string,
-            _listener: EventListenerOrEventListenerObject,
-            _options?: boolean | AddEventListenerOptions
-        ): void {}
+        addEventListener(_type: string, _listener: EventListenerOrEventListenerObject, _options?: boolean | AddEventListenerOptions): void {}
     }
     // @ts-expect-error
     window.XMLHttpRequest = MyXmlHttpRequest
@@ -234,4 +265,18 @@ export async function initVfs() {
     initIgImage()
     initAudio()
     initXml()
+}
+
+export const path = {
+    join(a: string, b: string) {
+        return a + '/' + b
+    },
+}
+
+// @ts-expect-error
+window.vfs = {
+    vfs,
+    dataRef,
+    fs,
+    path,
 }

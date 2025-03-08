@@ -18,9 +18,7 @@ const oggList: {
 const fileExists = async (path: string) => !!(await fs.promises.stat(path).catch(_ => false))
 
 ;(async () => {
-    const emptyOgg = Buffer.from(
-        await gzip.compress(await fs.promises.readFile('./empty.ogg'))
-    ).toString('base64')
+    const emptyOgg = Buffer.from(await gzip.compress(await fs.promises.readFile('./empty.ogg'))).toString('base64')
     dataRef[0].push(emptyOgg)
     dataRefLens[0] += emptyOgg.length
 
@@ -39,6 +37,7 @@ const fileExists = async (path: string) => !!(await fs.promises.stat(path).catch
             if (name.endsWith('.yaml')) return false
             if (name.endsWith('.md')) return false
             if (name.endsWith('.sh')) return false
+            if (name.endsWith('.ccmod')) return false
             if (name == '.npmrc') return false
             if (name == '.prettierrc.json') return false
             if (name == '.gitignore') return false
@@ -57,18 +56,59 @@ const fileExists = async (path: string) => !!(await fs.promises.stat(path).catch
             if (name == 'node_modules') return false
             if (name == '.git') return false
             if (name == 'GameData') return false
-            if (name == 'cache') return false
             if (name.startsWith('greenworks')) return false
             if (name == 'fonts') return false
             return true
         }
 
-        async function walk(path: string, node: vfs.VfsTree, depth: number): Promise<boolean> {
+        const fileSizeLimit = 1024 * 1024 * 50 // 50 MiB
+        function addToDataRef(data: string, node: vfs.NodeRef) {
+            const fi = dataRef.length - 1
+            node.fi = fi
+            node.i = dataRef[fi].length
+
+            dataRef[fi].push(data)
+            dataRefLens[fi] += data.length
+
+            if (dataRefLens[fi] > fileSizeLimit) {
+                dataRef.push([])
+                dataRefLens.push(0)
+            }
+        }
+
+        function handleModAsset(node: vfs.NodeRef, path: string) {
+            const toPath = path.substring(path.lastIndexOf('assets') + 'assets/'.length)
+            const sp = toPath.split('/')
+            let obj = tree
+            for (let i = 0; i < sp.length - 1; i++) {
+                let next = obj[sp[i]]
+                if (!next) {
+                    next = obj[sp[i]] = { t: 'd' } as vfs.NodeDir
+                } else if (next.t != 'd') throw new Error(`vfs: No such directory: ${path}`)
+                obj = next
+            }
+            const lastName = sp[sp.length - 1]
+            const node1 = obj[lastName]
+            if (node1) {
+                if (node1.t == 'd') throw new Error(`vfs: mkdir: cannot replace dir with mod asset`)
+                if (node1.t == 'f') {
+                    console.log('replacing game asset', toPath, 'with', path)
+                } else if (node1.t == 'r') {
+                    console.warn('mod asset conflict at', toPath, ', taking the last one:', path)
+                } else throw new Error('vfs: not implemented')
+            } else {
+                console.log('adding mod asset', toPath, 'from', path)
+            }
+            obj[lastName] = node
+        }
+
+        async function walk(path: string, node: vfs.VfsTree, depth: number, underModAssets: boolean): Promise<boolean> {
             if (depth >= 100) throw new Error(`Max depth reached! ${path}`)
             const files = await fs.promises.readdir(path, { withFileTypes: true })
             let fileCount = 0
             for (const file of files) {
                 const npath = `${path}/${file.name}`
+
                 if (file.isFile() && filterFile(file.name)) {
                     console.log(npath)
                     let data: string | Buffer
@@ -81,25 +121,30 @@ const fileExists = async (path: string) => !!(await fs.promises.stat(path).catch
                     const compressedArr = await gzip.compress(data)
                     const compressed = Buffer.from(compressedArr).toString('base64')
 
-                    if (npath.endsWith('.ogg')) {
-                        node[file.name] = { t: 'r', fi: 0, i: 0 }
-                        oggList.push({
-                            data: compressed,
-                            node: node[file.name] as vfs.NodeRef,
-                        })
+                    if (underModAssets) {
+                        const entry: vfs.NodeRef = { t: 'r', fi: 0, i: 0 }
+                        node[file.name] = entry
+                        addToDataRef(compressed, entry)
+                        handleModAsset(entry, npath)
                     } else {
-                        node[file.name] = {
-                            t: 'f',
-                            c: compressed,
+                        if (npath.endsWith('.ogg')) {
+                            node[file.name] = { t: 'r', fi: 0, i: 0 }
+                            oggList.push({
+                                data: compressed,
+                                node: node[file.name] as vfs.NodeRef,
+                            })
+                        } else {
+                            node[file.name] = {
+                                t: 'f',
+                                c: compressed,
+                            }
                         }
                     }
+
                     fileCount++
-                } else if (
-                    file.isDirectory() &&
-                    filterDir(file.name) /*|| file.isSymbolicLink()*/
-                ) {
+                } else if (file.isDirectory() && filterDir(file.name) || file.isSymbolicLink()) {
                     const nnode: vfs.VfsNode = { t: 'd' } as any
-                    if (await walk(npath, nnode as vfs.VfsTree, depth + 1)) {
+                    if (await walk(npath, nnode as vfs.VfsTree, depth + 1, underModAssets || file.name == 'assets')) {
                         fileCount++
                         node[file.name] = nnode
                     }
@@ -107,55 +152,21 @@ const fileExists = async (path: string) => !!(await fs.promises.stat(path).catch
             }
             return fileCount > 0
         }
-        await walk(passets, tree, 0)
-
-        // const addToDataRef = () => {
-        //     const fi = dataRef.length - 1
-        //     node[file.name] = {
-        //         t: 'f',
-        //         c: emptyOgg,
-        //     }
-        //     node[file.name] = {
-        //         t: 'r',
-        //         fi,
-        //         i: dataRef[fi].length,
-        //     }
-        //     dataRef[fi].push(compressed)
-        //     dataRefLens[fi] += compressed.length
-        //
-        //     if (dataRefLens[fi] > 50000000) {
-        //         dataRef.push([])
-        //         dataRefLens.push(0)
-        //     }
-        // }
+        await walk(passets, tree, 0, false)
 
         // sort from smallest to biggest
         oggList.sort((a, b) => a.data.length - b.data.length)
         let oggTotalBytes = 0
-        const oggByteLimit = 1024 * 1024 * 100 // 100 MiB
-        const fileSizeLimit = 1024 * 1024 * 50 // 50 MiB
+        const oggByteLimit = 1024 * 1024 * 0 // 100 MiB
         for (const { data, node } of oggList) {
-            const fi = dataRef.length - 1
-            node.fi = fi
-            node.i = dataRef[fi].length
-
-            dataRef[fi].push(data)
-            dataRefLens[fi] += data.length
-
+            addToDataRef(data, node)
             oggTotalBytes += data.length
             if (oggTotalBytes >= oggByteLimit) break
-
-            if (dataRefLens[fi] > fileSizeLimit) {
-                dataRef.push([])
-                dataRefLens.push(0)
-            }
         }
 
         await Promise.all([
             fs.promises.writeFile(ptree, JSON.stringify(tree)),
-            dataRef.map((arr, i) =>
-                fs.promises.writeFile(pdataRef.replace(/@ID/, i.toString()), JSON.stringify(arr))
-            ),
+            dataRef.map((arr, i) => fs.promises.writeFile(pdataRef.replace(/@ID/, i.toString()), JSON.stringify(arr))),
         ])
 
         // let res = await gzip.compress(str)

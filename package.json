@@ -6,13 +6,14 @@
     "scripts": {
         "build": "node build.ts build",
         "watch": "node build.ts watch",
-        "genVfs": "cd src && node generate-fs-tree.ts"
+        "genVfs": "cd src && rm vfsData/* && node generate-fs-tree.ts"
     },
     "devDependencies": {
         "@types/crypto-js": "^4.2.2",
         "@types/jquery": "^3.5.32",
         "@types/node": "^22.13.9",
         "@types/semver": "^7.5.8",
+        "ccmoddb": "github:CCDirectLink/CCModDB",
         "core-js": "^3.41.0",
         "crypto-js": "^4.2.0",
         "esbuild": "^0.25.0",
@@ -22,6 +23,10 @@
         "ultimate-crosscode-typedefs": "github:krypciak/ultimate-crosscode-typedefs"
     },
     "pnpm": {
-        "onlyBuiltDependencies": ["core-js", "esbuild", "node"]
+        "onlyBuiltDependencies": [
+            "core-js",
+            "esbuild",
+            "node"
+        ]
     }
 }
