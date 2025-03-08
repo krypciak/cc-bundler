@@ -1,4 +1,4 @@
-export async function compress(str: string) {
+export async function compress(str: any) {
     // Convert the string to a byte stream.
     const stream = new Blob([str]).stream()
 

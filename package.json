@@ -2,9 +2,10 @@
     "name": "ccbundler",
     "version": "1.0.0",
     "description": "",
+    "type": "module",
     "scripts": {
-        "start": "esbuild --target=es2018 --platform=browser --bundle --outfile=plugin.js src/main.ts --log-override:suspicious-boolean-not=silent --external:nw.gui",
-        "watch": "esbuild --target=es2018 --platform=browser --bundle --outfile=plugin.js src/main.ts --log-override:suspicious-boolean-not=silent --external:nw.gui --watch"
+        "start": "node build.ts",
+        "watch": ""
     },
     "devDependencies": {
         "@types/crypto-js": "^4.2.2",
@@ -13,13 +14,13 @@
         "@types/semver": "^7.5.8",
         "core-js": "^3.41.0",
         "crypto-js": "^4.2.0",
+        "esbuild": "^0.25.0",
         "jquery": "^3.7.1",
+        "node": "^23.9.0",
         "semver": "^7.7.1",
         "ultimate-crosscode-typedefs": "github:krypciak/ultimate-crosscode-typedefs"
     },
     "pnpm": {
-        "onlyBuiltDependencies": [
-            "core-js"
-        ]
+        "onlyBuiltDependencies": ["core-js", "esbuild", "node"]
     }
 }

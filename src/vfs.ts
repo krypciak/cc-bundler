@@ -1,21 +1,24 @@
-import * as _vfs from './fttree.json'
-const vfs: FileSystemTree = _vfs as any
+import 'core-js/actual/typed-array/to-base64'
 import * as gzip from './compress'
 
-import 'core-js/actual/typed-array/to-base64'
+// import * as _vfs from './fttree.json'
+const _vfsRaw = '@VFS_DATA'
+const _vfs = JSON.parse(_vfsRaw)
 
-type Node = DirectoryNode | FileNode
-export type FileSystemTree = Record<string, Node>
-export interface DirectoryNode {
-    directory: FileSystemTree
-}
-export interface FileNode {
-    file: {
-        contents: string
-    }
+const vfs: VfsTree = _vfs as any
+
+export interface VfsTree {
+    [name: string]: VfsNode
 }
 
-function resolvePath(path: string): Node {
+export type VfsNode =
+    | ({ t: 'd' } & VfsTree)
+    | {
+          t: 'f'
+          c: string
+      }
+
+function resolvePath(path: string): VfsNode {
     path = path.trim()
     if (path.startsWith('/')) path = path.substring('/'.length)
     if (path.startsWith('assets/')) path = path.substring('assets/'.length)
@@ -23,12 +26,11 @@ function resolvePath(path: string): Node {
     let obj = vfs
     for (let i = 0; i < sp.length - 1; i++) {
         const next = obj[sp[i]]
-        if (!next || 'file' in next)
-            throw new Error(`vfs: No such file or directory (dir traversal): ${path}`)
-        obj = next.directory
+        if (!next || next.t == 'f') throw new Error(`vfs: No such directory: ${path}`)
+        obj = next
     }
     const ret = obj[sp[sp.length - 1]]
-    if (!ret) throw new Error(`vfs: No such file or directory (excuse me?) ${ret} ${path}`)
+    if (!ret) throw new Error(`vfs: No such file or directory: ${path}`)
     return ret
 }
 
@@ -43,8 +45,8 @@ async function readFile(path: string, encoding: 'utf-8'): Promise<string>
 async function readFile(path: string, encoding?: string): Promise<Uint8Array>
 async function readFile(path: string, encoding?: string): Promise<string | Uint8Array> {
     const node = resolvePath(path)
-    if (!('file' in node)) throw new Error(`vfs: Not a file: ${path}`)
-    const compressedStr = node.file.contents
+    if (node.t != 'f') throw new Error(`vfs: Not a file: ${path}`)
+    const compressedStr = node.c
     const compressedBuf = await base64ToBufferAsync(compressedStr)
     let ret
     if (encoding == 'utf-8') ret = await gzip.decompressToString(compressedBuf)
@@ -64,8 +66,8 @@ async function readDir(
     if (options.recursive) throw new Error(`vfs: readdir: unsupported option: recursive`)
 
     const node = resolvePath(path)
-    if (!('directory' in node)) throw new Error(`vfs: Not a directory: ${path}`)
-    return Object.keys(node.directory)
+    if (node.t != 'd') throw new Error(`vfs: Not a directory: ${path}`)
+    return Object.keys(node).filter(key => key != 't')
 }
 
 export const fs = {
