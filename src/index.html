@@ -1,15 +1,13 @@
+<!doctype html>
 <html>
     <head>
-        <title>CrossCode - CCLoader</title>
-        <link rel="stylesheet" href="index.css" />
+        <title>CrossCode</title>
         <meta
             name="viewport"
             content="width=320, initial-scale=0.5, maximum-scale=0.5, user-scalable=0"
         />
-        <!-- <script type="module" src="plugin.js"></script> -->
-        <script type="module">
-            @JS_SCRIPT
-        </script>
+        <meta charset="UTF-8" />
+        <title>CrossCode</title>
 
         <style>
             html,
@@ -667,134 +665,139 @@
                 cursor: none;
             }
 
-            #game.cursorSize1.pointer {
-                cursor:
-                    url(img/cursor-1.png) 0 0,
-                    auto;
-            }
-            #game.cursorSize2.pointer {
-                cursor:
-                    url(img/cursor-2.png) 0 0,
-                    auto;
-            }
-            #game.cursorSize3.pointer {
-                cursor:
-                    url(img/cursor-3.png) 0 0,
-                    auto;
-            }
-            #game.cursorSize4.pointer {
-                cursor:
-                    url(img/cursor-4.png) 0 0,
-                    auto;
-            }
-            #game.cursorSize5.pointer {
-                cursor:
-                    url(img/cursor-5.png) 0 0,
-                    auto;
-            }
-            #game.cursorSize6.pointer {
-                cursor:
-                    url(img/cursor-6.png) 0 0,
-                    auto;
-            }
-            #game.cursorSize7.pointer {
-                cursor:
-                    url(img/cursor-7.png) 0 0,
-                    auto;
-            }
-            #game.cursorSize8.pointer {
-                cursor:
-                    url(img/cursor-8.png) 0 0,
-                    auto;
-            }
-
-            #game.cursorSize1.throw {
-                cursor:
-                    url(img/cursor-throw-1.png) 8 8,
-                    auto;
-            }
-            #game.cursorSize2.throw {
-                cursor:
-                    url(img/cursor-throw-2.png) 16 16,
-                    auto;
-            }
-            #game.cursorSize3.throw {
-                cursor:
-                    url(img/cursor-throw-3.png) 24 24,
-                    auto;
-            }
-            #game.cursorSize4.throw {
-                cursor:
-                    url(img/cursor-throw-4.png) 32 32,
-                    auto;
-            }
-            #game.cursorSize5.throw {
-                cursor:
-                    url(img/cursor-throw-5.png) 40 40,
-                    auto;
-            }
-            #game.cursorSize6.throw {
-                cursor:
-                    url(img/cursor-throw-6.png) 48 48,
-                    auto;
-            }
-            #game.cursorSize7.throw {
-                cursor:
-                    url(img/cursor-throw-7.png) 56 56,
-                    auto;
-            }
-            #game.cursorSize8.throw {
-                cursor:
-                    url(img/cursor-throw-8.png) 64 64,
-                    auto;
-            }
-
-            #game.cursorSize1.melee {
-                cursor:
-                    url(img/cursor-melee-1.png) 8 8,
-                    auto;
-            }
-            #game.cursorSize2.melee {
-                cursor:
-                    url(img/cursor-melee-2.png) 16 16,
-                    auto;
-            }
-            #game.cursorSize3.melee {
-                cursor:
-                    url(img/cursor-melee-3.png) 24 24,
-                    auto;
-            }
-            #game.cursorSize4.melee {
-                cursor:
-                    url(img/cursor-melee-4.png) 32 32,
-                    auto;
-            }
-            #game.cursorSize5.melee {
-                cursor:
-                    url(img/cursor-melee-5.png) 40 40,
-                    auto;
-            }
-            #game.cursorSize6.melee {
-                cursor:
-                    url(img/cursor-melee-6.png) 48 48,
-                    auto;
-            }
-            #game.cursorSize7.melee {
-                cursor:
-                    url(img/cursor-melee-7.png) 56 56,
-                    auto;
-            }
-            #game.cursorSize8.melee {
-                cursor:
-                    url(img/cursor-melee-8.png) 64 64,
-                    auto;
-            }
+            /* #game.cursorSize1.pointer { */
+            /*     cursor: */
+            /*         url(img/cursor-1.png) 0 0, */
+            /*         auto; */
+            /* } */
+            /* #game.cursorSize2.pointer { */
+            /*     cursor: */
+            /*         url(img/cursor-2.png) 0 0, */
+            /*         auto; */
+            /* } */
+            /* #game.cursorSize3.pointer { */
+            /*     cursor: */
+            /*         url(img/cursor-3.png) 0 0, */
+            /*         auto; */
+            /* } */
+            /* #game.cursorSize4.pointer { */
+            /*     cursor: */
+            /*         url(img/cursor-4.png) 0 0, */
+            /*         auto; */
+            /* } */
+            /* #game.cursorSize5.pointer { */
+            /*     cursor: */
+            /*         url(img/cursor-5.png) 0 0, */
+            /*         auto; */
+            /* } */
+            /* #game.cursorSize6.pointer { */
+            /*     cursor: */
+            /*         url(img/cursor-6.png) 0 0, */
+            /*         auto; */
+            /* } */
+            /* #game.cursorSize7.pointer { */
+            /*     cursor: */
+            /*         url(img/cursor-7.png) 0 0, */
+            /*         auto; */
+            /* } */
+            /* #game.cursorSize8.pointer { */
+            /*     cursor: */
+            /*         url(img/cursor-8.png) 0 0, */
+            /*         auto; */
+            /* } */
+            /**/
+            /* #game.cursorSize1.throw { */
+            /*     cursor: */
+            /*         url(img/cursor-throw-1.png) 8 8, */
+            /*         auto; */
+            /* } */
+            /* #game.cursorSize2.throw { */
+            /*     cursor: */
+            /*         url(img/cursor-throw-2.png) 16 16, */
+            /*         auto; */
+            /* } */
+            /* #game.cursorSize3.throw { */
+            /*     cursor: */
+            /*         url(img/cursor-throw-3.png) 24 24, */
+            /*         auto; */
+            /* } */
+            /* #game.cursorSize4.throw { */
+            /*     cursor: */
+            /*         url(img/cursor-throw-4.png) 32 32, */
+            /*         auto; */
+            /* } */
+            /* #game.cursorSize5.throw { */
+            /*     cursor: */
+            /*         url(img/cursor-throw-5.png) 40 40, */
+            /*         auto; */
+            /* } */
+            /* #game.cursorSize6.throw { */
+            /*     cursor: */
+            /*         url(img/cursor-throw-6.png) 48 48, */
+            /*         auto; */
+            /* } */
+            /* #game.cursorSize7.throw { */
+            /*     cursor: */
+            /*         url(img/cursor-throw-7.png) 56 56, */
+            /*         auto; */
+            /* } */
+            /* #game.cursorSize8.throw { */
+            /*     cursor: */
+            /*         url(img/cursor-throw-8.png) 64 64, */
+            /*         auto; */
+            /* } */
+            /**/
+            /* #game.cursorSize1.melee { */
+            /*     cursor: */
+            /*         url(img/cursor-melee-1.png) 8 8, */
+            /*         auto; */
+            /* } */
+            /* #game.cursorSize2.melee { */
+            /*     cursor: */
+            /*         url(img/cursor-melee-2.png) 16 16, */
+            /*         auto; */
+            /* } */
+            /* #game.cursorSize3.melee { */
+            /*     cursor: */
+            /*         url(img/cursor-melee-3.png) 24 24, */
+            /*         auto; */
+            /* } */
+            /* #game.cursorSize4.melee { */
+            /*     cursor: */
+            /*         url(img/cursor-melee-4.png) 32 32, */
+            /*         auto; */
+            /* } */
+            /* #game.cursorSize5.melee { */
+            /*     cursor: */
+            /*         url(img/cursor-melee-5.png) 40 40, */
+            /*         auto; */
+            /* } */
+            /* #game.cursorSize6.melee { */
+            /*     cursor: */
+            /*         url(img/cursor-melee-6.png) 48 48, */
+            /*         auto; */
+            /* } */
+            /* #game.cursorSize7.melee { */
+            /*     cursor: */
+            /*         url(img/cursor-melee-7.png) 56 56, */
+            /*         auto; */
+            /* } */
+            /* #game.cursorSize8.melee { */
+            /*     cursor: */
+            /*         url(img/cursor-melee-8.png) 64 64, */
+            /*         auto; */
+            /* } */
         </style>
+
+        <script type="module">
+            @JS_SCRIPT
+        </script>
     </head>
-    <body>
-        <!-- <div id="overlay"></div> -->
-        <!-- <h1 id="status" class="title">Initializing CCBundler</h1> -->
-        <!-- <div id="ui" class="ui"></div> -->
+    <body style="overflow: hidden">
+        <div id="options" class="toggleMenu" style="display: none">
+            <a class="trigger"><span>Options</span></a>
+            <ul class="optionList"></ul>
+        </div>
 
         <div id="game">
             <canvas id="canvas"></canvas>

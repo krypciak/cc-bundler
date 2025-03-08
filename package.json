@@ -4,8 +4,9 @@
     "description": "",
     "type": "module",
     "scripts": {
-        "start": "node build.ts",
-        "watch": ""
+        "build": "node build.ts build",
+        "watch": "node build.ts watch",
+        "genVfs": "cd src && node generate-fs-tree.ts"
     },
     "devDependencies": {
         "@types/crypto-js": "^4.2.2",

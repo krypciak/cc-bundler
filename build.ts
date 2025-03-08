@@ -1,29 +1,52 @@
 import * as esbuild from 'esbuild'
 import * as fs from 'fs'
 
-function injectVfsData(): esbuild.Plugin {
-    return {
-        name: 'replace-string',
-        setup(build) {
-            build.onLoad({ filter: /vfs.ts/ }, async args => {
-                const source = await fs.promises.readFile(args.path, 'utf8')
-                const vfsData = await fs.promises.readFile('src/fttree.json', 'utf8')
-                const contents = source.replace(/@VFS_DATA/, vfsData)
-                return { contents: contents, loader: 'ts' }
-            })
-        },
-    }
-}
+const vfsData = await fs.promises.readFile('src/vfsData/fttree.json', 'utf8')
+const dataRef: string[] = []
+const dataRefPaths = (await fs.promises.readdir('src/vfsData')).filter(name =>
+    name.startsWith('fttreeDataRef')
+)
+await Promise.all(
+    dataRefPaths.map(async (fileName, i) => {
+        const path = `src/vfsData/${fileName}`
+        dataRef[i] = await fs.promises.readFile(path, 'utf8')
+    })
+)
 
+const substitute = {
+    VFS_DATA: vfsData,
+    ...Object.fromEntries(
+        new Array(15).fill(null).map((_, i) => {
+            return [`REF_DATA_${i}`, dataRef[i] ?? '[]']
+        })
+    ),
+}
 const ctx = await esbuild.context({
     entryPoints: ['src/main.ts'],
     bundle: true,
     target: 'es2018',
     outfile: 'plugin.js',
-    logOverride: { 'suspicious-boolean-not': 'silent' },
+    logOverride: {
+        'suspicious-boolean-not': 'silent',
+        // 'assign-to-define': 'silent'
+    },
     write: false,
+    // minify: true,
+    define: {
+        'window.IG_GAME_CACHE': `""`,
+        'window.IG_ROOT': `"/assets/"`,
+        'window.IG_WIDTH': `568`,
+        'window.IG_HEIGHT': `320`,
+        'window.IG_SCREEN_MODE_OVERRIDE': `2`,
+        'window.IG_WEB_AUDIO_BGM': `false`,
+        'window.IG_FORCE_HTML5_AUDIO': `false`,
+        'window.LOAD_LEVEL_ON_GAME_START': `null`,
+        'window.IG_GAME_DEBUG': `false`,
+        'window.IG_GAME_BETA': `false`,
+        'window.IG_HIDE_DEBUG': `false`,
+    },
+    drop: ['debugger' /*'console'*/],
     plugins: [
-        injectVfsData(),
         {
             name: 'print',
             setup(build) {
@@ -32,14 +55,36 @@ const ctx = await esbuild.context({
                     console.log('building...')
                 })
                 build.onEnd(async a => {
-                    const txt = a.outputFiles![0].text
+                    const html = await fs.promises.readFile('./src/index.html', 'utf8')
+                    const code = a.outputFiles![0].text
 
-                    let html = await fs.promises.readFile('./src/index.html', 'utf8')
-                    html = html.replace(/@JS_SCRIPT/, txt)
+                    await fs.promises.writeFile(
+                        './dist.html',
+                        html.slice(0, html.indexOf('@JS_SCRIPT'))
+                    )
 
-                    await fs.promises.writeFile('./dist.html', html)
+                    let i = 0
+                    async function append(text: string) {
+                        await fs.promises.writeFile('./dist.html', text, { flag: 'a+' })
+                        // console.log('writing', text.slice(0, 100))
+                    }
+                    async function put(index: number) {
+                        const str = code.slice(i, index)
+                        await append(str)
+                        i = index
+                    }
+                    for (const key in substitute) {
+                        const to = substitute[key]
+                        const index = code.indexOf(key)
+                        await put(index)
+                        i += key.length
+                        await append(to)
+                    }
+                    await put(code.length)
 
-                    const mb = a.outputFiles![0].contents.length / 1_048_576
+                    await append(html.slice(html.indexOf('@JS_SCRIPT') + '@JS_SCRIPT'.length))
+
+                    const mb = html.length / 1_048_576
                     console.log('build done, size:', mb.toFixed(2), 'MB')
                 })
             },
