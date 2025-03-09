@@ -37,7 +37,7 @@ async function loadMods() {
     await registerCustomPatchSteps()
 
     return {
-        modIds: new Set(window.activeMods.map(mod => mod.name)),
+        modIds: new Set(modloader.mods.map(mod => mod.baseDirectory.substring('mods/'.length))),
     }
 }
 
@@ -308,7 +308,7 @@ async function filterOggs(tree: VfsTree, flatDataRef: FlatDataRef[]) {
     oggList.sort((a, b) => a.c.length - b.c.length)
 
     let oggTotalBytes = 0
-    const oggByteLimit = 1024 * 1024 * 0 // 0 MiB
+    const oggByteLimit = 1024 * 1024 * 200 // 0 MiB
     let i = 0
     let oggTotalBytesWhenLimitHit: number | undefined
     for (; i < oggList.length; i++) {
