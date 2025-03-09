@@ -1,176 +1,380 @@
+import type { DataRef, NodeDir, NodeFile, NodeRef, VfsNode, VfsTree } from './fs-proxy'
+import { isDir, isFile, isRef } from './fs-proxy'
+import { resolvePath } from './vfs'
 import * as fs from 'fs'
-import * as gzip from './compress.ts'
-import type * as vfs from './vfs.ts'
+import * as gzip from './compress'
+import 'core-js/actual/typed-array/to-base64'
+import stripJsonComments from '../../assets/mods/simplify/lib/strip-json-comments'
+import * as patchSteps from '../../assets/mods/simplify/lib/patch-steps-lib/src/patchsteps'
+import * as modloader from './mods'
+
+export function assert(v: any, msg?: string): asserts v {
+    if (!v) throw new Error(`Assertion error${msg ? `: ${msg}` : ''}`)
+}
 
 const ptree = `./vfsData/fttree.json`
 const pdataRef = `./vfsData/fttreeDataRef_@ID.json`
 const proot = `../..`
 const passets = `${proot}/assets`
-let tree: vfs.VfsTree = {}
 
-const dataRef: vfs.DataRef = [[]]
-const dataRefLens: number[] = [0]
-const oggList: {
-    data: string
-    node: vfs.NodeRef
-}[] = []
+type FlatDataRef = { c: string | ArrayBuffer; nodes: NodeRef[] }
 
-const fileExists = async (path: string) => !!(await fs.promises.stat(path).catch(_ => false))
+async function loadMods() {
+    global.window = global as any
+    await modloader.init()
 
-;(async () => {
-    const emptyOgg = Buffer.from(await gzip.compress(await fs.promises.readFile('./empty.ogg'))).toString('base64')
-    dataRef[0].push(emptyOgg)
-    dataRefLens[0] += emptyOgg.length
+    async function registerCustomPatchSteps() {
+        async function alybox() {
+            global.window.ccmod = {
+                patchStepsLib: patchSteps,
+            } as any
+            global.ccmod = window.ccmod
 
-    if (false && (await fileExists(ptree))) {
-        // tree = JSON.parse(await fs.promises.readFile(ptreeCache, 'utf8'))
-    } else {
-        function filterFile(name: string) {
-            if (name.endsWith('.ts')) return false
-            if (name.endsWith('.js')) return false
-            if (name.endsWith('.html')) return false
-            if (name.endsWith('.css')) return false
-            if (name.endsWith('.php')) return false
-            if (name.endsWith('.kra')) return false
-            if (name.endsWith('~')) return false
-            if (name.endsWith('.yml')) return false
-            if (name.endsWith('.yaml')) return false
-            if (name.endsWith('.md')) return false
-            if (name.endsWith('.sh')) return false
-            if (name.endsWith('.ccmod')) return false
-            if (name == '.npmrc') return false
-            if (name == '.prettierrc.json') return false
-            if (name == '.gitignore') return false
-            if (name == 'LICENSE') return false
-            if (name == '.eslintignore') return false
-            if (name == '.eslintrc.js') return false
-            if (name.startsWith('fttree')) return false
-            if (name == 'tsconfig.json') return false
-
-            // if (name.endsWith('.ogg')) return false
-            // if (name.endsWith('.png')) return false
-            // if (name.endsWith('.json')) return false
-            return true
+            await import('../../assets/mods/cc-alybox/src/logic-steps.js')
         }
-        function filterDir(name: string) {
-            if (name == 'node_modules') return false
-            if (name == '.git') return false
-            if (name == 'GameData') return false
-            if (name.startsWith('greenworks')) return false
-            if (name == 'fonts') return false
-            return true
-        }
+        await alybox()
+    }
+    await registerCustomPatchSteps()
 
-        const fileSizeLimit = 1024 * 1024 * 50 // 50 MiB
-        function addToDataRef(data: string, node: vfs.NodeRef) {
-            const fi = dataRef.length - 1
-            node.fi = fi
-            node.i = dataRef[fi].length
+    return {
+        modIds: new Set(window.activeMods.map(mod => mod.name)),
+    }
+}
 
-            dataRef[fi].push(data)
-            dataRefLens[fi] += data.length
+async function buildTree(modIds: Set<string>) {
+    function filterFile(name: string) {
+        if (name.endsWith('.ts')) return false
+        if (name.endsWith('.js')) return false
+        if (name.endsWith('.html')) return false
+        if (name.endsWith('.css')) return false
+        if (name.endsWith('.php')) return false
+        if (name.endsWith('.kra')) return false
+        if (name.endsWith('~')) return false
+        if (name.endsWith('.yml')) return false
+        if (name.endsWith('.yaml')) return false
+        if (name.endsWith('.md')) return false
+        if (name.endsWith('.sh')) return false
+        if (name.endsWith('.ccmod')) return false
+        if (name == '.npmrc') return false
+        if (name == '.prettierrc.json') return false
+        if (name == '.gitignore') return false
+        if (name == 'LICENSE') return false
+        if (name == '.eslintignore') return false
+        if (name == '.eslintrc.js') return false
+        if (name.startsWith('fttree')) return false
+        if (name == 'tsconfig.json') return false
 
-            if (dataRefLens[fi] > fileSizeLimit) {
-                dataRef.push([])
-                dataRefLens.push(0)
-            }
-        }
+        // if (name.endsWith('.ogg')) return false
+        // if (name.endsWith('.png')) return false
+        // if (name.endsWith('.json')) return false
+        return true
+    }
+    function filterDir(name: string, path: string) {
+        if (name == 'node_modules') return false
+        if (name == '.git') return false
+        if (name == 'GameData') return false
+        if (name.startsWith('greenworks')) return false
+        if (name == 'fonts') return false
+        if (path.endsWith('mods') && !modIds.has(name)) return false
 
-        function handleModAsset(node: vfs.NodeRef, path: string) {
-            const toPath = path.substring(path.lastIndexOf('assets') + 'assets/'.length)
-            const sp = toPath.split('/')
-            let obj = tree
-            for (let i = 0; i < sp.length - 1; i++) {
-                let next = obj[sp[i]]
-                if (!next) {
-                    next = obj[sp[i]] = { t: 'd' } as vfs.NodeDir
-                } else if (next.t != 'd') throw new Error(`vfs: No such directory: ${path}`)
-                obj = next
-            }
-            const lastName = sp[sp.length - 1]
-            const node1 = obj[lastName]
-            if (node1) {
-                if (node1.t == 'd') throw new Error(`vfs: mkdir: cannot replace dir with mod asset`)
-                if (node1.t == 'f') {
-                    console.log('replacing game asset', toPath, 'with', path)
-                } else if (node1.t == 'r') {
-                    console.warn('mod asset conflict at', toPath, ', taking the last one:', path)
-                } else throw new Error('vfs: not implemented')
-            } else {
-                console.log('adding mod asset', toPath, 'from', path)
-            }
-            obj[lastName] = node
-        }
+        return true
+    }
 
-        async function walk(path: string, node: vfs.VfsTree, depth: number, underModAssets: boolean): Promise<boolean> {
-            if (depth >= 100) throw new Error(`Max depth reached! ${path}`)
-            const files = await fs.promises.readdir(path, { withFileTypes: true })
-            let fileCount = 0
-            for (const file of files) {
-                const npath = `${path}/${file.name}`
+    function isTextFile(name: string) {
+        return name.endsWith('.txt') || name.endsWith('.json') || name.endsWith('.json.patch')
+    }
+    const tree: VfsTree = {}
 
-                if (file.isFile() && filterFile(file.name)) {
-                    console.log(npath)
-                    let data: string | Buffer
-                    if (npath.endsWith('.txt') || npath.endsWith('.json')) {
-                        data = await fs.promises.readFile(npath, 'utf8')
-                    } else {
-                        data = await fs.promises.readFile(npath)
-                    }
+    async function walk(path: string, node: VfsTree, depth: number): Promise<boolean> {
+        assert(depth <= 100, `Max depth reached! ${path}`)
+        const files = await fs.promises.readdir(path, { withFileTypes: true })
+        let fileCount = 0
+        for (const file of files) {
+            const npath = `${path}/${file.name}`
 
-                    const compressedArr = await gzip.compress(data)
-                    const compressed = Buffer.from(compressedArr).toString('base64')
+            if (file.isFile() && filterFile(file.name)) {
+                const encoding = isTextFile(file.name) ? 'utf8' : undefined
+                const data: ArrayBuffer | string = await fs.promises.readFile(npath, encoding)
 
-                    if (underModAssets) {
-                        const entry: vfs.NodeRef = { t: 'r', fi: 0, i: 0 }
-                        node[file.name] = entry
-                        addToDataRef(compressed, entry)
-                        handleModAsset(entry, npath)
-                    } else {
-                        if (npath.endsWith('.ogg')) {
-                            node[file.name] = { t: 'r', fi: 0, i: 0 }
-                            oggList.push({
-                                data: compressed,
-                                node: node[file.name] as vfs.NodeRef,
-                            })
-                        } else {
-                            node[file.name] = {
-                                t: 'f',
-                                c: compressed,
-                            }
-                        }
-                    }
+                node[file.name] = {
+                    t: 'f',
+                    c: data as any,
+                }
 
+                fileCount++
+            } else if ((file.isDirectory() && filterDir(file.name, path)) || file.isSymbolicLink()) {
+                const nnode: VfsNode = node[file.name] ?? ({ t: 'd' } as any)
+                if (await walk(npath, nnode as VfsTree, depth + 1)) {
                     fileCount++
-                } else if (file.isDirectory() && filterDir(file.name) || file.isSymbolicLink()) {
-                    const nnode: vfs.VfsNode = { t: 'd' } as any
-                    if (await walk(npath, nnode as vfs.VfsTree, depth + 1, underModAssets || file.name == 'assets')) {
-                        fileCount++
-                        node[file.name] = nnode
-                    }
+                    node[file.name] = nnode
                 }
             }
-            return fileCount > 0
         }
-        await walk(passets, tree, 0, false)
-
-        // sort from smallest to biggest
-        oggList.sort((a, b) => a.data.length - b.data.length)
-        let oggTotalBytes = 0
-        const oggByteLimit = 1024 * 1024 * 0 // 100 MiB
-        for (const { data, node } of oggList) {
-            addToDataRef(data, node)
-            oggTotalBytes += data.length
-            if (oggTotalBytes >= oggByteLimit) break
-        }
-
-        await Promise.all([
-            fs.promises.writeFile(ptree, JSON.stringify(tree)),
-            dataRef.map((arr, i) => fs.promises.writeFile(pdataRef.replace(/@ID/, i.toString()), JSON.stringify(arr))),
-        ])
-
-        // let res = await gzip.compress(str)
-        // await fs.promises.writeFile(ptreeCache + '.bin', a)
+        return fileCount > 0
     }
-    console.log('tree gathered')
-})()
+    await walk(passets, tree, 0)
+
+    return { tree }
+}
+
+async function forEachNode(
+    tree: VfsTree,
+    func: (node: VfsNode, fileName: string, path: string) => Promise<void> | void,
+    path: string = '',
+    promises: Promise<void>[] = []
+) {
+    for (const key in tree) {
+        if (key == 't') continue
+        const node = tree[key]
+        const npath = path + '/' + key
+
+        const promise = func(node, key, npath)
+        if (promise) promises.push(promise)
+
+        if (isDir(node)) {
+            forEachNode(node, func, npath, promises)
+        }
+    }
+    if (path == '') await Promise.all(promises)
+}
+
+function changeFileNodeToRef(node: NodeFile, flatDataRef: FlatDataRef[], overrideRef?: number): NodeRef {
+    const data = node.c
+    // @ts-expect-error
+    delete node.c
+
+    const node1 = node as VfsNode
+    node1.t = 'r'
+    assert(isRef(node1))
+    node1.fi = 0
+
+    if (overrideRef !== undefined) {
+        node1.i = overrideRef
+    } else {
+        node1.i = flatDataRef.length
+        flatDataRef.push({ c: data, nodes: [node1] })
+    }
+    return node1
+}
+
+async function handleModAssets(tree: VfsTree, flatDataRef: FlatDataRef[]) {
+    function aliasAsset(node: NodeRef, path: string, toPath: string, print: boolean) {
+        const sp = toPath.split('/')
+        const lastName = sp[sp.length - 1]
+
+        let obj = tree
+        for (let i = 0; i < sp.length - 1; i++) {
+            let next = obj[sp[i]]
+            if (!next) {
+                next = obj[sp[i]] = { t: 'd' } as NodeDir
+            } else if (next.t != 'd') throw new Error(`vfs: No such directory: ${path}`)
+            obj = next
+        }
+        const node1 = obj[lastName]
+        if (node1) {
+            if (isDir(node1)) throw new Error(`vfs: mkdir: cannot replace dir with mod asset`)
+            if (isFile(node1)) {
+                if (print) console.log('replacing game asset', toPath, 'with', path)
+            } else if (isRef(node1)) {
+                if (print) console.warn('mod asset conflict at', toPath, ', taking the last one:', path)
+            } else assert(false, 'vfs: not implemented')
+        } else {
+            if (print) console.log('adding mod asset', toPath, 'from', path)
+        }
+        obj[lastName] = node
+    }
+
+    const promises: Promise<void>[] = []
+    await forEachNode(tree, async (node, fileName, path) => {
+        if (node.t != 'f') return
+
+        const isPatchExt = fileName.endsWith('.json.patch') || fileName.endsWith('.patch.json')
+        const isJson = fileName.endsWith('.json') || isPatchExt
+
+        const underModAssets = path.substring(passets.length).includes('assets')
+        const underExtensions = path.includes('extension')
+        const underPatches = path.includes('patches')
+
+        if (isJson && underModAssets) {
+            assert(typeof node.c == 'string')
+            node.c = stripJsonComments(node.c, { trailingCommas: true })
+        }
+
+        // console.log(path)
+
+        if ((underPatches && fileName.endsWith('.json')) || (underModAssets && isPatchExt)) {
+            let toPath: string = path
+            let modName: string
+            if (underPatches) {
+                modName = toPath.substring('mods/'.length + 1, toPath.indexOf('patches') - 1)
+                toPath = toPath.substring(toPath.indexOf('patches') + 'patches/'.length)
+            } else {
+                modName = toPath.substring('mods/'.length + 1, toPath.indexOf('assets') - 1)
+                toPath = toPath.substring(toPath.indexOf('assets') + 'assets/'.length)
+            }
+
+            if (fileName.endsWith('.json.patch')) toPath = toPath.slice(0, -'.json.patch'.length)
+            else if (fileName.endsWith('.patch.json')) toPath = toPath.slice(0, -'.patch.json'.length)
+            else if (fileName.endsWith('.json')) toPath = toPath.slice(0, -'.json'.length)
+            else assert(false)
+            toPath += '.json'
+
+            function getDataHoldingObj(node: VfsNode) {
+                if (isFile(node)) return node
+                else if (isRef(node)) return flatDataRef[node.i]
+                assert(false)
+            }
+            const patchDataNode = getDataHoldingObj(node)
+            let sourceNode: VfsNode
+            try {
+                sourceNode = resolvePath(toPath, tree)
+            } catch (e) {
+                /* source file doesn't exist, this can happen when a mod 
+                  tries to patch another mod asset that isn't loaded */
+                return
+            }
+            const sourceDataNode = getDataHoldingObj(sourceNode)
+
+            assert(typeof patchDataNode.c == 'string')
+            assert(typeof sourceDataNode.c == 'string')
+            const patchJson = JSON.parse(patchDataNode.c)
+            const sourceJson = JSON.parse(sourceDataNode.c)
+
+            // console.log('patching ', path, 'into', toPath)
+            await patchSteps.patch(
+                sourceJson,
+                patchJson,
+                async (fromGame: boolean, url: string) => {
+                    if (!fromGame) {
+                        const origUrl = url
+                        url = 'mods/' + modName
+                        if (!url.startsWith('/')) url += '/'
+                        url += origUrl
+                    }
+                    const node = getDataHoldingObj(resolvePath(url, tree))
+                    assert(typeof node.c == 'string')
+                    const data = JSON.parse(node.c)
+                    // console.log('getting data', url, !!data)
+                    return data
+                },
+                undefined
+            )
+            const patchedData = JSON.stringify(sourceJson)
+            sourceDataNode.c = patchedData
+        } else if (underModAssets || underExtensions) {
+            const nodeRef = changeFileNodeToRef(node, flatDataRef)
+            let toPath: string
+            if (underModAssets) {
+                toPath = path.substring(path.lastIndexOf('assets') + 'assets/'.length)
+            } else if (underExtensions) {
+                toPath = path.substring(path.indexOf('extension') + 'extension/'.length)
+                toPath = toPath.substring(toPath.indexOf('/') + 1)
+            } else assert(false)
+            aliasAsset(nodeRef, path, toPath, false && underModAssets)
+        }
+    })
+
+    await Promise.all(promises)
+}
+
+async function compressNodes(tree: VfsTree, flatDataRef: FlatDataRef[]) {
+    async function compress(data: ArrayBuffer | string): Promise<string> {
+        const compressedArr = await gzip.compress(data)
+        const compressed = Buffer.from(compressedArr).toString('base64')
+        return compressed
+    }
+
+    const toCompress: { c: string | ArrayBuffer }[] = [...flatDataRef]
+    await forEachNode(tree, node => {
+        if (node.t != 'f') return
+        toCompress.push(node)
+    })
+    await Promise.all(
+        toCompress.map(async obj => {
+            const compressed = await compress(obj.c)
+            obj.c = compressed
+        })
+    )
+}
+
+async function filterOggs(tree: VfsTree, flatDataRef: FlatDataRef[]) {
+    const oggList: NodeFile[] = []
+    await forEachNode(tree, (node, fileName) => {
+        if (isFile(node) && fileName.endsWith('.ogg')) {
+            oggList.push(node)
+        }
+    })
+    // sort from smallest to biggest
+    oggList.sort((a, b) => a.c.length - b.c.length)
+
+    let oggTotalBytes = 0
+    const oggByteLimit = 1024 * 1024 * 0 // 0 MiB
+    let i = 0
+    let oggTotalBytesWhenLimitHit: number | undefined
+    for (; i < oggList.length; i++) {
+        oggTotalBytes += oggList[i].c.length
+        if (oggTotalBytes >= oggByteLimit) oggTotalBytesWhenLimitHit ??= oggTotalBytes
+        changeFileNodeToRef(oggList[i], flatDataRef, oggTotalBytes < oggByteLimit ? undefined : 0)
+    }
+    if (oggTotalBytesWhenLimitHit === undefined) oggTotalBytesWhenLimitHit = oggTotalBytes
+    console.log(
+        '   ogg:',
+        (oggTotalBytesWhenLimitHit / 1024 / 1024).toFixed(2),
+        'MB written,',
+        ((oggTotalBytes - oggTotalBytesWhenLimitHit) / 1024 / 1024).toFixed(2),
+        'MB left'
+    )
+}
+
+async function partitionDataRef(flatDataRef: FlatDataRef[]) {
+    const dataRef: DataRef = [[]]
+    const fileSizeLimit = 1024 * 1024 * 50 // 50 MiB
+    let size = 0
+    for (const obj of flatDataRef) {
+        assert(typeof obj.c == 'string')
+        const fi = dataRef.length - 1
+        for (const node of obj.nodes) {
+            node.fi = fi
+            node.i = dataRef[fi].length
+        }
+        dataRef[fi].push(obj.c)
+        size += obj.c.length
+        if (size > fileSizeLimit) {
+            dataRef.push([])
+            size = 0
+        }
+    }
+
+    return { dataRef }
+}
+
+async function write(tree: VfsTree, dataRef: DataRef) {
+    await Promise.all([
+        fs.promises.writeFile(ptree, JSON.stringify(tree)),
+        dataRef.map((arr, i) => fs.promises.writeFile(pdataRef.replace(/@ID/, i.toString()), JSON.stringify(arr))),
+    ])
+}
+
+async function run() {
+    console.log('loading mods...')
+    const { modIds } = await loadMods()
+
+    console.log('building tree...')
+    const { tree } = await buildTree(modIds)
+
+    const flatDataRef: FlatDataRef[] = []
+    flatDataRef.push({ c: await fs.promises.readFile('./empty.ogg'), nodes: [] })
+
+    console.log('handling mod assets...')
+    await handleModAssets(tree, flatDataRef)
+    console.log('compressing files...')
+    await compressNodes(tree, flatDataRef)
+    console.log("filtering ogg's...")
+    await filterOggs(tree, flatDataRef)
+    console.log('partitioning dataRef...')
+    const { dataRef } = await partitionDataRef(flatDataRef)
+    console.log('writing...')
+    await write(tree, dataRef)
+    console.log('done')
+}
+run()

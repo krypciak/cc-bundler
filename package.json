@@ -6,7 +6,7 @@
     "scripts": {
         "build": "node build.ts build",
         "watch": "node build.ts watch",
-        "genVfs": "cd src && rm vfsData/* && node generate-fs-tree.ts"
+        "genVfs": "cd src && rm -f vfsData/* && esbuild --target=es2018 --format=esm --platform=node --bundle --sourcemap=inline --outfile=tmp.js generate-fs-tree.ts && node tmp.js && rm tmp.js"
     },
     "devDependencies": {
         "@types/crypto-js": "^4.2.2",

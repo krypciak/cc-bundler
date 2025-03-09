@@ -3,15 +3,24 @@ import * as fs from 'fs'
 
 const vfsData = await fs.promises.readFile('src/vfsData/fttree.json', 'utf8')
 const dataRef: string[] = []
-const dataRefPaths = (await fs.promises.readdir('src/vfsData')).filter(name =>
-    name.startsWith('fttreeDataRef')
-)
+const dataRefPaths = (await fs.promises.readdir('src/vfsData')).filter(name => name.startsWith('fttreeDataRef'))
 await Promise.all(
     dataRefPaths.map(async (fileName, i) => {
         const path = `src/vfsData/${fileName}`
         dataRef[i] = await fs.promises.readFile(path, 'utf8')
     })
 )
+
+let html = await fs.promises.readFile('./src/index.html', 'utf8')
+const htmlImgs = html.split('\n').flatMap(line => [...line.matchAll(/url\((.*\.png)\)/g)])
+for (const entry of htmlImgs) {
+    const url = entry[1]
+    let path: string = '../assets/game/page/' + url
+
+    const data: string = await fs.promises.readFile(path, 'base64')
+    html = html.replace(new RegExp(url), "'data:image/png;base64," + data + "'")
+}
+html = html.replace(/@FAV_ICON/, 'data:image/png;base64,' + (await fs.promises.readFile('../favicon.png', 'base64')))
 
 const substitute = {
     VFS_DATA: vfsData,
@@ -54,14 +63,10 @@ const ctx = await esbuild.context({
                     console.log()
                     console.log('building...')
                 })
-                build.onEnd(async a => {
-                    const html = await fs.promises.readFile('./src/index.html', 'utf8')
-                    const code = a.outputFiles![0].text
+                build.onEnd(async res => {
+                    const code = res.outputFiles![0].text
 
-                    await fs.promises.writeFile(
-                        './dist.html',
-                        html.slice(0, html.indexOf('@JS_SCRIPT'))
-                    )
+                    await fs.promises.writeFile('./dist.html', html.slice(0, html.indexOf('@JS_SCRIPT')))
 
                     let i = 0
                     async function append(text: string) {
@@ -99,6 +104,7 @@ async function watch() {
 }
 async function build() {
     await ctx.rebuild()
+    process.exit()
 }
 
 if (process.argv[2] == 'build') {

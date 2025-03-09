@@ -21,14 +21,15 @@ window.IG_GAME_SCALE = 4
 // window.IG_GAME_DEBUG = false
 // window.IG_GAME_BETA = false
 
-import './vfs.js'
-import { initVfs } from './vfs.js'
 import { resizeFix } from './screen-fix'
 import './localstoarge-default'
 import * as modloader from './mods'
 import { requireFix } from './require-fix.js'
+import FsProxy from './chosen-fs'
 
 async function run() {
+    await FsProxy.preGameInit()
+
     await import('../../assets/game/page/game-base.js')
     await import('../../assets/impact/page/js/seedrandom.js')
     // @ts-expect-error
@@ -36,6 +37,7 @@ async function run() {
     requireFix()
 
     await modloader.init()
+    await modloader.createPlugins()
     await modloader.runPreload()
 
     {
@@ -50,7 +52,7 @@ async function run() {
     }
     resizeFix()
 
-    await initVfs()
+    await FsProxy.init()
 
     let waitForGameResolve: () => void
     let waitForGamePromise = new Promise<void>(res => (waitForGameResolve = res))

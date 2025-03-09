@@ -1,4 +1,5 @@
-import { fs, path } from './vfs'
+import FsProxy from './chosen-fs'
+import { path } from './fs-proxy'
 
 export const http = {}
 export const https = {}
@@ -6,7 +7,7 @@ export const https = {}
 export function requireFix() {
     // @ts-expect-error
     window.require = (src: string) => {
-        if (src == 'fs') return fs
+        if (src == 'fs') return FsProxy.fs
         if (src == 'path') return path
         if (src == 'http') return http
         if (src == 'https') return https

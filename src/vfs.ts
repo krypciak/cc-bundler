@@ -1,34 +1,17 @@
-import 'core-js/actual/typed-array/to-base64'
-import * as gzip from './compress'
+import type { DataRef, IFsProxy, NodeDir, VfsNode, VfsTree } from './fs-proxy'
+import { isDir, isFile, isRef } from './fs-proxy'
 import type { Dirent } from 'fs'
+import * as gzip from './compress'
+import 'core-js/actual/typed-array/to-base64'
 
-// import * as _vfs from './fttree.json'
-// const _vfsRaw = VFS_DATA
-// const _vfs = JSON.parse(_vfsRaw)
-// @ts-expect-error
-const vfs: VfsTree = VFS_DATA
-// @ts-expect-error
-// prettier-ignore
-const dataRef: DataRef = [REF_DATA_0, REF_DATA_1, REF_DATA_2, REF_DATA_3, REF_DATA_4, REF_DATA_5, REF_DATA_6, REF_DATA_7, REF_DATA_8, REF_DATA_9, REF_DATA_10, REF_DATA_11, REF_DATA_12, REF_DATA_13, REF_DATA_14, ]
-
-export interface VfsTree {
-    [name: string]: VfsNode
-}
-export type DataRef = string[][]
-
-export type NodeDir = { t: 'd' } & VfsTree
-export type NodeFile = { t: 'f'; c: string }
-export type NodeRef = { t: 'r'; fi: number; i: number }
-export type VfsNode = NodeDir | NodeFile | NodeRef
-
-export function isFile(node: VfsNode): node is NodeFile {
-    return node.t == 'f'
-}
-export function isDir(node: VfsNode): node is NodeDir {
-    return node.t == 'd'
-}
-export function isRef(node: VfsNode): node is NodeRef {
-    return node.t == 'r'
+let vfs!: VfsTree
+let dataRef!: DataRef
+function initVfsData() {
+    // @ts-expect-error
+    vfs = VFS_DATA
+    // @ts-expect-error
+    // prettier-ignore
+    dataRef = [REF_DATA_0, REF_DATA_1, REF_DATA_2, REF_DATA_3, REF_DATA_4, REF_DATA_5, REF_DATA_6, REF_DATA_7, REF_DATA_8, REF_DATA_9, REF_DATA_10, REF_DATA_11, REF_DATA_12, REF_DATA_13, REF_DATA_14, ]
 }
 
 function preparePath(path: string): string {
@@ -36,12 +19,19 @@ function preparePath(path: string): string {
     if (path.startsWith('./')) path = path.substring('./'.length)
     if (path.startsWith('/')) path = path.substring('/'.length)
     if (path.startsWith('assets/')) path = path.substring('assets/'.length)
-    return path
+    let last = ''
+    let newPath = []
+    for (const c of path) {
+        if (last == '/' && c == '/') continue
+        last = c
+        newPath.push(c)
+    }
+    return newPath.join('')
 }
-function resolvePath(path: string): VfsNode {
+export function resolvePath(path: string, root = vfs): VfsNode {
     path = preparePath(path)
     const sp = path.split('/')
-    let obj = vfs
+    let obj = root
     for (let i = 0; i < sp.length - 1; i++) {
         const next = obj[sp[i]]
         if (!next || !isDir(next)) throw new Error(`vfs: No such directory: ${path}`)
@@ -79,10 +69,12 @@ async function readFile(path: string, encoding?: string): Promise<string | Uint8
 }
 
 class VfsDirent {
-    constructor(
-        private node: VfsNode,
-        public name: string
-    ) {}
+    node: VfsNode
+    name: string
+    constructor(node1: VfsNode, name1: string) {
+        this.node = node1
+        this.name = name1
+    }
 
     isDirectory() {
         return this.node.t == 'd'
@@ -138,21 +130,6 @@ async function access(path: string, _mode?: number): Promise<void> {
     // just throw if the path doesnt exist
     resolvePath(path)
 }
-
-export const fs = {
-    promises: {
-        // @ts-expect-error
-        readFile,
-        // @ts-expect-error
-        readdir,
-        // @ts-expect-error
-        mkdir,
-        // @ts-expect-error
-        stat,
-        // @ts-expect-error
-        access,
-    },
-} satisfies Partial<typeof import('fs')>
 
 function initAjax() {
     $.ajax = (settings?: JQuery.AjaxSettings | string): JQuery.jqXHR => {
@@ -260,23 +237,37 @@ function initXml() {
     window.XMLHttpRequest = MyXmlHttpRequest
 }
 
-export async function initVfs() {
-    initAjax()
-    initIgImage()
-    initAudio()
-    initXml()
-}
-
-export const path = {
-    join(a: string, b: string) {
-        return a + '/' + b
+const FsProxy = {
+    preGameInit: async () => {
+        initVfsData()
+        initAjax()
+        initAudio()
+        initXml()
     },
-}
+    init: async () => {
+        initIgImage()
 
-// @ts-expect-error
-window.vfs = {
-    vfs,
-    dataRef,
-    fs,
-    path,
-}
+        // @ts-expect-error
+        window.vfs = {
+            vfs,
+            dataRef,
+        }
+    },
+    fs: {
+        promises: {
+            // @ts-expect-error
+            readFile,
+            // @ts-expect-error
+            readdir,
+            // @ts-expect-error
+            mkdir,
+            // @ts-expect-error
+            stat,
+            // @ts-expect-error
+            access,
+        },
+    },
+} satisfies IFsProxy
+const fs = FsProxy.fs
+
+export default FsProxy
