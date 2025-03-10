@@ -222,12 +222,16 @@ function initXml() {
         }
         send(_body?: Document | XMLHttpRequestBodyInit | null): void {
             if (!this.url) throw new Error(`vfs: XmlHttpRequest: send called before open`)
-            fs.promises.readFile(this.url).then(data => {
+            const promise = fs.promises.readFile(this.url)
+            promise.then(data => {
                 if (this.responseType == 'arraybuffer') {
                     this.response = data.buffer
                     this.readyState = 200
                     if (this.onload) this.onload()
                 } else throw new Error(`vfs: XmlHttpRequest: unsupported responseType: ${this.responseType}`)
+            })
+            promise.catch(() => {
+                if (this.onerror) this.onerror()
             })
         }
         setRequestHeader(_name: string, _value: string): void {}
