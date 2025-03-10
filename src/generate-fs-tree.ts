@@ -12,8 +12,9 @@ export function assert(v: any, msg?: string): asserts v {
     if (!v) throw new Error(`Assertion error${msg ? `: ${msg}` : ''}`)
 }
 
-const ptree = `./vfsData/fttree.json`
-const pdataRef = `./vfsData/fttreeDataRef_@ID.json`
+const pvfsDir = './vfsData'
+const ptree = `${pvfsDir}/fttree.json`
+const pdataRef = `${pvfsDir}/fttreeDataRef_@ID.json`
 const proot = `../..`
 const passets = `${proot}/assets`
 
@@ -349,6 +350,7 @@ async function partitionDataRef(flatDataRef: FlatDataRef[]) {
 }
 
 async function write(tree: VfsTree, dataRef: DataRef) {
+    await fs.promises.mkdir(pvfsDir, { recursive: true })
     await Promise.all([
         fs.promises.writeFile(ptree, JSON.stringify(tree)),
         dataRef.map((arr, i) => fs.promises.writeFile(pdataRef.replace(/@ID/, i.toString()), JSON.stringify(arr))),

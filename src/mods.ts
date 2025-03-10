@@ -241,7 +241,9 @@ export async function createPlugins() {
             const clazz = (await config.getPlugin()).default
             const plugin = new clazz(mod)
             mod.pluginInstance = plugin as any
+            // @ts-ignore in the case that no mods that have pluginClassPatch
             if (config.pluginClassPatch) {
+                // @ts-ignore
                 config.pluginClassPatch(plugin)
             }
         }
