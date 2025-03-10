@@ -365,7 +365,8 @@ async function run() {
     const { tree } = await buildTree(modIds)
 
     const flatDataRef: FlatDataRef[] = []
-    flatDataRef.push({ c: await fs.promises.readFile('./empty.ogg'), nodes: [] })
+    tree['empty.ogg'] = { t: 'r', fi: 0, i: 0 }
+    flatDataRef.push({ c: await fs.promises.readFile('./empty.ogg'), nodes: [tree['empty.ogg']] })
 
     console.log('handling mod assets...')
     await handleModAssets(tree, flatDataRef)

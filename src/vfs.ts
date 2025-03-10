@@ -42,6 +42,15 @@ export function resolvePath(path: string, root = vfs): VfsNode {
     return ret
 }
 
+function doesFileExist(path: string): boolean {
+    try {
+        resolvePath(path)
+        return true
+    } catch (e) {
+        return false
+    }
+}
+
 async function base64ToBufferAsync(base64: string) {
     var dataUrl = 'data:application/octet-binary;base64,' + base64
 
@@ -146,19 +155,17 @@ function initAjax() {
                 data = await readdir('extension')
                 data = data.filter(dir => dir != 'readme.txt')
             } else {
-                try {
-                    const dataStr: string = await fs.promises.readFile(settings.url, 'utf-8')
-
-                    if (settings.dataType == 'json') {
-                        data = JSON.parse(dataStr)
-                    } else throw new Error(`vfs: $.ajax: unsupported settings.dataType: ${settings.dataType}`)
-                } catch (e) {
-                    console.error(e)
+                if (!doesFileExist(settings.url)) {
                     if (settings.error) {
                         settings.error.call(settings.context, undefined as any, undefined as any, undefined as any)
                     }
                     return
                 }
+                const dataStr: string = await fs.promises.readFile(settings.url, 'utf-8')
+
+                if (settings.dataType == 'json') {
+                    data = JSON.parse(dataStr)
+                } else throw new Error(`vfs: $.ajax: unsupported settings.dataType: ${settings.dataType}`)
             }
             settings.success.call(settings.context, data, undefined as any, undefined as any)
         })()
@@ -173,6 +180,10 @@ function initIgImage() {
             this.data.onload = this.onload.bind(this)
             this.data.onerror = this.onerror.bind(this)
 
+            if (!doesFileExist(this.path)) {
+                if (this.onerror) this.onerror()
+                return
+            }
             fs.promises.readFile(this.path).then(data => {
                 // @ts-expect-error
                 const base64 = data.toBase64()
@@ -188,6 +199,7 @@ function initAudio() {
     window.Audio = function (src?: string) {
         const obj = new orig()
         if (src) {
+            if (!doesFileExist(src)) src = 'empty.ogg'
             fs.promises.readFile(src).then(data => {
                 // @ts-expect-error
                 const base64 = data.toBase64()
@@ -222,16 +234,16 @@ function initXml() {
         }
         send(_body?: Document | XMLHttpRequestBodyInit | null): void {
             if (!this.url) throw new Error(`vfs: XmlHttpRequest: send called before open`)
-            const promise = fs.promises.readFile(this.url)
-            promise.then(data => {
+            if (!doesFileExist(this.url)) {
+                if (this.onerror) this.onerror()
+                return
+            }
+            fs.promises.readFile(this.url).then(data => {
                 if (this.responseType == 'arraybuffer') {
                     this.response = data.buffer
                     this.readyState = 200
                     if (this.onload) this.onload()
                 } else throw new Error(`vfs: XmlHttpRequest: unsupported responseType: ${this.responseType}`)
-            })
-            promise.catch(() => {
-                if (this.onerror) this.onerror()
             })
         }
         setRequestHeader(_name: string, _value: string): void {}
