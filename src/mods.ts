@@ -1,6 +1,5 @@
 import { Mod, type Modloader } from '../../ccloader/js/mod'
 import type { PkgCCMod } from 'ccmoddb/build/src/types'
-import FsProxy from './chosen-fs'
 
 interface ModConfigInput {
     baseDirectory: string
@@ -24,6 +23,7 @@ declare global {
     var cc: Window
     var simplifyResources: any
     var simplify: any
+    var ccbundler: boolean
 }
 
 async function ccmod() {
@@ -31,7 +31,7 @@ async function ccmod() {
         let src: string
         if (path.startsWith('data')) src = path
         else {
-            const data = await FsProxy.fs.promises.readFile(path)
+            const data = await fsProxy.fs.promises.readFile(path)
             // @ts-expect-error
             const base64 = data.toBase64()
             src = 'data:image/png;base64,' + base64
@@ -96,79 +96,94 @@ async function ccmod() {
             ccmod: (await import('../../assets/mods/ccmodmanager/ccmod.json')) as PkgCCMod,
             getPlugin: () => import('../../assets/mods/ccmodmanager/plugin.js'),
         },
-        /* nax-module-cache */ {
-            baseDirectory: 'mods/nax-module-cache',
-            ccmod: (await import('../../assets/mods/nax-module-cache/ccmod.json')) as PkgCCMod,
-            getPlugin: () => import('../../assets/mods/nax-module-cache/nax-module-cache/plugin.js'),
+        // /* nax-module-cache */ {
+        //     baseDirectory: 'mods/nax-module-cache',
+        //     ccmod: (await import('../../assets/mods/nax-module-cache/ccmod.json')) as PkgCCMod,
+        //     getPlugin: () => import('../../assets/mods/nax-module-cache/nax-module-cache/plugin.js'),
+        // },
+        // /* nax-ccuilib */ {
+        //     baseDirectory: 'mods/nax-ccuilib',
+        //     ccmod: (await import('../../assets/mods/nax-ccuilib/ccmod.json')) as PkgCCMod,
+        //     getPlugin: () => import('../../assets/mods/nax-ccuilib/nax-ccuilib/plugin.js'),
+        //     pluginClassPatch: (plugin: InstanceType<(typeof import('../../assets/mods/nax-ccuilib/nax-ccuilib/plugin.js'))['default']>) => {
+        //         const orig = plugin.prestart
+        //         plugin.prestart = () => {
+        //             const backup = ig._loadScript
+        //             ig._loadScript = () => {}
+        //             orig.call(plugin)
+        //             ig._loadScript = backup
+        //         }
+        //     },
+        //     prestart: () => {
+        //         require('../../assets/mods/nax-ccuilib/nax-ccuilib/ui/quick-menu/default-widgets.js')
+        //         require('../../assets/mods/nax-ccuilib/nax-ccuilib/ui/quick-menu/button-traversal-patch.js')
+        //         require('../../assets/mods/nax-ccuilib/nax-ccuilib/ui/quick-menu/quick-menu-extension.js')
+        //
+        //         require('../../assets/mods/nax-ccuilib/nax-ccuilib/ui/input-field-cursor.js')
+        //         require('../../assets/mods/nax-ccuilib/nax-ccuilib/ui/input-field.js')
+        //         require('../../assets/mods/nax-ccuilib/nax-ccuilib/ui/test-menu.js')
+        //         require('../../assets/mods/nax-ccuilib/nax-ccuilib/ui.js')
+        //     },
+        // },
+        // /* char-select */ {
+        //     baseDirectory: 'mods/char-select',
+        //     ccmod: (await import('../../assets/mods/char-select/ccmod.json')) as PkgCCMod,
+        //     preload: () => require('../../assets/mods/char-select/preload.js'),
+        //     prestart: () => require('../../assets/mods/char-select/prestart.js'),
+        // },
+        // /* cc-alyxbox */ {
+        //     baseDirectory: 'mods/cc-alybox',
+        //     ccmod: (await import('../../assets/mods/cc-alybox/ccmod.json')) as PkgCCMod,
+        //     prestart: () => {
+        //         /* no need to import the patch steps */
+        //         require('../../assets/mods/cc-alybox/src/_core.js')
+        //         require('../../assets/mods/cc-alybox/src/enemy-var-path.js')
+        //         require('../../assets/mods/cc-alybox/src/player-name.js')
+        //     },
+        // },
+        // /* extension-assert-preloader */ {
+        //     baseDirectory: 'mods/extension-asset-preloader',
+        //     ccmod: (await import('../../assets/mods/extension-asset-preloader/ccmod.json')) as PkgCCMod,
+        //     /* not required with vfs */
+        //     // postload: () => require('../../assets/mods/extension-asset-preloader/postload.js'),
+        // },
+        // /* menu-ui-replacer */ {
+        //     baseDirectory: 'mods/menu-ui-replacer',
+        //     ccmod: (await import('../../assets/mods/menu-ui-replacer/ccmod.json')) as PkgCCMod,
+        //     getPlugin: () => import('../../assets/mods/menu-ui-replacer/plugin.js'),
+        //     postload: () => require('../../assets/mods/menu-ui-replacer/postload.js'),
+        //     pluginClassPatch: (plugin: InstanceType<(typeof import('../../assets/mods/menu-ui-replacer/plugin.js'))['default']>) => {
+        //         plugin.getBaseMenuImg = () => fixImageLoad('media/gui/menu.png')
+        //     },
+        // },
+        // /* extendable-severed-heads */ {
+        //     baseDirectory: 'mods/extendable-severed-heads',
+        //     ccmod: (await import('../../assets/mods/extendable-severed-heads/ccmod.json')) as PkgCCMod,
+        //     getPlugin: () => import('../../assets/mods/extendable-severed-heads/plugin.js'),
+        //     pluginClassPatch: (plugin: InstanceType<(typeof import('../../assets/mods/extendable-severed-heads/plugin.js'))['default']>) => {
+        //         plugin.loadImage = fixImageLoad
+        //     },
+        // },
+        // /* xenon-playable-classes */ {
+        //     baseDirectory: 'mods/xenons-playable-classes',
+        //     ccmod: (await import('../../assets/mods/xenons-playable-classes/ccmod.json')) as PkgCCMod,
+        //     prestart: () => require('../../assets/mods/xenons-playable-classes/prestart.js'),
+        //     poststart: () => require('../../assets/mods/xenons-playable-classes/poststart.js'),
+        // },
+        /* cc-instanceinator */ {
+            baseDirectory: 'mods/cc-instanceinator',
+            ccmod: (await import('../../assets/mods/cc-instanceinator/ccmod.json')) as PkgCCMod,
+            getPlugin: () => import('../../assets/mods/cc-instanceinator/plugin.js'),
         },
-        /* nax-ccuilib */ {
-            baseDirectory: 'mods/nax-ccuilib',
-            ccmod: (await import('../../assets/mods/nax-ccuilib/ccmod.json')) as PkgCCMod,
-            getPlugin: () => import('../../assets/mods/nax-ccuilib/nax-ccuilib/plugin.js'),
-            pluginClassPatch: (plugin: InstanceType<(typeof import('../../assets/mods/nax-ccuilib/nax-ccuilib/plugin.js'))['default']>) => {
-                const orig = plugin.prestart
-                plugin.prestart = () => {
-                    const backup = ig._loadScript
-                    ig._loadScript = () => {}
-                    orig.call(plugin)
-                    ig._loadScript = backup
-                }
-            },
-            prestart: () => {
-                require('../../assets/mods/nax-ccuilib/nax-ccuilib/ui/quick-menu/default-widgets.js')
-                require('../../assets/mods/nax-ccuilib/nax-ccuilib/ui/quick-menu/button-traversal-patch.js')
-                require('../../assets/mods/nax-ccuilib/nax-ccuilib/ui/quick-menu/quick-menu-extension.js')
-
-                require('../../assets/mods/nax-ccuilib/nax-ccuilib/ui/input-field-cursor.js')
-                require('../../assets/mods/nax-ccuilib/nax-ccuilib/ui/input-field.js')
-                require('../../assets/mods/nax-ccuilib/nax-ccuilib/ui/test-menu.js')
-                require('../../assets/mods/nax-ccuilib/nax-ccuilib/ui.js')
-            },
+        /* cc-determine */ {
+            baseDirectory: 'mods/cc-determine',
+            ccmod: (await import('../../assets/mods/cc-determine/ccmod.json')) as PkgCCMod,
+            getPlugin: () => import('../../assets/mods/cc-determine/plugin.js'),
         },
-        /* char-select */ {
-            baseDirectory: 'mods/char-select',
-            ccmod: (await import('../../assets/mods/char-select/ccmod.json')) as PkgCCMod,
-            preload: () => require('../../assets/mods/char-select/preload.js'),
-            prestart: () => require('../../assets/mods/char-select/prestart.js'),
-        },
-        /* cc-alyxbox */ {
-            baseDirectory: 'mods/cc-alybox',
-            ccmod: (await import('../../assets/mods/cc-alybox/ccmod.json')) as PkgCCMod,
-            prestart: () => {
-                /* no need to import the patch steps */
-                require('../../assets/mods/cc-alybox/src/_core.js')
-                require('../../assets/mods/cc-alybox/src/enemy-var-path.js')
-                require('../../assets/mods/cc-alybox/src/player-name.js')
-            },
-        },
-        /* extension-assert-preloader */ {
-            baseDirectory: 'mods/extension-asset-preloader',
-            ccmod: (await import('../../assets/mods/extension-asset-preloader/ccmod.json')) as PkgCCMod,
-            /* not required with vfs */
-            // postload: () => require('../../assets/mods/extension-asset-preloader/postload.js'),
-        },
-        /* menu-ui-replacer */ {
-            baseDirectory: 'mods/menu-ui-replacer',
-            ccmod: (await import('../../assets/mods/menu-ui-replacer/ccmod.json')) as PkgCCMod,
-            getPlugin: () => import('../../assets/mods/menu-ui-replacer/plugin.js'),
-            postload: () => require('../../assets/mods/menu-ui-replacer/postload.js'),
-            pluginClassPatch: (plugin: InstanceType<(typeof import('../../assets/mods/menu-ui-replacer/plugin.js'))['default']>) => {
-                plugin.getBaseMenuImg = () => fixImageLoad('media/gui/menu.png')
-            },
-        },
-        /* extendable-severed-heads */ {
-            baseDirectory: 'mods/extendable-severed-heads',
-            ccmod: (await import('../../assets/mods/extendable-severed-heads/ccmod.json')) as PkgCCMod,
-            getPlugin: () => import('../../assets/mods/extendable-severed-heads/plugin.js'),
-            pluginClassPatch: (plugin: InstanceType<(typeof import('../../assets/mods/extendable-severed-heads/plugin.js'))['default']>) => {
-                plugin.loadImage = fixImageLoad
-            },
-        },
-        /* xenon-playable-classes */ {
-            baseDirectory: 'mods/xenons-playable-classes',
-            ccmod: (await import('../../assets/mods/xenons-playable-classes/ccmod.json')) as PkgCCMod,
-            prestart: () => require('../../assets/mods/xenons-playable-classes/prestart.js'),
-            poststart: () => require('../../assets/mods/xenons-playable-classes/poststart.js'),
+        /* cc-multibakery */ {
+            baseDirectory: 'mods/cc-multibakery',
+            ccmod: (await import('../../assets/mods/cc-multibakery/ccmod.json')) as PkgCCMod,
+            getPlugin: () => import('../../assets/mods/cc-multibakery/plugin.js'),
         },
     ]
 }
@@ -180,7 +195,7 @@ const modloader = {
 let ccmodRes: Awaited<ReturnType<typeof ccmod>>
 export let mods: ModConfig[] = []
 
-export async function init() {
+export async function init(noOverride?: boolean) {
     const activeMods: Mod[] = []
     window.versions = {
         ccloader: '2.25.3',
@@ -191,6 +206,22 @@ export async function init() {
     /* some old mods use export default MyMod extends Plugin { */
     // @ts-expect-error
     window.Plugin = class {}
+    window.ccbundler = true
+
+    if (!noOverride) {
+        window.global = window
+        window.process = {
+            on(name: string, _func: () => void) {
+                if (name == 'on') {
+                } else if (name == 'exit') {
+                } else {
+                    console.warn('Unsupported process.on:', name)
+                }
+            },
+            execPath: 'client',
+            versions: {},
+        } as any
+    }
 
     ccmodRes = await ccmod()
     mods = ccmodRes.map(config => {
@@ -238,7 +269,7 @@ export async function createPlugins() {
         const mod = mods[i].mod
 
         if (config.getPlugin) {
-            const clazz = (await config.getPlugin()).default
+            const clazz = (await config.getPlugin()).default as any
             const plugin = new clazz(mod)
             mod.pluginInstance = plugin as any
             // @ts-ignore in the case that no mods that have pluginClassPatch

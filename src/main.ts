@@ -24,11 +24,11 @@ window.IG_GAME_SCALE = 4
 import { resizeFix } from './screen-fix'
 import './localstoarge-default'
 import * as modloader from './mods'
-import { requireFix } from './require-fix.js'
-import FsProxy from './chosen-fs'
+import { requireFix } from './require-fix'
+import * as fsProxy from './fs-proxy'
 
 async function run() {
-    await FsProxy.preGameInit()
+    await fsProxy.preloadInit()
 
     await import('../../assets/game/page/game-base.js')
     await import('../../assets/impact/page/js/seedrandom.js')
@@ -41,18 +41,24 @@ async function run() {
     await modloader.runPreload()
 
     {
-        const back = window.Worker
+        const backupWorker = window.Worker
         // @ts-expect-error
         window.Worker = function () {}
+
+        const backupProcess = window.process
+        /* Trick the game into setting ig.platform to ig.PLATFORM_TYPES.BROWSER */
+        // @ts-expect-error
+        window.process = undefined
 
         // @ts-ignore
         await import('../../assets/js/game.compiled.js')
 
-        window.Worker = back
+        window.Worker = backupWorker
+        window.process = backupProcess
     }
     resizeFix()
 
-    await FsProxy.init()
+    await fsProxy.init()
 
     let waitForGameResolve: () => void
     let waitForGamePromise = new Promise<void>(res => (waitForGameResolve = res))

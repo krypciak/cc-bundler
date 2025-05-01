@@ -1,4 +1,5 @@
 plugin.js
 node_modules
 vfsData
-dist.html
+dist
+tmp.js

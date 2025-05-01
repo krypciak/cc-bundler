@@ -4,21 +4,22 @@
     "description": "",
     "type": "module",
     "scripts": {
-        "build": "node build.ts build",
-        "watch": "node build.ts watch",
-        "genVfs": "cd src && rm -f vfsData/* && esbuild --target=es2018 --format=esm --platform=node --bundle --sourcemap=inline --outfile=tmp.js generate-fs-tree.ts && node tmp.js && rm tmp.js"
+        "build": "cd build && esbuild --log-override:direct-eval=silent --format=esm --platform=node --bundle --sourcemap=inline --external:esbuild --outfile=tmp.js build.ts && node --enable-source-maps tmp.js build && rm tmp.js",
+        "watch": "cd build && esbuild --log-override:direct-eval=silent --format=esm --platform=node --bundle --sourcemap=inline --external:esbuild --outfile=tmp.js build.ts && node --enable-source-maps tmp.js watch && rm tmp.js",
+        "genVfs": "cd build && rm -f vfsData/* && esbuild --log-override:direct-eval=silent --format=esm --platform=node --bundle --sourcemap=inline --outfile=tmp.js generate-fs-tree.ts && node --enable-source-maps tmp.js && rm tmp.js"
     },
     "devDependencies": {
         "@types/crypto-js": "^4.2.2",
         "@types/jquery": "^3.5.32",
-        "@types/node": "^22.13.9",
-        "@types/semver": "^7.5.8",
+        "@types/node": "^22.15.3",
+        "@types/semver": "^7.7.0",
         "ccmoddb": "github:CCDirectLink/CCModDB",
-        "core-js": "^3.41.0",
+        "core-js": "^3.42.0",
+        "crypto-browserify": "^3.12.1",
         "crypto-js": "^4.2.0",
-        "esbuild": "^0.25.0",
+        "esbuild": "^0.25.3",
         "jquery": "^3.7.1",
-        "node": "^23.9.0",
+        "node": "^23.11.0",
         "semver": "^7.7.1",
         "ultimate-crosscode-typedefs": "github:krypciak/ultimate-crosscode-typedefs"
     },

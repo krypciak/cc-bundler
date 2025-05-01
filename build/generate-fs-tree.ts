@@ -1,14 +1,14 @@
-import type { DataRef, NodeDir, NodeFile, NodeRef, VfsNode, VfsTree } from './fs-proxy'
-import { isDir, isFile, isRef } from './fs-proxy'
-import { resolvePath } from './vfs'
+import type {} from 'ultimate-crosscode-typedefs'
+import type { DataRef, NodeDir, NodeFile, NodeRef, VfsNode, VfsTree } from '../src/vfs'
+import { forEachNode, isDir, isFile, isRef, resolvePath } from '../src/vfs'
 import * as fs from 'fs'
-import * as gzip from './compress'
+import * as gzip from '../src/compress'
 import 'core-js/actual/typed-array/to-base64'
 import stripJsonComments from '../../assets/mods/simplify/lib/strip-json-comments'
 import * as patchSteps from '../../assets/mods/simplify/lib/patch-steps-lib/src/patchsteps'
-import * as modloader from './mods'
+import * as modloader from '../src/mods'
 
-export function assert(v: any, msg?: string): asserts v {
+function assert(v: any, msg?: string): asserts v {
     if (!v) throw new Error(`Assertion error${msg ? `: ${msg}` : ''}`)
 }
 
@@ -18,11 +18,11 @@ const pdataRef = `${pvfsDir}/fttreeDataRef_@ID.json`
 const proot = `../..`
 const passets = `${proot}/assets`
 
-type FlatDataRef = { c: string | ArrayBuffer; nodes: NodeRef[] }
+type FlatDataRef = { c: string | Uint8Array; nodes: NodeRef[] }
 
 async function loadMods() {
     global.window = global as any
-    await modloader.init()
+    await modloader.init(true)
 
     async function registerCustomPatchSteps() {
         async function alybox() {
@@ -56,6 +56,7 @@ async function buildTree(modIds: Set<string>) {
         if (name.endsWith('.md')) return false
         if (name.endsWith('.sh')) return false
         if (name.endsWith('.ccmod')) return false
+        if (name.endsWith('.bkp')) return false
         if (name == '.npmrc') return false
         if (name == '.prettierrc.json') return false
         if (name == '.gitignore') return false
@@ -95,7 +96,7 @@ async function buildTree(modIds: Set<string>) {
 
             if (file.isFile() && filterFile(file.name)) {
                 const encoding = isTextFile(file.name) ? 'utf8' : undefined
-                const data: ArrayBuffer | string = await fs.promises.readFile(npath, encoding)
+                const data: Uint8Array | string = await fs.promises.readFile(npath, encoding)
 
                 node[file.name] = {
                     t: 'f',
@@ -116,27 +117,6 @@ async function buildTree(modIds: Set<string>) {
     await walk(passets, tree, 0)
 
     return { tree }
-}
-
-async function forEachNode(
-    tree: VfsTree,
-    func: (node: VfsNode, fileName: string, path: string) => Promise<void> | void,
-    path: string = '',
-    promises: Promise<void>[] = []
-) {
-    for (const key in tree) {
-        if (key == 't') continue
-        const node = tree[key]
-        const npath = path + '/' + key
-
-        const promise = func(node, key, npath)
-        if (promise) promises.push(promise)
-
-        if (isDir(node)) {
-            forEachNode(node, func, npath, promises)
-        }
-    }
-    if (path == '') await Promise.all(promises)
 }
 
 function changeFileNodeToRef(node: NodeFile, flatDataRef: FlatDataRef[], overrideRef?: number): NodeRef {
@@ -270,6 +250,7 @@ async function handleModAssets(tree: VfsTree, flatDataRef: FlatDataRef[]) {
             } else if (underExtensions) {
                 toPath = path.substring(path.indexOf('extension') + 'extension/'.length)
                 toPath = toPath.substring(toPath.indexOf('/') + 1)
+                if (!toPath.includes('/')) return
             } else assert(false)
             aliasAsset(nodeRef, path, toPath, false && underModAssets)
         }
@@ -279,13 +260,13 @@ async function handleModAssets(tree: VfsTree, flatDataRef: FlatDataRef[]) {
 }
 
 async function compressNodes(tree: VfsTree, flatDataRef: FlatDataRef[]) {
-    async function compress(data: ArrayBuffer | string): Promise<string> {
+    async function compress(data: Uint8Array | string): Promise<string> {
         const compressedArr = await gzip.compress(data)
         const compressed = Buffer.from(compressedArr).toString('base64')
         return compressed
     }
 
-    const toCompress: { c: string | ArrayBuffer }[] = [...flatDataRef]
+    const toCompress: { c: string | Uint8Array }[] = [...flatDataRef]
     await forEachNode(tree, node => {
         if (node.t != 'f') return
         toCompress.push(node)
@@ -309,7 +290,7 @@ async function filterOggs(tree: VfsTree, flatDataRef: FlatDataRef[]) {
     oggList.sort((a, b) => a.c.length - b.c.length)
 
     let oggTotalBytes = 0
-    const oggByteLimit = 1024 * 1024 * 200 // 0 MiB
+    const oggByteLimit = 1024 * 1024 * 1000 // 0 MiB
     let i = 0
     let oggTotalBytesWhenLimitHit: number | undefined
     for (; i < oggList.length; i++) {
@@ -325,6 +306,14 @@ async function filterOggs(tree: VfsTree, flatDataRef: FlatDataRef[]) {
         ((oggTotalBytes - oggTotalBytesWhenLimitHit) / 1024 / 1024).toFixed(2),
         'MB left'
     )
+}
+
+async function changeAllFilesToRef(tree: VfsTree, flatDataRef: FlatDataRef[]) {
+    forEachNode(tree, (node, _fileName) => {
+        if (isFile(node)) {
+            changeFileNodeToRef(node, flatDataRef)
+        }
+    })
 }
 
 async function partitionDataRef(flatDataRef: FlatDataRef[]) {
@@ -374,6 +363,8 @@ async function run() {
     await compressNodes(tree, flatDataRef)
     console.log("filtering ogg's...")
     await filterOggs(tree, flatDataRef)
+    console.log('changing all files to references...')
+    await changeAllFilesToRef(tree, flatDataRef)
     console.log('partitioning dataRef...')
     const { dataRef } = await partitionDataRef(flatDataRef)
     console.log('writing...')
