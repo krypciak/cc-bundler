@@ -1,5 +1,6 @@
 import * as esbuild from 'esbuild'
 import * as fs from 'fs'
+import * as zlib from 'zlib'
 import type { DataRef, VfsTree } from '../src/vfs'
 import { forEachNode, isFile, isDir, isRef, uncompressData } from '../src/vfs'
 
@@ -18,7 +19,7 @@ async function loadVfsData() {
 }
 
 const favIconPath = '../../favicon.png'
-async function handleCssImageReplacement(html: string, singleFile: boolean) {
+async function handleCssImageReplacement(html: string) {
     const htmlImgs = html.split('\n').flatMap(line => [...line.matchAll(/url\((.*\.png)\)/g)])
     for (const entry of htmlImgs) {
         const url = entry[1]
@@ -32,7 +33,7 @@ async function handleCssImageReplacement(html: string, singleFile: boolean) {
     return html
 }
 
-async function loadSubstitutions(vfsData: string, dataRef: string[], singleFile: boolean) {
+async function loadSubstitutions(vfsData: string, dataRef: string[]) {
     const substitute: Record<string, string> = {}
     Object.assign(substitute, {
         VFS_DATA: vfsData,
@@ -71,8 +72,27 @@ async function writeVfsToDir(distDir: string, vfsDataStr: string, dataRefStr: st
         } else throw new Error('huh')
 
         const data = await uncompressData(dataStr)
-        await fs.promises.writeFile(newPath, data)
+        await writeDistFile(newPath, data)
     })
+}
+
+async function writeDistFile(path: string, data: Uint8Array | string) {
+    const promises: Promise<void>[] = []
+    promises.push(fs.promises.writeFile(path, data))
+    if (gzipCompression) {
+        const compPath = `${path}.gz`
+        const func = async () => {
+            const buf = await new Promise<Buffer>((resolve, reject) => {
+                zlib.gzip(data, (error: Error | null, result: Buffer) => {
+                    if (error) reject(error)
+                    else resolve(result)
+                })
+            })
+            await fs.promises.writeFile(compPath, buf)
+        }
+        promises.push(func())
+    }
+    await Promise.all(promises)
 }
 
 async function watch(ctx: esbuild.BuildContext) {
@@ -83,6 +103,9 @@ async function build(ctx: esbuild.BuildContext) {
     process.exit()
 }
 
+const singleFile: boolean = false
+const gzipCompression: boolean = true
+
 async function run() {
     const distDir = '../dist'
     await fs.promises.rm(distDir, { recursive: true })
@@ -90,14 +113,12 @@ async function run() {
 
     const outIndexPath = `${distDir}/index.html`
 
-    const singleFile: boolean = false
-
     const { vfsData, dataRef } = await loadVfsData()
 
     let html = await fs.promises.readFile('./index.html', 'utf8')
-    html = await handleCssImageReplacement(html, singleFile)
+    html = await handleCssImageReplacement(html)
 
-    const substitute = await loadSubstitutions(vfsData, dataRef, singleFile)
+    const substitute = await loadSubstitutions(vfsData, dataRef)
 
     const socketioPath = '../lib/socket.io.min.js'
     const socketioCode = await fs.promises.readFile(socketioPath, 'utf8')
@@ -141,7 +162,7 @@ async function run() {
                 } else {
                     const socketioOutPath = './socket.io.js'
                     await appendHtml(`<script src="${socketioOutPath}"></script>\n`)
-                    await fs.promises.writeFile(`${distDir}/${socketioOutPath}`, socketioCode)
+                    await writeDistFile(`${distDir}/${socketioOutPath}`, socketioCode)
                 }
                 appendHtml(html.slice(html.indexOf(socketioTag) + socketioTag.length, html.indexOf(jsTag)))
 
@@ -173,7 +194,10 @@ async function run() {
 
                 if (!singleFile && buildI == 0) {
                     await writeVfsToDir(distDir, vfsData, dataRef)
-                    await fs.promises.writeFile(`${distDir}/favicon.png`, await fs.promises.readFile(favIconPath))
+                    await writeDistFile(`${distDir}/favicon.png`, await fs.promises.readFile(favIconPath))
+                }
+                if (!singleFile && gzipCompression) {
+                    await writeDistFile(distJsPath, await fs.promises.readFile(distJsPath))
                 }
 
                 const stat = await fs.promises.stat(outIndexPath)
