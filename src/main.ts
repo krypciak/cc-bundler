@@ -26,6 +26,7 @@ import './localstoarge-default'
 import * as modloader from './mods'
 import { requireFix } from './require-fix'
 import * as fsProxy from './fs-proxy'
+import { audioWarningFix } from './audio-warning-fix.js'
 
 async function run() {
     await fsProxy.preloadInit()
@@ -57,6 +58,7 @@ async function run() {
         window.process = backupProcess
     }
     resizeFix()
+    audioWarningFix()
 
     await fsProxy.init()
 

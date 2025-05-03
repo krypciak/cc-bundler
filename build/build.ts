@@ -104,7 +104,7 @@ async function build(ctx: esbuild.BuildContext) {
 }
 
 const singleFile: boolean = false
-const gzipCompression: boolean = true
+const gzipCompression: boolean = false
 
 async function run() {
     const distDir = '../dist'
@@ -226,7 +226,7 @@ async function run() {
             'window.IG_WIDTH': `568`,
             'window.IG_HEIGHT': `320`,
             'window.IG_SCREEN_MODE_OVERRIDE': `2`,
-            'window.IG_WEB_AUDIO_BGM': `false`,
+            'window.IG_WEB_AUDIO_BGM': `true`,
             'window.IG_FORCE_HTML5_AUDIO': `false`,
             'window.LOAD_LEVEL_ON_GAME_START': `null`,
             'window.IG_GAME_DEBUG': `false`,
