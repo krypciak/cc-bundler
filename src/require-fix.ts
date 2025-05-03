@@ -1,7 +1,9 @@
 import { path } from './fs-proxy'
 
-export const http = {}
-export const https = {}
+const http = {}
+const https = {}
+const crypto = {}
+const stream = {}
 
 export function requireFix() {
     // @ts-expect-error
@@ -10,6 +12,10 @@ export function requireFix() {
         if (src == 'path') return path
         if (src == 'http') return http
         if (src == 'https') return https
-        console.warn(`requireFix: unknown module: ${src}`)
+        if (src == 'crypto') return crypto
+        if (src == 'stream') return stream
+        console.groupCollapsed(`requireFix: unknown module: ${src}`)
+        console.trace()
+        console.groupEnd()
     }
 }
