@@ -211,7 +211,7 @@ async function run() {
     const ctx = await esbuild.context({
         entryPoints: ['../src/main.ts'],
         bundle: true,
-        target: 'es2018',
+        target: 'es2020',
         outfile: 'plugin.js',
         logOverride: {
             'suspicious-boolean-not': 'silent',
@@ -237,7 +237,7 @@ async function run() {
         drop: ['debugger' /*'console'*/],
         sourcemap: 'inline',
         plugins: [plugin],
-        external: ['nw.gui', 'fs', 'http', 'crypto'],
+        external: ['nw.gui', 'fs', 'http', 'crypto', 'repl'],
     })
 
     if (process.argv[2] == 'build') {
