@@ -91,20 +91,28 @@ async function buildTree(modIds: Set<string>) {
         assert(depth <= 100, `Max depth reached! ${path}`)
         const files = await fs.promises.readdir(path, { withFileTypes: true })
         let fileCount = 0
-        for (const file of files) {
+        for (let file of files) {
             const npath = `${path}/${file.name}`
 
-            if (file.isFile() && filterFile(file.name)) {
-                const encoding = isTextFile(file.name) ? 'utf8' : undefined
-                const data: Uint8Array | string = await fs.promises.readFile(npath, encoding)
+            let fileInfo: fs.Dirent | fs.Stats = file
+            if (file.isSymbolicLink()) {
+                const linkRealPath = await fs.promises.readlink(npath)
+                fileInfo = await fs.promises.stat(linkRealPath)
+            }
 
-                node[file.name] = {
-                    t: 'f',
-                    c: data as any,
+            if (fileInfo.isFile()) {
+                if (filterFile(file.name)) {
+                    const encoding = isTextFile(file.name) ? 'utf8' : undefined
+                    const data: Uint8Array | string = await fs.promises.readFile(npath, encoding)
+
+                    node[file.name] = {
+                        t: 'f',
+                        c: data as any,
+                    }
+
+                    fileCount++
                 }
-
-                fileCount++
-            } else if ((file.isDirectory() && filterDir(file.name, path)) || file.isSymbolicLink()) {
+            } else if (fileInfo.isDirectory() && filterDir(file.name, path)) {
                 const nnode: VfsNode = node[file.name] ?? ({ t: 'd' } as any)
                 if (await walk(npath, nnode as VfsTree, depth + 1)) {
                     fileCount++
