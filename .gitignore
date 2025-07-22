@@ -2,4 +2,5 @@ plugin.js
 node_modules
 vfsData
 dist
+tmp
 tmp.js

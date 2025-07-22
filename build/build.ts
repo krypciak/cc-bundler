@@ -1,22 +1,6 @@
 import * as esbuild from 'esbuild'
 import * as fs from 'fs'
 import * as zlib from 'zlib'
-import type { DataRef, VfsTree } from '../src/vfs'
-import { forEachNode, isFile, isDir, isRef, uncompressData } from '../src/vfs'
-
-async function loadVfsData() {
-    const vfsDataDir = './vfsData'
-    const vfsData = await fs.promises.readFile(`${vfsDataDir}/fttree.json`, 'utf8')
-    const dataRef: string[] = []
-    const dataRefPaths = (await fs.promises.readdir(vfsDataDir)).filter(name => name.startsWith('fttreeDataRef'))
-    await Promise.all(
-        new Array(dataRefPaths.length).fill(null).map(async (_, i) => {
-            const path = `${vfsDataDir}/fttreeDataRef_${i}.json`
-            dataRef[i] = await fs.promises.readFile(path, 'utf8')
-        })
-    )
-    return { vfsData, dataRef }
-}
 
 const favIconPath = '../../favicon.png'
 async function handleCssImageReplacement(html: string) {
@@ -25,55 +9,12 @@ async function handleCssImageReplacement(html: string) {
         const url = entry[1]
         const path = `./assets/game/page/${url}`
 
-        const replacement = singleFile ? `'data:image/png;base64,${await fs.promises.readFile(`../../${path}`, 'base64')}'` : path
+        const replacement = path
         html = html.replace(new RegExp(url), replacement)
     }
-    const favIconReplacement = singleFile ? 'data:image/png;base64,' + (await fs.promises.readFile(favIconPath, 'base64')) : '/favicon.png'
+    const favIconReplacement = '/favicon.png'
     html = html.replace(/@FAV_ICON/, favIconReplacement)
     return html
-}
-
-async function loadSubstitutions(vfsData: string, dataRef: string[]) {
-    const substitute: Record<string, string> = {}
-    Object.assign(substitute, {
-        VFS_DATA: vfsData,
-    })
-    Object.assign(substitute, {
-        ...Object.fromEntries(
-            new Array(15).fill(null).map((_, i) => {
-                return [`REF_DATA_${i}`, (singleFile ? dataRef[i] : undefined) ?? '[]']
-            })
-        ),
-    })
-    return substitute
-}
-
-async function writeVfsToDir(distDir: string, vfsDataStr: string, dataRefStr: string[]) {
-    distDir += '/assets'
-    const vfsData: VfsTree = JSON.parse(vfsDataStr)
-    const dataRef: DataRef = dataRefStr.map(a => JSON.parse(a))
-
-    await forEachNode(vfsData, async (node, _fileName, filePath) => {
-        const newPath = `${distDir}${filePath}`
-        if (!isDir(node)) return
-        await fs.promises.mkdir(newPath, { recursive: true })
-    })
-
-    await forEachNode(vfsData, async (node, _fileName, filePath) => {
-        if (isDir(node)) return
-
-        const newPath = `${distDir}${filePath}`
-        let dataStr: string
-        if (isFile(node)) {
-            throw new Error('how')
-            // dataStr = node.c
-        } else if (isRef(node)) {
-            dataStr = dataRef[node.fi][node.i]
-        } else throw new Error('huh')
-
-        const data = await uncompressData(dataStr)
-        await writeDistFile(newPath, data)
-    })
 }
 
 async function writeDistFile(path: string, data: Uint8Array | string) {
@@ -103,22 +44,22 @@ async function build(ctx: esbuild.BuildContext) {
     process.exit()
 }
 
-const singleFile: boolean = false
 const gzipCompression: boolean = false
 
 async function run() {
     const distDir = '../dist'
-    await fs.promises.rm(distDir, { recursive: true })
+    try {
+        const files = await fs.promises.readdir(distDir)
+        for (const file of files) {
+            await fs.promises.rm(file, { recursive: true })
+        }
+    } catch (e) {}
     await fs.promises.mkdir(distDir, { recursive: true })
 
     const outIndexPath = `${distDir}/index.html`
 
-    const { vfsData, dataRef } = await loadVfsData()
-
     let html = await fs.promises.readFile('./index.html', 'utf8')
     html = await handleCssImageReplacement(html)
-
-    const substitute = await loadSubstitutions(vfsData, dataRef)
 
     const socketioPath = '../lib/socket.io.min.js'
     const socketioCode = await fs.promises.readFile(socketioPath, 'utf8')
@@ -149,42 +90,23 @@ async function run() {
                     await fs.promises.writeFile(distJsPath, text, { flag: 'a+' })
                 }
                 async function appendCode(text: string) {
-                    if (singleFile) {
-                        return appendHtml(text)
-                    } else {
-                        return appendJs(text)
-                    }
+                    return appendJs(text)
                     // console.log('writing', text.slice(0, 100))
                 }
 
-                if (singleFile) {
-                    await appendHtml(`<script>\n${socketioCode}\n</script>\n`)
-                } else {
-                    const socketioOutPath = './socket.io.js'
-                    await appendHtml(`<script src="${socketioOutPath}"></script>\n`)
-                    await writeDistFile(`${distDir}/${socketioOutPath}`, socketioCode)
-                }
+                const socketioOutPath = './socket.io.js'
+                await appendHtml(`<script src="${socketioOutPath}"></script>\n`)
+                await writeDistFile(`${distDir}/${socketioOutPath}`, socketioCode)
+
                 appendHtml(html.slice(html.indexOf(socketioTag) + socketioTag.length, html.indexOf(jsTag)))
 
-                if (singleFile) {
-                    await appendHtml(`<script type="module">\n`)
-                } else {
-                    await appendHtml(`<script type="module" src="${outJsPath}">`)
-                    await fs.promises.writeFile(distJsPath, '')
-                }
+                await appendHtml(`<script type="module" src="./crosscode.js">`)
+                await fs.promises.writeFile(distJsPath, '')
 
                 async function put(index: number) {
                     const str = code.slice(i, index)
                     await appendCode(str)
                     i = index
-                }
-                for (const key in substitute) {
-                    const to = substitute[key]
-                    const index = code.indexOf(key)
-                    if (index == -1) continue
-                    await put(index)
-                    i += key.length
-                    await appendCode(to)
                 }
                 await put(code.length)
 
@@ -192,13 +114,15 @@ async function run() {
 
                 await appendHtml(html.slice(html.indexOf(jsTag) + jsTag.length))
 
-                if (!singleFile && buildI == 0) {
-                    await writeVfsToDir(distDir, vfsData, dataRef)
+                if (buildI == 0) {
+                    // await writeVfsToDir(distDir, vfsData, dataRef)
                     await writeDistFile(`${distDir}/favicon.png`, await fs.promises.readFile(favIconPath))
                 }
-                if (!singleFile && gzipCompression) {
+                if (gzipCompression) {
                     await writeDistFile(distJsPath, await fs.promises.readFile(distJsPath))
                 }
+
+                await fs.promises.cp('../../ccloader3/dist-ccmod-service-worker.js', `${distDir}/dist-ccmod-service-worker.js`)
 
                 const stat = await fs.promises.stat(outIndexPath)
                 const mb = stat.size / 1_048_576
@@ -212,6 +136,7 @@ async function run() {
         entryPoints: ['../src/main.ts'],
         bundle: true,
         target: 'es2020',
+        format: 'esm',
         outfile: 'plugin.js',
         logOverride: {
             'suspicious-boolean-not': 'silent',
@@ -232,13 +157,15 @@ async function run() {
             'window.IG_GAME_DEBUG': `false`,
             'window.IG_GAME_BETA': `false`,
             'window.IG_HIDE_DEBUG': `false`,
-            'window.CHOSEN_FS_PROXY': singleFile ? '"vfs"' : '"webfs"',
         },
-        drop: ['debugger' /*'console'*/],
+        // drop: ['debugger' /*'console'*/],
         sourcemap: 'inline',
         plugins: [plugin],
         external: ['nw.gui', 'fs', 'http', 'crypto', 'repl'],
     })
+
+    await fs.promises.cp('../tmp/_assets.zip', `${distDir}/_assets.zip`)
+    await fs.promises.cp('../tmp/runtime.ccmod', `${distDir}/runtime.ccmod`)
 
     if (process.argv[2] == 'build') {
         await build(ctx)

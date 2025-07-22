@@ -9,465 +9,61 @@
         <link id="favicon" rel="CrossCode icon" type="image/png" href="@FAV_ICON" />
 
         <style>
-            html,
             body {
                 background-color: #000;
-                font-size: inherit !important;
+                color: #fff;
             }
 
-            .title {
-                position: absolute;
-                text-align: center;
+            /* colors were taken from the Material Palette, see <https://material.io/resources/color/> */
+
+            .ccloader-vbox {
+                display: flex;
+                flex-direction: column;
+            }
+
+            .ccloader-vscroll {
+                max-height: 100%;
+                overflow-y: auto;
+            }
+
+            .ccloader-overlay {
+                position: fixed;
+                top: 0;
                 left: 0;
-                bottom: 4rem;
-                font-size: 2rem;
-                width: 100%;
-                color: #fff;
+                right: 0;
+                bottom: 0;
+
+                font: 18px sans-serif;
+                color: #e0e0e0; /* Grey 300 */
+            }
+
+            #ccloader-console {
+                bottom: unset;
+                z-index: 9999;
+
+                white-space: pre-wrap;
+                word-break: break-all;
+            }
+
+            #ccloader-console > .ccloader-message {
+                padding: 4px;
+                border-bottom: 2px solid;
                 font-family: monospace;
             }
 
-            .ui {
-                position: absolute;
-                top: 20px;
-                right: 20px;
-                color: white;
-                text-shadow:
-                    -1px 0 black,
-                    0 1px black,
-                    1px 0 black,
-                    0 -1px black;
+            #ccloader-console > .ccloader-message.ccloader-LOG {
+                background-color: rgba(27, 27, 27, 0.8); /* Grey 800 dark */
+                border-color: #424242; /* Grey 800 */
             }
 
-            #overlay {
-                display: block;
-                position: absolute;
-                background-color: rgba(0, 0, 0, 0.3);
-                top: 0;
-                left: 0;
-                width: 100%;
-                height: 100%;
-            }
-        </style>
-        <style>
-            * {
-                margin: 0;
-                padding: 0;
+            #ccloader-console > .ccloader-message.ccloader-WARN {
+                background-color: rgba(196, 62, 0, 0.8); /* Amber 900 dark */
+                border-color: #ff6f00; /* Amber 900 */
             }
 
-            /* @font-face { */
-            /*     font-family: 'CrossCode'; */
-            /*     src: url('fonts/SourceHanSerifSC-Regular.otf') format('opentype'); */
-            /* } */
-            /**/
-            /* @font-face { */
-            /*     font-family: 'CrossCodeKR'; */
-            /*     src: url('fonts/NanumSquareB.ttf') format('truetype'); */
-            /* } */
-            /**/
-            /* @font-face { */
-            /*     font-family: 'CrossCodeJP'; */
-            /*     src: url('fonts/ume-tgo5.ttf') format('truetype'); */
-            /* } */
-
-            html,
-            body {
-                background-color: #080808;
-                color: #fff;
-                font-family: helvetica, arial, sans-serif;
-                margin: 0;
-                padding: 0;
-                font-size: 14pt;
-            }
-
-            #canvas {
-                position: absolute;
-                left: 0;
-                right: 0;
-                top: 0;
-                bottom: 0;
-                margin: auto;
-                border: 1px solid #333;
-                -webkit-transition: all 0.3s;
-                -moz-transition: all 0.3s;
-                box-sizing: content-box !important;
-            }
-
-            #canvas.borderHidden {
-                border: 0px solid #333;
-            }
-
-            #game {
-                position: absolute;
-                left: 0;
-                right: 0;
-                top: 0px;
-                bottom: 0px;
-            }
-
-            .overlay {
-                z-index: 3;
-                background: black;
-                opacity: 0.5;
-                left: 0;
-                top: 0;
-                right: 0;
-                bottom: 0;
-                position: absolute;
-            }
-
-            .warnMessage {
-                z-index: 4;
-                position: absolute;
-                top: 0;
-                left: 0;
-                right: 0;
-                border-bottom: 1px solid white;
-                background: #111;
-                height: 0px;
-                -webkit-transition: all 0.3s;
-                -moz-transition: all 0.3s;
-                transition: all 0.3s;
-                overflow: hidden;
-            }
-            .warnMessage.shown {
-                height: 100px;
-            }
-            .warnMessage div {
-                width: 500px;
-                margin: 0 auto;
-            }
-
-            .warnMessage p {
-                margin: 8px 0;
-            }
-
-            .warnMessage button {
-                padding: 4px 8px;
-            }
-        </style>
-        <style>
-            .errorMessage.shown {
-                height: 400px;
-                margin-top: -200px;
-                transition: all 1s;
-            }
-
-            .errorMessage {
-                position: absolute;
-                height: 0;
-                overflow: hidden;
-                left: 0;
-                right: 0;
-                top: 50%;
-                background: #050505;
-                border-top: 3px solid red;
-                border-bottom: 3px solid red;
-                box-sizing: border-box;
-                padding: 8px;
-            }
-            .errorMessage h3 {
-                text-align: center;
-                padding: 8px 0;
-            }
-            .errorMessage p {
-                font-size: 12pt;
-                padding-bottom: 8px;
-            }
-            .errorMessage textarea {
-                display: block;
-                width: 100%;
-                box-sizing: border-box;
-                padding: 8px;
-                height: 200px;
-                background: black;
-                color: white;
-                border: 0;
-                margin-bottom: 8px;
-            }
-            .errorMessage a {
-                color: #0078a3;
-            }
-
-            .gameOverlayBox.shown {
-                opacity: 1;
-                height: 200px;
-                margin-top: -100px;
-            }
-            .gameOverlayBox {
-                transition: all 0.2s;
-                position: absolute;
-                height: 0;
-                overflow: hidden;
-                left: 0;
-                right: 0;
-                top: 50%;
-                background: #050505;
-                border-top: 1px solid white;
-                border-bottom: 1px solid white;
-                box-sizing: border-box;
-                padding: 8px;
-                text-align: center;
-                opacity: 0;
-            }
-
-            .gameOverlayBox h3 {
-                text-align: center;
-                padding: 8px 0;
-                margin: 0 !important;
-            }
-            .gameOverlayBox p {
-                font-size: 12pt;
-                padding-bottom: 8px;
-            }
-            .gameOverlayBox textarea {
-                display: block;
-                width: 100%;
-                box-sizing: border-box;
-                padding: 8px;
-                height: 200px;
-                background: black;
-                color: white;
-                border: 0;
-                margin-bottom: 8px;
-            }
-
-            .gameOverlayBox textarea[readonly] {
-                color: #888;
-            }
-
-            .gameOverlayBox a {
-                color: #0078a3;
-            }
-
-            .gameOverlayBox input {
-                font-size: 12pt;
-                padding: 8px;
-            }
-
-            .indiegogoMessage.shown {
-                height: 400px;
-                margin-top: -200px;
-            }
-
-            .saveMessage.shown {
-                height: 400px;
-                margin-top: -200px;
-            }
-
-            .gameOverlayBox.saveMessage textarea {
-                height: 100px;
-            }
-
-            a.indiegogo.logo {
-                display: inline-block;
-                width: 442px;
-                height: 244px;
-                background: url(img/indiegogo-logo.png) no-repeat;
-            }
-            a.indiegogo.logo span {
-                display: none;
-            }
-
-            .gamecodeMessage.shown {
-                height: 100px;
-                margin-top: -50px;
-            }
-
-            .twitterMessage.shown {
-                height: 400px;
-                margin-top: -200px;
-            }
-
-            .twitterMessage li {
-                padding: 3px 0;
-            }
-
-            .twitterMessage ul {
-                padding-bottom: 10px;
-            }
-
-            .twitterMessage a {
-                text-decoration: none;
-            }
-
-            .screenshotMessage.shown {
-                height: 400px;
-                margin-top: -200px;
-            }
-            .screenshotMessage img {
-                height: 320px;
-            }
-
-            .bigButton,
-            .biggerButton {
-                background: url(img/button1.png);
-                padding: 10px 16px;
-                color: white;
-                text-decoration: none;
-                text-align: center;
-                font-weight: bold;
-                font-size: 16pt;
-                display: inline-block;
-                margin: 0 8px 8px 8px;
-                width: 232px;
-                height: 45px;
-                box-sizing: border-box;
-            }
-            .bigButton:hover,
-            .biggerButton:hover {
-                background-position: 0 -64px;
-                text-decoration: none;
-                color: white;
-            }
-            .bigButton:active,
-            .biggerButton:active,
-            .bigButton:visited,
-            .biggerButton:visited {
-                color: white;
-            }
-
-            .biggerButton {
-                background: url(img/button2.png);
-                width: 300px;
-            }
-
-            @media (max-width: 639px) {
-                .biggerButton {
-                    width: 250px;
-                    background-size: 250px auto;
-                    height: 40px;
-                    font-size: 12pt;
-                }
-                .biggerButton:hover {
-                    background-position: 0 -53px;
-                }
-            }
-
-            #game.none {
-                cursor: none;
-            }
-
-            #game.cursorSize1.pointer {
-                cursor:
-                    url(img/cursor-1.png) 0 0,
-                    auto;
-            }
-            #game.cursorSize2.pointer {
-                cursor:
-                    url(img/cursor-2.png) 0 0,
-                    auto;
-            }
-            #game.cursorSize3.pointer {
-                cursor:
-                    url(img/cursor-3.png) 0 0,
-                    auto;
-            }
-            #game.cursorSize4.pointer {
-                cursor:
-                    url(img/cursor-4.png) 0 0,
-                    auto;
-            }
-            #game.cursorSize5.pointer {
-                cursor:
-                    url(img/cursor-5.png) 0 0,
-                    auto;
-            }
-            #game.cursorSize6.pointer {
-                cursor:
-                    url(img/cursor-6.png) 0 0,
-                    auto;
-            }
-            #game.cursorSize7.pointer {
-                cursor:
-                    url(img/cursor-7.png) 0 0,
-                    auto;
-            }
-            #game.cursorSize8.pointer {
-                cursor:
-                    url(img/cursor-8.png) 0 0,
-                    auto;
-            }
-
-            #game.cursorSize1.throw {
-                cursor:
-                    url(img/cursor-throw-1.png) 8 8,
-                    auto;
-            }
-            #game.cursorSize2.throw {
-                cursor:
-                    url(img/cursor-throw-2.png) 16 16,
-                    auto;
-            }
-            #game.cursorSize3.throw {
-                cursor:
-                    url(img/cursor-throw-3.png) 24 24,
-                    auto;
-            }
-            #game.cursorSize4.throw {
-                cursor:
-                    url(img/cursor-throw-4.png) 32 32,
-                    auto;
-            }
-            #game.cursorSize5.throw {
-                cursor:
-                    url(img/cursor-throw-5.png) 40 40,
-                    auto;
-            }
-            #game.cursorSize6.throw {
-                cursor:
-                    url(img/cursor-throw-6.png) 48 48,
-                    auto;
-            }
-            #game.cursorSize7.throw {
-                cursor:
-                    url(img/cursor-throw-7.png) 56 56,
-                    auto;
-            }
-            #game.cursorSize8.throw {
-                cursor:
-                    url(img/cursor-throw-8.png) 64 64,
-                    auto;
-            }
-
-            #game.cursorSize1.melee {
-                cursor:
-                    url(img/cursor-melee-1.png) 8 8,
-                    auto;
-            }
-            #game.cursorSize2.melee {
-                cursor:
-                    url(img/cursor-melee-2.png) 16 16,
-                    auto;
-            }
-            #game.cursorSize3.melee {
-                cursor:
-                    url(img/cursor-melee-3.png) 24 24,
-                    auto;
-            }
-            #game.cursorSize4.melee {
-                cursor:
-                    url(img/cursor-melee-4.png) 32 32,
-                    auto;
-            }
-            #game.cursorSize5.melee {
-                cursor:
-                    url(img/cursor-melee-5.png) 40 40,
-                    auto;
-            }
-            #game.cursorSize6.melee {
-                cursor:
-                    url(img/cursor-melee-6.png) 48 48,
-                    auto;
-            }
-            #game.cursorSize7.melee {
-                cursor:
-                    url(img/cursor-melee-7.png) 56 56,
-                    auto;
-            }
-            #game.cursorSize8.melee {
-                cursor:
-                    url(img/cursor-melee-8.png) 64 64,
-                    auto;
+            #ccloader-console > .ccloader-message.ccloader-ERROR {
+                background-color: rgba(127, 0, 0, 0.8); /* Red 900 dark */
+                border-color: #b71c1c; /* Red 900 */
             }
         </style>
 
@@ -475,15 +71,5 @@
 
         @JS_SCRIPT
     </head>
-    <body style="overflow: hidden">
-        <div id="options" class="toggleMenu" style="display: none">
-            <a class="trigger"><span>Options</span></a>
-            <ul class="optionList"></ul>
-        </div>
-
-        <div id="game">
-            <canvas id="canvas"></canvas>
-        </div>
-
-    </body>
+    <body></body>
 </html>
