@@ -1,6 +1,7 @@
 import * as esbuild from 'esbuild'
 import * as fs from 'fs'
 import * as zlib from 'zlib'
+import AdmZip from 'adm-zip'
 
 const favIconPath = '../../favicon.png'
 async function handleCssImageReplacement(html: string) {
@@ -69,9 +70,18 @@ async function run() {
     const plugin: esbuild.Plugin = {
         name: 'print',
         setup(build) {
-            build.onStart(() => {
+            build.onStart(async () => {
                 console.log()
                 console.log('building...')
+
+                const runtimeModDir = '../../ccloader3/dist/runtime'
+                await fs.promises.stat(runtimeModDir)
+                const zip = new AdmZip()
+                zip.addLocalFolder(runtimeModDir)
+                const buf = await zip.toBufferPromise()
+                const dataBase64 = buf.toString('base64')
+                const json = { data: dataBase64 }
+                fs.promises.writeFile('../tmp/runtime.json', JSON.stringify(json))
             })
             build.onEnd(async res => {
                 const code = res.outputFiles![0]?.text
@@ -125,7 +135,10 @@ async function run() {
                     await writeDistFile(distJsPath, await fs.promises.readFile(distJsPath))
                 }
 
-                await fs.promises.cp('../../ccloader3/dist-ccmod-service-worker.js', `${distDir}/dist-ccmod-service-worker.js`)
+                await fs.promises.cp(
+                    '../../ccloader3/dist-ccmod-service-worker.js',
+                    `${distDir}/dist-ccmod-service-worker.js`
+                )
 
                 const stat = await fs.promises.stat(outIndexPath)
                 const mb = stat.size / 1_048_576
@@ -138,37 +151,14 @@ async function run() {
     const ctx = await esbuild.context({
         entryPoints: ['../src/main.ts'],
         bundle: true,
-        target: 'es2020',
+        target: 'es2022',
         format: 'esm',
-        outfile: 'plugin.js',
-        logOverride: {
-            'suspicious-boolean-not': 'silent',
-            // 'assign-to-define': 'silent'
-            'direct-eval': 'silent',
-        },
         write: false,
         minify: false,
-        define: {
-            'window.IG_GAME_CACHE': `""`,
-            'window.IG_ROOT': `"/assets/"`,
-            'window.IG_WIDTH': `568`,
-            'window.IG_HEIGHT': `320`,
-            'window.IG_SCREEN_MODE_OVERRIDE': `2`,
-            'window.IG_WEB_AUDIO_BGM': `true`,
-            'window.IG_FORCE_HTML5_AUDIO': `false`,
-            'window.LOAD_LEVEL_ON_GAME_START': `null`,
-            'window.IG_GAME_DEBUG': `false`,
-            'window.IG_GAME_BETA': `false`,
-            'window.IG_HIDE_DEBUG': `false`,
-        },
         // drop: ['debugger' /*'console'*/],
         sourcemap: 'inline',
         plugins: [plugin],
-        external: ['nw.gui', 'fs', 'http', 'crypto', 'repl'],
     })
-
-    // await fs.promises.cp('../tmp/_assets.zip', `${distDir}/_assets.zip`)
-    await fs.promises.cp('../../runtime.ccmod', `${distDir}/runtime.ccmod`)
 
     if (process.argv[2] == 'build') {
         await build(ctx)

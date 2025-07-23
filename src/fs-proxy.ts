@@ -18,20 +18,28 @@ export function wait(ms: number): Promise<void> {
 export let isMounted = false
 export let ccloaderVersion: string | undefined
 
+import runtimeModJson from '../tmp/runtime.json'
+
+async function loadRuntimeModData(): Promise<Uint8Array> {
+    return Uint8Array.from(atob(runtimeModJson.data), c => c.charCodeAt(0))
+}
+
+import metadata from '../../ccloader3/metadata.json'
+
 export async function preloadInit() {
     console.log('mounting...')
     await configure({
         mounts: {
             '/': { backend: InMemory },
             '/assets': { backend: IndexedDB },
-            '/dist': { backend: Zip, data: await (await fetch('./runtime.ccmod')).arrayBuffer() },
+            '/dist/runtime': { backend: Zip, data: await loadRuntimeModData() },
         },
     })
     console.log('mounted!')
     // console.log(fs.readdirSync('/assets'))
 
-    ccloaderVersion = '3.3.3-alpha'
-    await fs.promises.writeFile('/metadata.json', `{ "version": "${ccloaderVersion}" }`)
+    ccloaderVersion = metadata.version
+    await fs.promises.writeFile('/metadata.json', JSON.stringify(metadata))
 
     isMounted = true
     mountChangeEvent()

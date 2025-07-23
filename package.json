@@ -4,11 +4,11 @@
     "description": "",
     "type": "module",
     "scripts": {
-        "build": "cd build && esbuild --log-override:direct-eval=silent --format=esm --platform=node --bundle --sourcemap=inline --external:esbuild --outfile=tmp.js build.ts && node --enable-source-maps tmp.js build && rm tmp.js",
-        "watch": "cd build && esbuild --log-override:direct-eval=silent --format=esm --platform=node --bundle --sourcemap=inline --external:esbuild --outfile=tmp.js build.ts && node --enable-source-maps tmp.js watch && rm tmp.js",
-        "genVfs": "cd build && rm -f vfsData/* && esbuild --log-override:direct-eval=silent --format=esm --platform=node --bundle --sourcemap=inline --outfile=tmp.js generate-fs-tree.ts && node --enable-source-maps tmp.js && rm tmp.js"
+        "build": "cd build && bun build.ts build",
+        "watch": "cd build && bun build.ts watch"
     },
     "devDependencies": {
+        "@types/adm-zip": "^0.5.7",
         "@types/jquery": "^3.5.32",
         "@types/node": "^22.15.3",
         "@types/nw.js": "^0.92.0",
@@ -17,6 +17,7 @@
         "@zenfs/archives": "^1.2.3",
         "@zenfs/core": "^2.3.4",
         "@zenfs/dom": "^1.1.8",
+        "adm-zip": "^0.5.16",
         "ccmoddb": "github:CCDirectLink/CCModDB",
         "core-js": "^3.42.0",
         "esbuild": "^0.25.3",
@@ -27,10 +28,6 @@
         "ultimate-crosscode-typedefs": "github:krypciak/ultimate-crosscode-typedefs"
     },
     "pnpm": {
-        "onlyBuiltDependencies": [
-            "core-js",
-            "esbuild",
-            "node"
-        ]
+        "onlyBuiltDependencies": ["core-js", "esbuild", "node"]
     }
 }
