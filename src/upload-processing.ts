@@ -1,6 +1,7 @@
-import { updateStorageInfoLabel, updateUploadStatusLabel } from './ui'
+import { updateUI, updateUploadStatusLabel } from './ui'
 import paths from 'path-browserify'
 import { fs } from './fs-proxy'
+import { type Unzipped, unzipSync } from 'fflate/browser'
 
 function getParentDirs(files: [string, File][]): string[] {
     const dirs = new Set<string>()
@@ -119,26 +120,26 @@ async function mkdirs(dirs: string[]) {
     updateUploadStatusLabel(label, dirs.length, dirs.length)
 }
 
+async function getUint8Array(file: File): Promise<Uint8Array> {
+    if ('data' in file) return file.data as Uint8Array
+
+    try {
+        if (file.bytes) {
+            return await file.bytes()
+        } else {
+            return new Uint8Array(await file.arrayBuffer())
+        }
+    } catch (e) {
+        console.error(e)
+        return new Uint8Array()
+    }
+}
+
 async function copyFiles(toCopyFiles: [string, File][]) {
     const dirs = getParentDirs(toCopyFiles)
     await mkdirs(dirs)
 
     updateUploadStatusLabel('copying', 0, toCopyFiles.length)
-
-    async function getUint8Array(file: File): Promise<Uint8Array> {
-        try {
-            if (file.bytes) {
-                return await file.bytes()
-            } else {
-                return new Uint8Array(await file.arrayBuffer())
-            }
-        } catch (e) {
-            console.error(e)
-            return new Uint8Array()
-        }
-    }
-
-    console.time('copy')
 
     const waitResolves: (() => void)[] = []
     const waitPromises = toCopyFiles.map(
@@ -173,26 +174,32 @@ async function copyFiles(toCopyFiles: [string, File][]) {
     }
 
     await copyPromises
-    console.timeEnd('copy')
 
-    // for (let i = 0; i < toCopyFiles.length; i++) {
-    //     const file = toCopyFiles[i]
-    //     const buffer = await getUint8Array(file)
-    //     const path = file.webkitRelativePath.substring(root.length)
-    //
-    //     await fs.promises.writeFile(path, buffer)
-    //     updateUploadStatusLabel('copying', i, toCopyFiles.length)
-    // }
-    updateUploadStatusLabel('done, uploaded', toCopyFiles.length, toCopyFiles.length, true)
+    updateUploadStatusLabel('done, uploaded', toCopyFiles.length)
 }
 
 export async function uploadCrossCode(filesRaw: FileList) {
     updateUploadStatusLabel('preparing', 0, filesRaw!.length)
-    const files = [...filesRaw]
+    let files = [...filesRaw]
+
+    if (files.length == 1 && files[0].name.endsWith('.zip')) {
+        updateUploadStatusLabel('fetching zip')
+        const zipData = await getUint8Array(files[0])
+        updateUploadStatusLabel('uncompressing zip')
+        const unzipped: Unzipped = unzipSync(zipData)
+        files = Object.entries(unzipped).map(
+            ([path, data]) =>
+                ({
+                    webkitRelativePath: path,
+                    data,
+                }) as unknown as File
+        )
+    }
 
     function findCrossCode(files: File[]) {
-        const root = files[0].webkitRelativePath.substring(0, files[0].webkitRelativePath.indexOf('/') + 1)
-        if (!root) return
+        const root = files[0].webkitRelativePath.startsWith('assets/')
+            ? ''
+            : files[0].webkitRelativePath.substring(0, files[0].webkitRelativePath.indexOf('/') + 1)
 
         const hasDatabase = files.find(file => {
             return file.webkitRelativePath.substring(root.length) == 'assets/data/database.json'
@@ -203,13 +210,13 @@ export async function uploadCrossCode(filesRaw: FileList) {
     }
 
     const root = findCrossCode(files)
-    if (!root) {
-        console.log('not crosscode')
+    if (root === undefined) {
+        updateUploadStatusLabel('crosscode not detected!')
         return
     }
 
     const toCopyFiles = await filesToCopy(files, root)
     await copyFiles(toCopyFiles)
 
-    updateStorageInfoLabel()
+    updateUI()
 }

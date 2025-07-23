@@ -47,6 +47,9 @@ importers:
       esbuild:
         specifier: ^0.25.3
         version: 0.25.3
+      fflate:
+        specifier: ^0.8.2
+        version: 0.8.2
       jquery:
         specifier: ^3.7.1
         version: 3.7.1

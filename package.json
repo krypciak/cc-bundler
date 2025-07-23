@@ -21,6 +21,7 @@
         "ccmoddb": "github:CCDirectLink/CCModDB",
         "core-js": "^3.42.0",
         "esbuild": "^0.25.3",
+        "fflate": "^0.8.2",
         "jquery": "^3.7.1",
         "node": "^23.11.0",
         "path-browserify": "^1.0.1",
@@ -28,6 +29,10 @@
         "ultimate-crosscode-typedefs": "github:krypciak/ultimate-crosscode-typedefs"
     },
     "pnpm": {
-        "onlyBuiltDependencies": ["core-js", "esbuild", "node"]
+        "onlyBuiltDependencies": [
+            "core-js",
+            "esbuild",
+            "node"
+        ]
     }
 }

@@ -1,7 +1,7 @@
 import { configure, fs, InMemory } from '@zenfs/core'
 import { IndexedDB } from '@zenfs/dom'
 import { Zip } from '@zenfs/archives'
-import { mountChangeEvent } from './ui'
+import { updateUI } from './ui'
 export { fs }
 
 export function clearAssets() {
@@ -42,5 +42,5 @@ export async function preloadInit() {
     await fs.promises.writeFile('/metadata.json', JSON.stringify(metadata))
 
     isMounted = true
-    mountChangeEvent()
+    updateUI()
 }

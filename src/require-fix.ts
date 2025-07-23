@@ -84,9 +84,7 @@ window.process = {
 // @ts-expect-error
 window.nw = {}
 
-// @ts-expect-error
 window.chrome ??= {}
-// @ts-expect-error
 window.chrome.runtime = {
     reload() {
         location.reload()

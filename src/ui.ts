@@ -1,13 +1,15 @@
 import { isMounted, clearAssets, fs, ccloaderVersion } from './fs-proxy'
 import { run } from './main'
 import { uploadCrossCode } from './upload-processing'
+import type { ChangelogFileData } from 'ultimate-crosscode-typedefs/file-types/changelog'
 
 declare global {
     const storageInfoLabel: HTMLSpanElement
     const uploadStatusLabel: HTMLSpanElement
-    const gameInfoLabel: HTMLSpanElement
+    const gameInfoLabel: HTMLDivElement
 
     const dirInput: HTMLInputElement
+    const archiveInput: HTMLInputElement
 
     const clearButton: HTMLButtonElement
     const runButton: HTMLButtonElement
@@ -17,13 +19,16 @@ function updateElementsEnabled() {
     const isEnabled = isMounted
 
     dirInput.disabled = !isEnabled
-    runButton.disabled = !isEnabled
+    archiveInput.disabled = !isEnabled
 }
 
-import type { ChangelogFileData } from 'ultimate-crosscode-typedefs/file-types/changelog'
-
-async function loadVersion(): Promise<string> {
-    const changelogText = await fs.promises.readFile('/assets/data/changelog.json', 'utf8')
+async function loadVersion(): Promise<string | undefined> {
+    let changelogText: string
+    try {
+        changelogText = await fs.promises.readFile('/assets/data/changelog.json', 'utf8')
+    } catch (e) {
+        return
+    }
     const { changelog } = JSON.parse(changelogText) as ChangelogFileData
     const latestEntry = changelog[0]
 
@@ -49,16 +54,20 @@ async function updateGameInfo() {
 
     if (isMounted) {
         gameInfoLabel.style.visibility = 'inherit'
-        gameVersionStr = await loadVersion()
+
+        const gameVersion = await loadVersion()
+        runButton.disabled = !gameVersion
+        gameVersionStr = gameVersion ?? 'not installed'
+
         ccloaderVersionStr = ccloaderVersion!
     } else {
-        gameInfoLabel.style.visibility = 'hidden'
+        // gameInfoLabel.style.visibility = 'hidden'
     }
 
-    gameInfoLabel.textContent = `CrossCode ${gameVersionStr}\nCCLoader ${ccloaderVersionStr}`
+    gameInfoLabel.innerHTML = `CrossCode: ${gameVersionStr} <br /> CCLoader: ${ccloaderVersionStr}`
 }
 
-export async function mountChangeEvent() {
+export async function updateUI() {
     updateStorageInfoLabel()
     updateElementsEnabled()
     updateGameInfo()
@@ -78,69 +87,34 @@ export async function updateStorageInfoLabel() {
     }
 }
 
-export async function updateUploadStatusLabel(
-    operation: string,
-    fileCount: number,
-    allFilesCount: number,
-    dontShowTotal: boolean = false
-) {
+export async function updateUploadStatusLabel(operation: string, fileCount?: number, allFilesCount?: number) {
     uploadStatusLabel.style.visibility = 'inherit'
 
-    const prefix = `${operation}: ${fileCount}`
-    if (dontShowTotal) {
-        uploadStatusLabel.textContent = prefix
-    } else {
-        const percentage = allFilesCount == 0 ? 100 : Math.floor((fileCount / allFilesCount) * 100)
-        uploadStatusLabel.textContent = `${prefix} / ${allFilesCount} (${percentage}%)`
+    const getText = () => {
+        if (allFilesCount === undefined) {
+            if (fileCount === undefined) {
+                return operation
+            } else {
+                return `${operation}: ${fileCount}`
+            }
+        } else {
+            const percentage = allFilesCount == 0 ? 100 : Math.floor((fileCount! / allFilesCount) * 100)
+            return `${operation}: ${fileCount} / ${allFilesCount} (${percentage}%)`
+        }
     }
+    uploadStatusLabel.textContent = getText()
 }
 
 export function showLoadScreen() {
-    document.body.innerHTML += `
-        <div id="bundleTitleScreen">
-            <span id="storageInfoLabel"></span>
-            <br>
-            <button id="clearButton">Clear stoarge</button>
-            <br>
-            <br>
-            <input id="dirInput" type="file" multiple directory webkitdirectory />
-            <br>
-            <span id="uploadStatusLabel" style="visibility: hidden;"></span>
-            <br>
-            <button id="runButton">Run</button>
-            <br>
-            <span id="gameInfoLabel" style="white-space: pre-line;"></span>
-        </div>
-    `
-    const style = document.createElement('style')
-    style.textContent = `
-            #bundleTitleScreen {
-                position: absolute;
-                background-color: gray;
-                border: solid;
-
-                width: 400px;
-                top: 50%;
-                left: 50%;
-                transform: translate(-50%, -50%);
-
-                font-family: sans-serif;
-                padding: 20px;
-                justify-content: center;
-                align-items: center;
-                text-align: center;
-            }
-
-            button {
-                margin: 10px;
-                padding: 8px 16px;
-                font-size: 16px;
-                cursor: pointer;
-            }
-    `
-    document.head.appendChild(style)
-
     dirInput.addEventListener(
+        'change',
+        function () {
+            uploadCrossCode(this.files!)
+        },
+        false
+    )
+
+    archiveInput.addEventListener(
         'change',
         function () {
             uploadCrossCode(this.files!)
@@ -152,5 +126,5 @@ export function showLoadScreen() {
 
     runButton.onclick = () => run()
 
-    mountChangeEvent()
+    updateUI()
 }

@@ -6,7 +6,7 @@
         <meta charset="UTF-8" />
         <title>CrossCode</title>
 
-        <link id="favicon" rel="CrossCode icon" type="image/png" href="@FAV_ICON" />
+        <link id="favicon" rel="CrossCode icon" type="image/png" href="favicon.png" />
 
         <style>
             body {
@@ -67,7 +67,54 @@
             }
         </style>
 
-        @SOCKETIO_SCRIPT @JS_SCRIPT
+        <script src="socket.io.js"></script>
+        <script src="crosscode.js" type="module"></script>
+
+        <style>
+            #bundleTitleScreen {
+                position: absolute;
+                background-color: gray;
+                border: solid;
+
+                width: 400px;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+
+                font-family: sans-serif;
+                padding: 20px;
+                justify-content: center;
+                align-items: center;
+                text-align: center;
+            }
+
+            button {
+                margin: 10px;
+                padding: 8px 16px;
+                font-size: 16px;
+                cursor: pointer;
+            }
+        </style>
     </head>
-    <body></body>
+    <body>
+        <div id="bundleTitleScreen">
+            <span id="storageInfoLabel">Mounting...</span>
+            <br />
+            <button id="clearButton">Clear stoarge</button>
+            <br />
+            <br />
+            <input id="dirInput" type="file" multiple directory webkitdirectory />
+            <br />
+            <input id="archiveInput" type="file" accept=".zip" />
+            <br />
+            <span id="uploadStatusLabel" style="visibility: hidden"></span>
+            <br />
+            <button id="runButton" disabled>Run</button>
+            <br />
+            <div id="gameInfoLabel" style="text-align: left; margin: 0 auto; width: max-content">
+                CrossCode: not installed <br />
+                CCLoader: ...
+            </div>
+        </div>
+    </body>
 </html>
