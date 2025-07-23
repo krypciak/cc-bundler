@@ -21,10 +21,9 @@ declare global {
 async function setup() {
     if (navigator.serviceWorker.controller) {
         showLoadScreen()
+        requireFix()
 
         await fsProxy.preloadInit()
-
-        requireFix()
     } else {
         run()
     }

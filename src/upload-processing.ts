@@ -19,8 +19,6 @@ async function filesToCopy(files: File[], root: string) {
         .map(file => [file.webkitRelativePath.substring(root.length), file] as [string, File])
         .filter(([path]) => path.startsWith('assets') && !path.startsWith('assets/modules'))
 
-    assetsFiles.sort((a, b) => a.length - b.length)
-
     const fileParentDirs: Record<string, [string, File][]> = {}
     for (const [path, file] of assetsFiles) {
         const parent = '/' + paths.dirname(path)
@@ -79,7 +77,7 @@ async function filesToCopy(files: File[], root: string) {
         updateUploadStatusLabel(label, ++filesChecked, filesTotal)
 
         if (!exists) {
-            treeForEach(node, async (_path, node) => {
+            await treeForEach(node, async (_path, node) => {
                 if (node.files) {
                     toCopyFiles.push(...node.files)
                 }
@@ -103,6 +101,8 @@ async function filesToCopy(files: File[], root: string) {
             return true
         }
     })
+
+    toCopyFiles.sort((a, b) => a[0].length - b[0].length)
 
     return toCopyFiles
 }
@@ -155,7 +155,12 @@ async function copyFiles(toCopyFiles: [string, File][]) {
             await waitPromises[i]
             const buffer = await getUint8Array(file)
 
-            await fs.promises.writeFile(path, buffer)
+            try {
+                await fs.promises.writeFile(path, buffer)
+            } catch (e) {
+                console.error('error while writing file:', path, e)
+                return
+            }
             updateUploadStatusLabel('copying', ++filesCopied, toCopyFiles.length)
 
             runNext(i)
@@ -167,7 +172,7 @@ async function copyFiles(toCopyFiles: [string, File][]) {
         next?.()
     }
 
-    const atOnce = 200
+    const atOnce = 100
 
     for (let i = 0; i < Math.min(atOnce, toCopyFiles.length); i++) {
         waitResolves[i]()
