@@ -1,11 +1,14 @@
-import { isMounted, clearAssets, fs } from './fs-proxy'
+import { isMounted, clearAssets, fs, ccloaderVersion } from './fs-proxy'
 import { run } from './main'
 import { uploadCrossCode } from './upload-processing'
 
 declare global {
     const storageInfoLabel: HTMLSpanElement
     const uploadStatusLabel: HTMLSpanElement
+    const gameInfoLabel: HTMLSpanElement
+
     const dirInput: HTMLInputElement
+
     const clearButton: HTMLButtonElement
     const runButton: HTMLButtonElement
 }
@@ -17,9 +20,48 @@ function updateElementsEnabled() {
     runButton.disabled = !isEnabled
 }
 
+import type { ChangelogFileData } from 'ultimate-crosscode-typedefs/file-types/changelog'
+
+async function loadVersion(): Promise<string> {
+    const changelogText = await fs.promises.readFile('/assets/data/changelog.json', 'utf8')
+    const { changelog } = JSON.parse(changelogText) as ChangelogFileData
+    const latestEntry = changelog[0]
+
+    const version = latestEntry.version
+
+    let hotfix = 0
+    let changes = []
+    if (latestEntry.changes != null) changes.push(...latestEntry.changes)
+    if (latestEntry.fixes != null) changes.push(...latestEntry.fixes)
+    for (let change of changes) {
+        let match = /^\W*HOTFIX\((\d+)\)/i.exec(change)
+        if (match != null && match.length === 2) {
+            hotfix = Math.max(hotfix, parseInt(match[1], 10))
+        }
+    }
+
+    return `v${version}-${hotfix}`
+}
+
+async function updateGameInfo() {
+    let gameVersionStr = 'loading...'
+    let ccloaderVersionStr = 'loading...'
+
+    if (isMounted) {
+        gameInfoLabel.style.visibility = 'inherit'
+        gameVersionStr = await loadVersion()
+        ccloaderVersionStr = ccloaderVersion!
+    } else {
+        gameInfoLabel.style.visibility = 'hidden'
+    }
+
+    gameInfoLabel.textContent = `CrossCode ${gameVersionStr}\nCCLoader ${ccloaderVersionStr}`
+}
+
 export async function mountChangeEvent() {
     updateStorageInfoLabel()
     updateElementsEnabled()
+    updateGameInfo()
 }
 
 export async function updateStorageInfoLabel() {
@@ -66,6 +108,8 @@ export function showLoadScreen() {
             <span id="uploadStatusLabel" style="visibility: hidden;"></span>
             <br>
             <button id="runButton">Run</button>
+            <br>
+            <span id="gameInfoLabel" style="white-space: pre-line;"></span>
         </div>
     `
     const style = document.createElement('style')

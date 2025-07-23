@@ -16,6 +16,7 @@ export function wait(ms: number): Promise<void> {
 }
 
 export let isMounted = false
+export let ccloaderVersion: string | undefined
 
 export async function preloadInit() {
     console.log('mounting...')
@@ -29,7 +30,8 @@ export async function preloadInit() {
     console.log('mounted!')
     // console.log(fs.readdirSync('/assets'))
 
-    await fs.promises.writeFile('/metadata.json', '{ "version": "3.3.3-alpha" }')
+    ccloaderVersion = '3.3.3-alpha'
+    await fs.promises.writeFile('/metadata.json', `{ "version": "${ccloaderVersion}" }`)
 
     isMounted = true
     mountChangeEvent()
