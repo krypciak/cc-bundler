@@ -51,15 +51,14 @@ async function run() {
     try {
         const files = await fs.promises.readdir(distDir)
         for (const file of files) {
-            await fs.promises.rm(file, { recursive: true })
+            await fs.promises.rm(distDir + '/' + file, { recursive: true })
         }
-    } catch (e) {}
+    } catch (e) {
+        console.log(e)
+    }
     await fs.promises.mkdir(distDir, { recursive: true })
 
     const outIndexPath = `${distDir}/index.html`
-
-    let html = await fs.promises.readFile('./index.html', 'utf8')
-    html = await handleCssImageReplacement(html)
 
     const socketioPath = '../lib/socket.io.min.js'
     const socketioCode = await fs.promises.readFile(socketioPath, 'utf8')
@@ -75,7 +74,11 @@ async function run() {
                 console.log('building...')
             })
             build.onEnd(async res => {
-                const code = res.outputFiles![0].text
+                const code = res.outputFiles![0]?.text
+                if (!code) return
+
+                let html = await fs.promises.readFile('./index.html', 'utf8')
+                html = await handleCssImageReplacement(html)
 
                 const socketioTag = '@SOCKETIO_SCRIPT'
                 const jsTag = '@JS_SCRIPT'
@@ -164,8 +167,8 @@ async function run() {
         external: ['nw.gui', 'fs', 'http', 'crypto', 'repl'],
     })
 
-    await fs.promises.cp('../tmp/_assets.zip', `${distDir}/_assets.zip`)
-    await fs.promises.cp('../tmp/runtime.ccmod', `${distDir}/runtime.ccmod`)
+    // await fs.promises.cp('../tmp/_assets.zip', `${distDir}/_assets.zip`)
+    await fs.promises.cp('../../runtime.ccmod', `${distDir}/runtime.ccmod`)
 
     if (process.argv[2] == 'build') {
         await build(ctx)

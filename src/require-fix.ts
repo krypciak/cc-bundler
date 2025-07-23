@@ -1,8 +1,9 @@
-import { path, fs } from './fs-proxy'
+import { fs } from './fs-proxy'
+import path from 'path-browserify'
 
+const crypto = {}
 const http = {}
 const https = {}
-const crypto = {}
 const stream = {}
 const util = {
     format(str: string) {
@@ -83,6 +84,8 @@ window.process = {
 // @ts-expect-error
 window.nw = {}
 
+// @ts-expect-error
+window.chrome ??= {}
 // @ts-expect-error
 window.chrome.runtime = {
     reload() {
