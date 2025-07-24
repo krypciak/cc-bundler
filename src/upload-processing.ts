@@ -39,84 +39,8 @@ async function filesToCopy(filesUnfiltered: FileEntry[]) {
             (path.startsWith('assets') || path.startsWith('dist/runtime')) && !path.startsWith('assets/modules')
     )
 
-    const fileParentDirs: Record<string, FileEntry[]> = {}
-    for (const file of files) {
-        const parent = '/' + paths.dirname(file.path)
-
-        ;(fileParentDirs[parent] ??= []).push(file)
-    }
-
-    interface TreeNode {
-        dirs: Record<string, TreeNode>
-        files?: FileEntry[]
-    }
-
-    const createTree = () => {
-        function emptyNode(): TreeNode {
-            return { dirs: {} }
-        }
-        const tree: TreeNode = emptyNode()
-
-        const label = 'creating tree'
-        const entries = Object.entries(fileParentDirs)
-        updateUploadStatusLabel(label, 0, entries.length)
-        let i = 0
-        for (const [dirPath, files] of entries) {
-            const sp = dirPath.split('/')
-            let currentNode: TreeNode = tree
-            for (let i = 1; i < sp.length; i++) {
-                const dir = sp[i]
-                currentNode = currentNode.dirs[dir] ??= emptyNode()
-            }
-            currentNode.files = files
-
-            updateUploadStatusLabel(label, ++i, entries.length)
-        }
-        return tree
-    }
-    const tree = createTree()
-
-    async function treeForEach(tree: TreeNode, func: (path: string, node: TreeNode) => Promise<boolean>, path = '/') {
-        if (await func(path, tree)) {
-            await Promise.all(Object.entries(tree.dirs).map(([dir, node]) => treeForEach(node, func, path + '/' + dir)))
-        }
-    }
-
-    const toCopyFiles: FileEntry[] = []
-
-    let filesTotal = 0
-    let filesChecked = 0
-    await treeForEach(tree, async (path, node) => {
-        const label = 'filtering out existing files'
-        updateUploadStatusLabel(label, filesChecked, ++filesTotal)
-        const exists = await fs.promises.exists(path)
-        updateUploadStatusLabel(label, ++filesChecked, filesTotal)
-
-        if (!exists) {
-            await treeForEach(node, async (_path, node) => {
-                if (node.files) {
-                    toCopyFiles.push(...node.files)
-                }
-                return true
-            })
-            return false
-        } else {
-            if (node.files) {
-                filesTotal += node.files.length
-                for (const file of node.files) {
-                    const exists = await fs.promises.exists(file.path)
-                    if (!exists) {
-                        toCopyFiles.push(file)
-                    }
-
-                    filesChecked++
-                    updateUploadStatusLabel(label, filesChecked, filesTotal)
-                }
-            }
-
-            return true
-        }
-    })
+    const existsArr: boolean[] = await Promise.all(files.map(file => fs.promises.exists(file.path)))
+    const toCopyFiles: FileEntry[] = files.filter((_, i) => !existsArr[i])
 
     toCopyFiles.sort((a, b) => a.path.length - b.path.length)
 
