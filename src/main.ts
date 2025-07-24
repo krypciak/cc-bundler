@@ -7,12 +7,12 @@ window.$ = $
 window.IG_GAME_SCALE = 4
 
 import './localstoarge-default'
-import { requireFix } from './require-fix'
+import { requireFix } from './nwjs-fix'
 import * as fsProxy from './fs-proxy'
-import { audioWarningFix } from './audio-warning-fix.js'
+import { audioWarningFix } from './audio-warning-fix'
 
-import { addFetchHandler } from '../../ccloader3/packages/core/src/service-worker-bridge.js'
-import { showLoadScreen } from './ui.js'
+import { addFetchHandler } from '../../ccloader3/packages/core/src/service-worker-bridge'
+import { showLoadScreen } from './ui'
 
 declare global {
     var ccbundler: boolean
