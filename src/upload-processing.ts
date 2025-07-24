@@ -1,5 +1,5 @@
 import { updateUI, updateUploadStatusLabel } from './ui'
-import paths from 'path-browserify'
+import { path as paths } from './nwjs-fix'
 import { fs } from './fs-proxy'
 import { type Unzipped, unzipSync } from 'fflate/browser'
 
@@ -13,11 +13,7 @@ function fileEntryFromFile(file: File, addPrefix = ''): FileEntry {
         path: addPrefix + file.webkitRelativePath,
         async uint8Array() {
             try {
-                if (file.bytes) {
-                    return file.bytes()
-                } else {
-                    return new Uint8Array(await file.arrayBuffer())
-                }
+                return getUint8ArrayFromFile(file)
             } catch (e) {
                 console.error(e)
                 return new Uint8Array()
@@ -140,7 +136,7 @@ async function mkdirs(dirs: string[]) {
     updateUploadStatusLabel(label, dirs.length, dirs.length)
 }
 
-async function copyFiles(toCopyFiles: FileEntry[]) {
+async function copyFiles(toCopyFiles: FileEntry[], fetchRateLimit: boolean) {
     const dirs = getParentDirs(toCopyFiles)
     await mkdirs(dirs)
 
@@ -160,12 +156,7 @@ async function copyFiles(toCopyFiles: FileEntry[]) {
             await waitPromises[i]
             const buffer = await file.uint8Array()
 
-            try {
-                await fs.promises.writeFile(file.path, buffer)
-            } catch (e) {
-                console.error('error while writing file:', file.path, e)
-                return
-            }
+            await fs.promises.writeFile(file.path, buffer)
             updateUploadStatusLabel('copying', ++filesCopied, toCopyFiles.length)
 
             runNext(i)
@@ -177,7 +168,7 @@ async function copyFiles(toCopyFiles: FileEntry[]) {
         next?.()
     }
 
-    const atOnce = 100
+    const atOnce = fetchRateLimit ? 100 : 1000
 
     for (let i = 0; i < Math.min(atOnce, toCopyFiles.length); i++) {
         waitResolves[i]()
@@ -191,15 +182,18 @@ async function copyFiles(toCopyFiles: FileEntry[]) {
 async function zipToFileEntryList(zipData: Uint8Array, addPrefix = ''): Promise<FileEntry[]> {
     updateUploadStatusLabel('uncompressing zip')
     const unzipped: Unzipped = unzipSync(zipData)
-    return Object.entries(unzipped).map(([path, data]) => ({
-        path: addPrefix + path,
-        async uint8Array() {
-            return data
-        },
-    }))
+    return Object.entries(unzipped)
+        .map(([path, data]) => ({
+            path: addPrefix + path,
+            async uint8Array() {
+                return data
+            },
+        }))
+        .filter(({ path }) => !path.endsWith('/'))
 }
 
 import runtimeModJson from '../tmp/runtime.json'
+import { getUint8ArrayFromFile } from './opfs'
 
 async function loadRuntimeModData(): Promise<Uint8Array> {
     return Uint8Array.from(atob(runtimeModJson.data), c => c.charCodeAt(0))
@@ -214,11 +208,13 @@ async function getRuntimeModFiles(): Promise<FileEntry[]> {
 export async function uploadCrossCode(filesRaw: FileList) {
     updateUploadStatusLabel('preparing', 0, filesRaw!.length)
     let files = [...filesRaw].map(file => fileEntryFromFile(file))
+    let fetchRateLimit = true
 
     if (files.length == 1 && filesRaw[0].name.endsWith('.zip')) {
         updateUploadStatusLabel('fetching zip')
         const zipData = await files[0].uint8Array()
         files = await zipToFileEntryList(zipData)
+        fetchRateLimit = false
     }
 
     function findCrossCode(files: FileEntry[]): boolean {
@@ -246,7 +242,7 @@ export async function uploadCrossCode(filesRaw: FileList) {
     files.push(...(await getRuntimeModFiles()))
 
     const toCopyFiles = await filesToCopy(files)
-    await copyFiles(toCopyFiles)
+    await copyFiles(toCopyFiles, fetchRateLimit)
 
     updateUI()
 }

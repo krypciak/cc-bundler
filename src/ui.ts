@@ -1,4 +1,4 @@
-import { isMounted, clearAssets, fs, ccloaderVersion } from './fs-proxy'
+import { isMounted, clearStorage, fs, ccloaderVersion } from './fs-proxy'
 import { run } from './main'
 import { uploadCrossCode } from './upload-processing'
 import type { ChangelogFileData } from 'ultimate-crosscode-typedefs/file-types/changelog'
@@ -24,11 +24,11 @@ function updateElementsEnabled() {
 
 async function loadVersion(): Promise<string | undefined> {
     let changelogText: string
-    try {
-        changelogText = await fs.promises.readFile('/assets/data/changelog.json', 'utf8')
-    } catch (e) {
-        return
-    }
+    const changelogPath = '/assets/data/changelog.json'
+    if (!(await fs.promises.exists(changelogPath))) return
+
+    changelogText = await fs.promises.readFile(changelogPath, 'utf8')
+
     const { changelog } = JSON.parse(changelogText) as ChangelogFileData
     const latestEntry = changelog[0]
 
@@ -61,7 +61,7 @@ async function updateGameInfo() {
 
         ccloaderVersionStr = ccloaderVersion!
     } else {
-        // gameInfoLabel.style.visibility = 'hidden'
+        gameInfoLabel.style.visibility = 'hidden'
     }
 
     gameInfoLabel.innerHTML = `CrossCode: ${gameVersionStr} <br /> CCLoader: ${ccloaderVersionStr}`
@@ -123,7 +123,7 @@ export function showLoadScreen() {
         false
     )
 
-    clearButton.onclick = () => clearAssets()
+    clearButton.onclick = () => clearStorage()
 
     runButton.onclick = () => run()
 

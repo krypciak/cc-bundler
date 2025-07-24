@@ -1,5 +1,6 @@
 import { fs } from './fs-proxy'
 import path from 'path-browserify'
+export { path }
 
 const crypto = {}
 const http = {}

@@ -1,10 +1,9 @@
-import { configureSingle, fs } from '@zenfs/core'
-import { WebAccess } from '@zenfs/dom'
 import { updateUI } from './ui'
 
+import { init, fs } from './opfs'
 export { fs }
 
-export async function clearAssets() {
+export async function clearStorage() {
     const root = await navigator.storage.getDirectory()
     for await (const file of root.values()) {
         await root.removeEntry(file.name, { recursive: true })
@@ -21,15 +20,12 @@ export let ccloaderVersion: string | undefined
 
 import metadata from '../../ccloader3/metadata.json'
 
-export async function preloadInit() {
-    console.log('mounting...')
-    const root = await navigator.storage.getDirectory()
+export let fsRoot: FileSystemDirectoryHandle
 
-    await configureSingle({
-        backend: WebAccess,
-        handle: root,
-    })
-    console.log('mounted!')
+export async function preloadInit() {
+    fsRoot = await navigator.storage.getDirectory()
+
+    await init()
 
     ccloaderVersion = metadata.version
     await fs.promises.writeFile('/metadata.json', JSON.stringify(metadata))
