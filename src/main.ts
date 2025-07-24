@@ -1,8 +1,3 @@
-import $ from 'jquery'
-
-// @ts-expect-error
-window.$ = $
-
 /* Set variables from assets/node-webkit.html */
 window.IG_GAME_SCALE = 4
 
