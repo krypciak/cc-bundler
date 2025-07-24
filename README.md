@@ -1,5 +1,7 @@
 # Build instructions
 
+OUTDATED BUILD INSTRUCTIONS  
+
 ```bash
 # cd /my/crosscode/directory
 git clone https://github.com/krypciak/cc-bundler
