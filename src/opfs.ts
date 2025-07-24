@@ -296,6 +296,12 @@ export const fs = {
     },
     readFile: wrapAsync(readFile),
     readdir: wrapAsync(readdir),
+    fileCount() {
+        return pathToFileHandle.size
+    },
+    dirCount() {
+        return pathToDirHandle.size
+    },
 }
 
 // const fsa: typeof import('fs') = undefined as any

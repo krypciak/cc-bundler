@@ -77,8 +77,7 @@ export async function updateStorageInfoLabel() {
     if (isMounted) {
         let fileCountStr: string = '???'
         try {
-            const files = await fs.promises.readdir('/', { recursive: true })
-            const count = files.length - 1
+            const count = fs.fileCount() - 1
             fileCountStr = count.toString()
         } catch (e) {}
 
