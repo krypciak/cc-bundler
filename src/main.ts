@@ -1,13 +1,10 @@
-/* Set variables from assets/node-webkit.html */
-window.IG_GAME_SCALE = 4
-
-import './localstoarge-default'
 import { requireFix } from './nwjs-fix'
 import * as fsProxy from './fs-proxy'
 import { audioWarningFix } from './audio-warning-fix'
+import { showLoadScreen } from './ui'
+import './localstoarge-default'
 
 import { addFetchHandler } from '../../ccloader3/packages/core/src/service-worker-bridge'
-import { showLoadScreen } from './ui'
 
 declare global {
     var ccbundler: boolean

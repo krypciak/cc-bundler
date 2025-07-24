@@ -10,34 +10,59 @@ const util = {
         return str
     },
 }
+
 const nwGui = {
     App: {
         dataPath: '/nwjsData',
         argv: [],
-    },
+    } satisfies Partial<nw.App> as unknown as nw.App,
     Window: {
         get(): NWJS_Helpers.win {
             return {
                 isFullscreen: false,
-                enterFullscreen() {},
-                leaveFullscreen() {},
-                close() {},
+                enterFullscreen() {
+                    document.body.requestFullscreen()
+                },
+                leaveFullscreen() {
+                    document.exitFullscreen()
+                },
+                close() {
+                    location.reload()
+                },
             } as NWJS_Helpers.win
         },
-        open(url: string, option: NWJS_Helpers.WindowOpenOption) {},
-    },
+        async open(url: string, _option: NWJS_Helpers.WindowOpenOption) {
+            if (url.startsWith('data:image/png;base64,')) {
+                /* workaround because of https://blog.mozilla.org/security/2017/11/27/blocking-top-level-navigations-data-urls-firefox-59/ */
+                const blob = await (await fetch(url)).blob()
+                const fileURL = URL.createObjectURL(blob)
+                window.open(fileURL, '_blank')
+            } else {
+                window.open(url, '_blank')
+            }
+        },
+    } satisfies Partial<nw.Window> as unknown as nw.Window,
     Clipboard: {
         get() {
             return {
-                set(content: string, type: string, das: boolean) {},
-            }
+                async set(_content: string, _type: string, _raw: boolean) {},
+                get(_type, _raw) {
+                    return 'not supported'
+                },
+            } satisfies Partial<NWJS_Helpers.clip> as unknown as NWJS_Helpers.clip
         },
-    },
-}
+    } satisfies Partial<nw.Clipboard> as unknown as nw.Clipboard,
+} as const satisfies Partial<typeof nw>
+window.nw = nwGui as typeof nw
+
 const greenworks = {
     init() {},
-    activateAchievement() {},
-    clearAchievement() {},
+    activateAchievement() {
+        // console.log('activateAchievement', ...args)
+    },
+    clearAchievement() {
+        // console.log('clearAchievement', ...args)
+    },
 }
 
 export function requireFix() {
@@ -80,9 +105,6 @@ window.process = {
         return '/'
     },
 } as any
-
-// @ts-expect-error
-window.nw = {}
 
 window.chrome ??= {}
 window.chrome.runtime = {
