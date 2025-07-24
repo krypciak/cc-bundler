@@ -3,10 +3,33 @@ import paths from 'path-browserify'
 import { fs } from './fs-proxy'
 import { type Unzipped, unzipSync } from 'fflate/browser'
 
-function getParentDirs(files: [string, File][]): string[] {
+interface FileEntry {
+    path: string
+    uint8Array(): Promise<Uint8Array>
+}
+
+function fileEntryFromFile(file: File, addPrefix = ''): FileEntry {
+    return {
+        path: addPrefix + file.webkitRelativePath,
+        async uint8Array() {
+            try {
+                if (file.bytes) {
+                    return file.bytes()
+                } else {
+                    return new Uint8Array(await file.arrayBuffer())
+                }
+            } catch (e) {
+                console.error(e)
+                return new Uint8Array()
+            }
+        },
+    }
+}
+
+function getParentDirs(files: FileEntry[]): string[] {
     const dirs = new Set<string>()
 
-    for (const [path] of files) {
+    for (const { path } of files) {
         const parent = '/' + paths.dirname(path)
         dirs.add(parent)
     }
@@ -14,21 +37,22 @@ function getParentDirs(files: [string, File][]): string[] {
     return [...dirs]
 }
 
-async function filesToCopy(files: File[], root: string) {
-    const assetsFiles = files
-        .map(file => [file.webkitRelativePath.substring(root.length), file] as [string, File])
-        .filter(([path]) => path.startsWith('assets') && !path.startsWith('assets/modules'))
+async function filesToCopy(filesUnfiltered: FileEntry[]) {
+    const files = filesUnfiltered.filter(
+        ({ path }) =>
+            (path.startsWith('assets') || path.startsWith('dist/runtime')) && !path.startsWith('assets/modules')
+    )
 
-    const fileParentDirs: Record<string, [string, File][]> = {}
-    for (const [path, file] of assetsFiles) {
-        const parent = '/' + paths.dirname(path)
+    const fileParentDirs: Record<string, FileEntry[]> = {}
+    for (const file of files) {
+        const parent = '/' + paths.dirname(file.path)
 
-        ;(fileParentDirs[parent] ??= []).push([path, file])
+        ;(fileParentDirs[parent] ??= []).push(file)
     }
 
     interface TreeNode {
         dirs: Record<string, TreeNode>
-        files?: [string, File][]
+        files?: FileEntry[]
     }
 
     const createTree = () => {
@@ -44,7 +68,7 @@ async function filesToCopy(files: File[], root: string) {
         for (const [dirPath, files] of entries) {
             const sp = dirPath.split('/')
             let currentNode: TreeNode = tree
-            for (let i = 2; i < sp.length; i++) {
+            for (let i = 1; i < sp.length; i++) {
                 const dir = sp[i]
                 currentNode = currentNode.dirs[dir] ??= emptyNode()
             }
@@ -56,17 +80,13 @@ async function filesToCopy(files: File[], root: string) {
     }
     const tree = createTree()
 
-    async function treeForEach(
-        tree: TreeNode,
-        func: (path: string, node: TreeNode) => Promise<boolean>,
-        path = '/assets'
-    ) {
+    async function treeForEach(tree: TreeNode, func: (path: string, node: TreeNode) => Promise<boolean>, path = '/') {
         if (await func(path, tree)) {
             await Promise.all(Object.entries(tree.dirs).map(([dir, node]) => treeForEach(node, func, path + '/' + dir)))
         }
     }
 
-    const toCopyFiles: [string, File][] = []
+    const toCopyFiles: FileEntry[] = []
 
     let filesTotal = 0
     let filesChecked = 0
@@ -87,10 +107,10 @@ async function filesToCopy(files: File[], root: string) {
         } else {
             if (node.files) {
                 filesTotal += node.files.length
-                for (const [path, file] of node.files) {
-                    const exists = await fs.promises.exists(path)
+                for (const file of node.files) {
+                    const exists = await fs.promises.exists(file.path)
                     if (!exists) {
-                        toCopyFiles.push([path, file])
+                        toCopyFiles.push(file)
                     }
 
                     filesChecked++
@@ -102,7 +122,7 @@ async function filesToCopy(files: File[], root: string) {
         }
     })
 
-    toCopyFiles.sort((a, b) => a[0].length - b[0].length)
+    toCopyFiles.sort((a, b) => a.path.length - b.path.length)
 
     return toCopyFiles
 }
@@ -120,22 +140,7 @@ async function mkdirs(dirs: string[]) {
     updateUploadStatusLabel(label, dirs.length, dirs.length)
 }
 
-async function getUint8Array(file: File): Promise<Uint8Array> {
-    if ('data' in file) return file.data as Uint8Array
-
-    try {
-        if (file.bytes) {
-            return await file.bytes()
-        } else {
-            return new Uint8Array(await file.arrayBuffer())
-        }
-    } catch (e) {
-        console.error(e)
-        return new Uint8Array()
-    }
-}
-
-async function copyFiles(toCopyFiles: [string, File][]) {
+async function copyFiles(toCopyFiles: FileEntry[]) {
     const dirs = getParentDirs(toCopyFiles)
     await mkdirs(dirs)
 
@@ -151,14 +156,14 @@ async function copyFiles(toCopyFiles: [string, File][]) {
 
     let filesCopied = 0
     const copyPromises = Promise.all(
-        toCopyFiles.map(async ([path, file], i) => {
+        toCopyFiles.map(async (file, i) => {
             await waitPromises[i]
-            const buffer = await getUint8Array(file)
+            const buffer = await file.uint8Array()
 
             try {
-                await fs.promises.writeFile(path, buffer)
+                await fs.promises.writeFile(file.path, buffer)
             } catch (e) {
-                console.error('error while writing file:', path, e)
+                console.error('error while writing file:', file.path, e)
                 return
             }
             updateUploadStatusLabel('copying', ++filesCopied, toCopyFiles.length)
@@ -183,44 +188,64 @@ async function copyFiles(toCopyFiles: [string, File][]) {
     updateUploadStatusLabel('done, uploaded', toCopyFiles.length)
 }
 
+async function zipToFileEntryList(zipData: Uint8Array, addPrefix = ''): Promise<FileEntry[]> {
+    updateUploadStatusLabel('uncompressing zip')
+    const unzipped: Unzipped = unzipSync(zipData)
+    return Object.entries(unzipped).map(([path, data]) => ({
+        path: addPrefix + path,
+        async uint8Array() {
+            return data
+        },
+    }))
+}
+
+import runtimeModJson from '../tmp/runtime.json'
+
+async function loadRuntimeModData(): Promise<Uint8Array> {
+    return Uint8Array.from(atob(runtimeModJson.data), c => c.charCodeAt(0))
+}
+
+async function getRuntimeModFiles(): Promise<FileEntry[]> {
+    const data = await loadRuntimeModData()
+    const runtimeModFiles = await zipToFileEntryList(data, 'dist/runtime/')
+    return runtimeModFiles
+}
+
 export async function uploadCrossCode(filesRaw: FileList) {
     updateUploadStatusLabel('preparing', 0, filesRaw!.length)
-    let files = [...filesRaw]
+    let files = [...filesRaw].map(file => fileEntryFromFile(file))
 
-    if (files.length == 1 && files[0].name.endsWith('.zip')) {
+    if (files.length == 1 && files[0].path.endsWith('.zip')) {
         updateUploadStatusLabel('fetching zip')
-        const zipData = await getUint8Array(files[0])
-        updateUploadStatusLabel('uncompressing zip')
-        const unzipped: Unzipped = unzipSync(zipData)
-        files = Object.entries(unzipped).map(
-            ([path, data]) =>
-                ({
-                    webkitRelativePath: path,
-                    data,
-                }) as unknown as File
-        )
+        const zipData = await files[0].uint8Array()
+        files = await zipToFileEntryList(zipData)
     }
 
-    function findCrossCode(files: File[]) {
-        const root = files[0].webkitRelativePath.startsWith('assets/')
+    function findCrossCode(files: FileEntry[]): boolean {
+        const root = files[0].path.startsWith('assets/')
             ? ''
-            : files[0].webkitRelativePath.substring(0, files[0].webkitRelativePath.indexOf('/') + 1)
+            : files[0].path.substring(0, files[0].path.indexOf('/') + 1)
 
         const hasDatabase = files.find(file => {
-            return file.webkitRelativePath.substring(root.length) == 'assets/data/database.json'
+            return file.path.substring(root.length) == 'assets/data/database.json'
         })
-        if (!hasDatabase) return
+        if (!hasDatabase) return false
 
-        return root
+        for (const file of files) {
+            file.path = file.path.substring(root.length)
+        }
+
+        return true
     }
 
-    const root = findCrossCode(files)
-    if (root === undefined) {
+    if (!findCrossCode(files)) {
         updateUploadStatusLabel('crosscode not detected!')
         return
     }
 
-    const toCopyFiles = await filesToCopy(files, root)
+    files.push(...(await getRuntimeModFiles()))
+
+    const toCopyFiles = await filesToCopy(files)
     await copyFiles(toCopyFiles)
 
     updateUI()

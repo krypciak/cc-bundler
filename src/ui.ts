@@ -77,8 +77,9 @@ export async function updateStorageInfoLabel() {
     if (isMounted) {
         let fileCountStr: string = '???'
         try {
-            const fileCount = fs.readdirSync('/assets', { recursive: true }).length
-            fileCountStr = fileCount.toString()
+            const files = await fs.promises.readdir('/', { recursive: true })
+            const count = files.length - 1
+            fileCountStr = count.toString()
         } catch (e) {}
 
         storageInfoLabel.textContent = `Files: ${fileCountStr}`
