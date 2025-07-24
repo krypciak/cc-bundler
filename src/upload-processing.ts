@@ -215,7 +215,7 @@ export async function uploadCrossCode(filesRaw: FileList) {
     updateUploadStatusLabel('preparing', 0, filesRaw!.length)
     let files = [...filesRaw].map(file => fileEntryFromFile(file))
 
-    if (files.length == 1 && files[0].path.endsWith('.zip')) {
+    if (files.length == 1 && filesRaw[0].name.endsWith('.zip')) {
         updateUploadStatusLabel('fetching zip')
         const zipData = await files[0].uint8Array()
         files = await zipToFileEntryList(zipData)
