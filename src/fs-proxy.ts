@@ -20,11 +20,7 @@ export let ccloaderVersion: string | undefined
 
 import metadata from '../../ccloader3/metadata.json'
 
-export let fsRoot: FileSystemDirectoryHandle
-
 export async function preloadInit() {
-    fsRoot = await navigator.storage.getDirectory()
-
     await init()
 
     ccloaderVersion = metadata.version

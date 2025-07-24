@@ -1,6 +1,5 @@
 import type { Dirent, MakeDirectoryOptions, ObjectEncodingOptions, StatOptions, Stats } from 'fs'
 
-import { fsRoot } from './fs-proxy'
 import { dirname, basename } from 'path-browserify'
 import { OpfsDirent, OpfsStats, constants } from './fs-misc'
 
@@ -12,7 +11,10 @@ export async function getUint8ArrayFromFile(file: File): Promise<Uint8Array> {
     }
 }
 
+let fsRoot: FileSystemDirectoryHandle
+
 export async function init() {
+    fsRoot = await navigator.storage.getDirectory()
     await buildQuickPathLookupMap()
 }
 
