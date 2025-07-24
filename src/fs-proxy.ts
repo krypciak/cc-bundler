@@ -4,15 +4,9 @@ import { init, fs } from './opfs'
 export { fs }
 
 export async function clearStorage() {
-    const root = await navigator.storage.getDirectory()
-    for await (const file of root.values()) {
-        await root.removeEntry(file.name, { recursive: true })
-    }
-    location.reload()
-}
+    await fs.clearStorage()
 
-export function wait(ms: number): Promise<void> {
-    return new Promise(resolve => setTimeout(resolve, ms))
+    preloadInit()
 }
 
 export let isMounted = false

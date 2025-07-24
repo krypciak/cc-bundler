@@ -94,11 +94,20 @@
                 font-size: 16px;
                 cursor: pointer;
             }
+
+            .infoText {
+                text-align: left;
+                margin: 0 auto;
+                width: max-content;
+            }
         </style>
     </head>
     <body>
         <div id="bundleTitleScreen">
-            <span id="storageInfoLabel">Mounting...</span>
+            <div id="storageInfoLabel" class="infoText">
+                Mounting... <br />
+                <wbr />
+            </div>
             <br />
             <button id="clearButton">Clear stoarge</button>
             <br />
@@ -107,11 +116,11 @@
             <br />
             <input id="archiveInput" type="file" accept=".zip" />
             <br />
-            <span id="uploadStatusLabel" style="visibility: hidden"></span>
+            <div id="uploadStatusLabel" class="infoText"><wbr /></div>
             <br />
             <button id="runButton" disabled>Run</button>
             <br />
-            <div id="gameInfoLabel" style="text-align: left; margin: 0 auto; width: max-content">
+            <div id="gameInfoLabel" class="infoText">
                 CrossCode: not installed <br />
                 CCLoader: ...
             </div>

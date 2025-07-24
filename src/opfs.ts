@@ -1,4 +1,4 @@
-import type { Dirent, MakeDirectoryOptions, ObjectEncodingOptions, StatOptions, Stats } from 'fs'
+import type { Dirent, MakeDirectoryOptions, ObjectEncodingOptions, RmOptions, StatOptions, Stats } from 'fs'
 
 import { dirname, basename } from 'path-browserify'
 import { OpfsDirent, OpfsStats, constants } from './fs-misc'
@@ -57,6 +57,9 @@ async function forEach(
 }
 
 async function buildQuickPathLookupMap() {
+    pathToFileHandle.clear()
+    pathToDirHandle.clear()
+
     pathToDirHandle.set('', fsRoot)
     await forEach(
         fsRoot,
@@ -89,6 +92,41 @@ async function touch(path: string): Promise<FileSystemFileHandle> {
     pathToFileHandle.set(path, handle)
 
     return handle
+}
+
+async function removeFileOrDirectory(
+    path: string,
+    handle: FileSystemDirectoryHandle | FileSystemFileHandle
+): Promise<void> {
+    if (!handle) throw new Error()
+    if (path == '/') throw new Error('opfs: cannot delete /')
+
+    if (handle.kind == 'file') {
+        pathToFileHandle.delete(path)
+    } else {
+        pathToDirHandle.delete(path)
+        for (const map of [pathToFileHandle, pathToDirHandle]) {
+            for (const filePath of map
+                .keys()
+                .filter(filePath => filePath.startsWith(path) && filePath[path.length] == '/')) {
+                map.delete(filePath)
+            }
+        }
+    }
+
+    const parentHandle = getParentDirHandle(path)
+    const name = basename(path)
+    await parentHandle.removeEntry(name, { recursive: true })
+}
+
+async function clearStorage() {
+    for await (const file of fsRoot.values()) {
+        await fsRoot.removeEntry(file.name, { recursive: true })
+    }
+}
+
+async function usage(): Promise<StorageEstimate> {
+    return navigator.storage.estimate()
 }
 
 async function readFile(path: string, encoding: 'utf-8' | 'utf8'): Promise<string>
@@ -271,7 +309,33 @@ async function stat(path: string, opts?: StatOptions): Promise<Stats> {
     return new OpfsStats(handle.kind == 'file')
 }
 
-// stat
+async function rm(path: string, options?: RmOptions): Promise<void> {
+    path = cleanPath(path)
+
+    if (options?.maxRetries) throw new Error(`opfs: rm options.maxRetries not supported`)
+    if (options?.retryDelay) throw new Error(`opfs: rm options.maxRetries not supported`)
+
+    const recursive = options?.recursive
+    const force = options?.force
+
+    const handle = getFileHandle(path) || getDirHandle(path)
+    if (!handle) {
+        if (force) return
+        throw new Error(`opfs: file not found: ${path}`)
+    }
+
+    if (handle.kind == 'directory' && !recursive) {
+        if ((await Array.fromAsync(handle.keys())).length > 0) {
+            throw new Error(`opfs: cannot remove non empty directory without recursive: ${path}`)
+        }
+    }
+    await removeFileOrDirectory(path, handle)
+}
+
+async function rename(oldPath: string, newPath: string): Promise<void> {
+    const data = await readFile(oldPath)
+    await Promise.all([writeFile(newPath, data), rm(oldPath)])
+}
 
 function wrapAsync<D, CB = (err: Error | null, data: D | null) => void>(
     func: (path: string, options?: any) => Promise<D>
@@ -295,16 +359,24 @@ export const fs = {
         mkdir,
         access,
         stat,
+        rename,
+        rm,
     },
     readFile: wrapAsync(readFile),
     readdir: wrapAsync(readdir),
+    rename: wrapAsync(rename),
+
     fileCount() {
         return pathToFileHandle.size
     },
     dirCount() {
         return pathToDirHandle.size
     },
+    clearStorage,
+    usage,
 }
+// @ts-expect-error
+window.fs = fs
 
 // const fsa: typeof import('fs') = undefined as any
-// fsa.promises.stat()
+// fsa.promises.rm()

@@ -4,8 +4,8 @@ import { uploadCrossCode } from './upload-processing'
 import type { ChangelogFileData } from 'ultimate-crosscode-typedefs/file-types/changelog'
 
 declare global {
-    const storageInfoLabel: HTMLSpanElement
-    const uploadStatusLabel: HTMLSpanElement
+    const storageInfoLabel: HTMLDivElement
+    const uploadStatusLabel: HTMLDivElement
     const gameInfoLabel: HTMLDivElement
 
     const dirInput: HTMLInputElement
@@ -81,15 +81,21 @@ export async function updateStorageInfoLabel() {
             fileCountStr = count.toString()
         } catch (e) {}
 
-        storageInfoLabel.textContent = `Files: ${fileCountStr}`
+        const stats = await fs.usage()
+        const mbUsed = (stats.usage ?? 0) / 1000 / 1000
+        const gbUsed = mbUsed / 1000
+        const usedText = (gbUsed >= 1 ? `${gbUsed.toFixed(1)} GB` : `${Math.floor(mbUsed)} MB`) + ' used'
+
+        const gbAvail = (stats.quota ?? 0) / 1000 / 1000 / 1000
+        const availText = `${Math.floor(gbAvail)} GB quota`
+
+        storageInfoLabel.innerHTML = `${usedText} / ${availText} <br> Files: ${fileCountStr}`
     } else {
-        storageInfoLabel.textContent = `Mounting...`
+        storageInfoLabel.innerHTML = `Mounting... <br> <wbr>`
     }
 }
 
 export async function updateUploadStatusLabel(operation: string, fileCount?: number, allFilesCount?: number) {
-    uploadStatusLabel.style.visibility = 'inherit'
-
     const getText = () => {
         if (allFilesCount === undefined) {
             if (fileCount === undefined) {
@@ -106,21 +112,14 @@ export async function updateUploadStatusLabel(operation: string, fileCount?: num
 }
 
 export function showLoadScreen() {
-    dirInput.addEventListener(
-        'change',
-        function () {
+    function upload(this: HTMLInputElement) {
+        if (this.files?.length ?? 0 > 0) {
             uploadCrossCode(this.files!)
-        },
-        false
-    )
+        }
+    }
 
-    archiveInput.addEventListener(
-        'change',
-        function () {
-            uploadCrossCode(this.files!)
-        },
-        false
-    )
+    dirInput.addEventListener('change', upload, false)
+    archiveInput.addEventListener('change', upload, false)
 
     clearButton.onclick = () => clearStorage()
 
