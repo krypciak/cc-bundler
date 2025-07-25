@@ -19,7 +19,7 @@ async function setup() {
 setup()
 
 export async function run() {
-    addFetchHandler(['assets', 'ccloader3', 'favicon.png'], async path => {
+    addFetchHandler(['assets', 'ccloader3'], async path => {
         return (await fsProxy.fs.promises.readFile(path)).buffer
     })
 

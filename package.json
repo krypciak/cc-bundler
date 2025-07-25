@@ -5,11 +5,13 @@
     "type": "module",
     "scripts": {
         "build": "cd build && bun build.ts build",
-        "watch": "cd build && bun build.ts watch"
+        "watch": "cd build && bun build.ts watch",
+        "httpServer": "node --experimental-strip-types src/http-server.ts"
     },
     "devDependencies": {
         "@jspm/core": "^2.1.0",
         "@types/adm-zip": "^0.5.7",
+        "@types/http-server": "^0.12.4",
         "@types/jquery": "^3.5.32",
         "@types/node": "^22.15.3",
         "@types/nw.js": "^0.92.0",
@@ -20,6 +22,7 @@
         "ccmoddb": "github:CCDirectLink/CCModDB",
         "esbuild": "^0.25.3",
         "fflate": "^0.8.2",
+        "http-server": "^14.1.1",
         "node": "^23.11.0",
         "path-browserify": "^1.0.1",
         "semver": "^7.7.1",
