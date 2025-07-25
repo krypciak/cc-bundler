@@ -3,7 +3,10 @@ import type { Dirent, MakeDirectoryOptions, ObjectEncodingOptions, RmOptions, St
 import { dirname, basename } from 'path-browserify'
 import { OpfsDirent, OpfsStats, constants } from './fs-misc'
 
-export async function getUint8ArrayFromFile(file: File): Promise<Uint8Array> {
+export async function getUint8ArrayFromFile(file: {
+    bytes?(): Promise<Uint8Array>
+    arrayBuffer(): Promise<ArrayBuffer>
+}): Promise<Uint8Array> {
     if (file.bytes) {
         return file.bytes()
     } else {
@@ -232,9 +235,13 @@ async function readdir(
     }
 }
 
-async function exists(path: string): Promise<boolean> {
+function existsSync(path: string): boolean {
     path = cleanPath(path)
     return !!(getFileHandle(path) || getDirHandle(path))
+}
+
+async function exists(path: string): Promise<boolean> {
+    return existsSync(path)
 }
 
 async function touchDir(path: string): Promise<FileSystemDirectoryHandle> {
@@ -287,19 +294,7 @@ async function access(path: string, _mode?: number): Promise<void> {
     return
 }
 
-function stat(
-    path: string,
-    opts?: StatOptions & {
-        bigint?: false | undefined
-    }
-): Promise<Stats>
-// function stat(
-//     path: string,
-//     opts: StatOptions & {
-//         bigint: true
-//     }
-// ): Promise<BigIntStats>
-async function stat(path: string, opts?: StatOptions): Promise<Stats> {
+function statSync(path: string, opts?: StatOptions): Stats {
     path = cleanPath(path)
     const handle = getFileHandle(path) || getDirHandle(path)
     if (!handle) throw new Error(`opfs: stat file or directory not found: ${path}`)
@@ -307,6 +302,9 @@ async function stat(path: string, opts?: StatOptions): Promise<Stats> {
     if (opts?.bigint) throw new Error('opfs: stat bigint option not implemented')
 
     return new OpfsStats(handle.kind == 'file')
+}
+async function stat(path: string, opts?: StatOptions): Promise<Stats> {
+    return statSync(path, opts)
 }
 
 async function rm(path: string, options?: RmOptions): Promise<void> {
@@ -359,12 +357,29 @@ export const fs = {
         mkdir,
         access,
         stat,
+        lstat: stat,
         rename,
         rm,
     },
     readFile: wrapAsync(readFile),
+    writeFile: wrapAsync(writeFile),
     readdir: wrapAsync(readdir),
+
+    exists: wrapAsync(exists),
+    existsSync,
+
+    // mkdir
+    // access
+
+    stat: wrapAsync(stat),
+    statSync,
+
+    lstat: wrapAsync(stat),
+    lstatSync: statSync,
+
     rename: wrapAsync(rename),
+
+    // rm
 
     fileCount() {
         return pathToFileHandle.size
@@ -375,8 +390,6 @@ export const fs = {
     clearStorage,
     usage,
 }
-// @ts-expect-error
-window.fs = fs
 
 // const fsa: typeof import('fs') = undefined as any
-// fsa.promises.rm()
+// fsa.lstat()
