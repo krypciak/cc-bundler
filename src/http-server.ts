@@ -2,6 +2,22 @@ import type { IncomingMessage, ServerResponse } from 'http'
 import { createServer } from 'http-server'
 import type { InputLocations } from 'ccmoddb/build/src/types'
 
+import NodeFetchCache, { MemoryCache } from 'node-fetch-cache'
+
+const fetchWithCache = NodeFetchCache.create({
+    shouldCacheResponse: response => response.ok,
+    cache: new MemoryCache({
+        ttl: 1000 * 60 * 3, // 3 days
+    }),
+})
+
+async function fetchData(url: string): Promise<Uint8Array> {
+    const resp = await fetchWithCache(url)
+    const data = new Uint8Array(await resp.arrayBuffer())
+
+    return data
+}
+
 const updateInputLocationsEveryMs = 1000 * 5 // 1000 * 60 * 60 // hour
 let lastInputLocationsFetched = 0
 const validUrlSet: Set<string> = new Set()
@@ -68,8 +84,7 @@ export async function startHttpServer() {
                         return
                     }
 
-                    const data = await (await fetch(modUrl)).bytes()
-
+                    const data = await fetchData(modUrl)
                     const etag = await sha256(data)
 
                     res.writeHead(200, {
