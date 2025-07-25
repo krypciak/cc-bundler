@@ -71,29 +71,34 @@ export async function startHttpServer() {
             async (req: IncomingMessage, res: ServerResponse) => {
                 const url = req.url ?? ''
 
-                await checkUpdate()
+                try {
+                    await checkUpdate()
 
-                if (url.startsWith('/modDownload')) {
-                    const matches = url.match(/\?url=(.+)/)
-                    const modUrl = matches?.[1]
+                    if (url.startsWith('/modDownload')) {
+                        const matches = url.match(/\?url=(.+)/)
+                        const modUrl = matches?.[1]
 
-                    if (!checkUrl(modUrl)) {
-                        res.writeHead(403, {})
+                        if (!checkUrl(modUrl)) {
+                            res.writeHead(403, {})
+                            res.end()
+
+                            return
+                        }
+
+                        const data = await fetchData(modUrl)
+                        const etag = await sha256(data)
+
+                        res.writeHead(200, {
+                            'Content-Type': 'application/zip',
+                            Etag: etag,
+                        })
+                        res.write(data)
                         res.end()
-
-                        return
+                    } else {
+                        res.emit('next')
                     }
-
-                    const data = await fetchData(modUrl)
-                    const etag = await sha256(data)
-
-                    res.writeHead(200, {
-                        'Content-Type': 'application/zip',
-                        Etag: etag,
-                    })
-                    res.write(data)
-                    res.end()
-                } else {
+                } catch (e) {
+                    console.error(e)
                     res.emit('next')
                 }
             },
