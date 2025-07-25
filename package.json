@@ -6,7 +6,7 @@
     "scripts": {
         "build": "cd build && bun build.ts build",
         "watch": "cd build && bun build.ts watch",
-        "httpServer": "node --experimental-strip-types src/http-server.ts"
+        "httpServer": "node --experimental-strip-types src/http-server/http-server.ts"
     },
     "devDependencies": {
         "@jspm/core": "^2.1.0",
