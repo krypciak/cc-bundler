@@ -96,8 +96,8 @@ async function run() {
         format: 'esm',
         write: false,
         minify: false,
-        // drop: ['debugger' /*'console'*/],
         sourcemap: 'inline',
+        // drop: ['debugger' /*'console'*/],
         plugins: [plugin],
     })
 

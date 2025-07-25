@@ -1,4 +1,12 @@
-import type { Dirent, MakeDirectoryOptions, ObjectEncodingOptions, RmOptions, StatOptions, Stats } from 'fs'
+import type {
+    Dirent,
+    MakeDirectoryOptions,
+    ObjectEncodingOptions,
+    RmDirOptions,
+    RmOptions,
+    StatOptions,
+    Stats,
+} from 'fs'
 
 import { dirname, basename } from 'path-browserify'
 import { OpfsDirent, OpfsStats, constants } from './fs-misc'
@@ -311,7 +319,7 @@ async function rm(path: string, options?: RmOptions): Promise<void> {
     path = cleanPath(path)
 
     if (options?.maxRetries) throw new Error(`opfs: rm options.maxRetries not supported`)
-    if (options?.retryDelay) throw new Error(`opfs: rm options.maxRetries not supported`)
+    if (options?.retryDelay) throw new Error(`opfs: rm options.retryDelay not supported`)
 
     const recursive = options?.recursive
     const force = options?.force
@@ -328,6 +336,24 @@ async function rm(path: string, options?: RmOptions): Promise<void> {
         }
     }
     await removeFileOrDirectory(path, handle)
+}
+
+async function unlink(path: string): Promise<void> {
+    const dirHandle = getDirHandle(path)
+    if (dirHandle) throw new Error(`opfs: cannot unlink a directory: ${path}`)
+    return rm(path)
+}
+
+async function rmdir(path: string, options?: RmDirOptions): Promise<void> {
+    path = cleanPath(path)
+
+    if (options?.maxRetries) throw new Error(`opfs: rm options.maxRetries not supported`)
+    if (options?.retryDelay) throw new Error(`opfs: rm options.retryDelay not supported`)
+
+    const fileHandle = getFileHandle(path)
+    if (fileHandle) throw new Error(`opfs: cannot rmdir a file: ${path}`)
+
+    await rm(path, { recursive: true })
 }
 
 async function rename(oldPath: string, newPath: string): Promise<void> {
@@ -360,6 +386,8 @@ export const fs = {
         lstat: stat,
         rename,
         rm,
+        unlink,
+        rmdir,
     },
     readFile: wrapAsync(readFile),
     writeFile: wrapAsync(writeFile),
@@ -379,7 +407,11 @@ export const fs = {
 
     rename: wrapAsync(rename),
 
-    // rm
+    rm: wrapAsync(rm),
+
+    unlink: wrapAsync(unlink),
+
+    rmdir: wrapAsync(rmdir),
 
     fileCount() {
         return pathToFileHandle.size
@@ -392,4 +424,4 @@ export const fs = {
 }
 
 // const fsa: typeof import('fs') = undefined as any
-// fsa.lstat()
+// fsa.promises.rmdir()

@@ -1,16 +1,21 @@
 import { fs } from './fs-proxy'
+
 import path from 'path-browserify'
 export { path }
 
+// @ts-expect-error
+import util from '@jspm/core/nodelibs/util'
+
+// @ts-expect-error
+import assert from '@jspm/core/nodelibs/assert'
+
+// @ts-expect-error
+import events from '@jspm/core/nodelibs/events'
+
 const crypto = {}
+const stream = {}
 const http = {}
 const https = {}
-const stream = {}
-const util = {
-    format(str: string) {
-        return str
-    },
-}
 
 const nwGui = {
     App: {
@@ -77,6 +82,8 @@ export function requireFix() {
         if (src == 'stream') return stream
         if (src == 'util') return util
         if (src == 'nw.gui') return nwGui
+        if (src == 'events') return events
+        if (src == 'assert') return assert
         if (src.includes('greenworks')) return greenworks
 
         console.groupCollapsed(`requireFix: unknown module: ${src}`)

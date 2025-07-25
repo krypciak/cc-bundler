@@ -8,6 +8,9 @@ importers:
 
   .:
     devDependencies:
+      '@jspm/core':
+        specifier: ^2.1.0
+        version: 2.1.0
       '@types/adm-zip':
         specifier: ^0.5.7
         version: 0.5.7
@@ -202,6 +205,9 @@ packages:
     engines: {node: '>=18'}
     cpu: [x64]
     os: [win32]
+
+  '@jspm/core@2.1.0':
+    resolution: {integrity: sha512-3sRl+pkyFY/kLmHl0cgHiFp2xEqErA8N3ECjMs7serSUBmoJ70lBa0PG5t0IM6WJgdZNyyI0R8YFfi5wM8+mzg==}
 
   '@kwsites/file-exists@1.1.1':
     resolution: {integrity: sha512-m9/5YGR18lIwxSFDwfE3oA7bWuq9kdau6ugN4H2rJeyhFQZcG9AgSHkQtSD15a8WvTgfz9aikZMrKPHvbpqFiw==}
@@ -689,6 +695,8 @@ snapshots:
 
   '@esbuild/win32-x64@0.25.3':
     optional: true
+
+  '@jspm/core@2.1.0': {}
 
   '@kwsites/file-exists@1.1.1':
     dependencies:

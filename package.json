@@ -8,6 +8,7 @@
         "watch": "cd build && bun build.ts watch"
     },
     "devDependencies": {
+        "@jspm/core": "^2.1.0",
         "@types/adm-zip": "^0.5.7",
         "@types/jquery": "^3.5.32",
         "@types/node": "^22.15.3",
@@ -24,6 +25,9 @@
         "ultimate-crosscode-typedefs": "github:krypciak/ultimate-crosscode-typedefs"
     },
     "pnpm": {
-        "onlyBuiltDependencies": ["esbuild", "node"]
+        "onlyBuiltDependencies": [
+            "esbuild",
+            "node"
+        ]
     }
 }
