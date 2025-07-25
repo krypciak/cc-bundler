@@ -6,7 +6,7 @@ export { fs }
 export async function clearStorage() {
     await fs.clearStorage()
 
-    preloadInit()
+    await preloadInit()
 }
 
 export let isMounted = false
@@ -18,7 +18,8 @@ export async function preloadInit() {
     await init()
 
     ccloaderVersion = metadata.version
-    await fs.promises.writeFile('/metadata.json', JSON.stringify(metadata))
+    await fs.promises.mkdir('ccloader3', { recursive: true })
+    await fs.promises.writeFile('ccloader3/metadata.json', JSON.stringify(metadata))
 
     isMounted = true
     updateUI()

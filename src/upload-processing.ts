@@ -26,7 +26,9 @@ function getParentDirs(files: FileEntry[]): string[] {
     const dirs = new Set<string>()
 
     for (const { path } of files) {
-        const parent = '/' + paths.dirname(path)
+        let dirname = paths.dirname(path)
+        if (dirname.endsWith('.')) dirname = dirname.slice(0, -1)
+        const parent = '/' + dirname
         dirs.add(parent)
     }
 
@@ -36,7 +38,8 @@ function getParentDirs(files: FileEntry[]): string[] {
 async function filesToCopy(filesUnfiltered: FileEntry[]) {
     const files = filesUnfiltered.filter(
         ({ path }) =>
-            (path.startsWith('assets') || path.startsWith('dist/runtime')) && !path.startsWith('assets/modules')
+            (path.startsWith('assets') || path.startsWith('ccloader3/dist/runtime')) &&
+            !path.startsWith('assets/modules')
     )
 
     const existsArr: boolean[] = await Promise.all(files.map(file => fs.promises.exists(file.path)))
@@ -125,7 +128,7 @@ async function loadRuntimeModData(): Promise<Uint8Array> {
 
 async function getRuntimeModFiles(): Promise<FileEntry[]> {
     const data = await loadRuntimeModData()
-    const runtimeModFiles = await zipToFileEntryList(data, 'dist/runtime/')
+    const runtimeModFiles = await zipToFileEntryList(data, 'ccloader3/dist/runtime/')
     return runtimeModFiles
 }
 

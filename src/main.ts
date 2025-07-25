@@ -1,5 +1,5 @@
-import { requireFix } from './nwjs-fix'
 import * as fsProxy from './fs-proxy'
+import { requireFix } from './nwjs-fix'
 import { audioWarningFix } from './audio-warning-fix'
 import { showLoadScreen } from './ui'
 import './localstoarge-default'
@@ -23,11 +23,11 @@ async function setup() {
 setup()
 
 export async function run() {
-    addFetchHandler(['assets', 'dist'], async path => {
+    addFetchHandler(['assets', 'ccloader3', 'favicon.png'], async path => {
         return (await fsProxy.fs.promises.readFile(path)).buffer
     })
 
-    const modloader = await import('../../ccloader3/packages/core/src/modloader.js')
+    const modloader = await import('../../ccloader3/packages/core/src/modloader')
     await modloader.boot()
 
     audioWarningFix()

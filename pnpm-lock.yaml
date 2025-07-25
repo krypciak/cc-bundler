@@ -32,9 +32,6 @@ importers:
       ccmoddb:
         specifier: github:CCDirectLink/CCModDB
         version: https://codeload.github.com/CCDirectLink/CCModDB/tar.gz/afde7658912cf4c0181f66512e4dcb02a3280ecd
-      core-js:
-        specifier: ^3.42.0
-        version: 3.42.0
       esbuild:
         specifier: ^0.25.3
         version: 0.25.3
@@ -325,9 +322,6 @@ packages:
 
   color-name@1.1.4:
     resolution: {integrity: sha512-dOy+3AuW3a2wNbZHIuMZpTcgjGuLU/uBL/ubcZF9OXbDo8ff4O8yVp5Bf0efS8uEoYo5q4Fx7dY9OgQGXgAsQA==}
-
-  core-js@3.42.0:
-    resolution: {integrity: sha512-Sz4PP4ZA+Rq4II21qkNqOEDTDrCvcANId3xpIgB34NDkWc3UduWj2dqEtN9yZIq8Dk3HyPI33x9sqqU5C8sr0g==}
 
   debug@4.4.0:
     resolution: {integrity: sha512-6WTZ/IxCY/T6BALoZHaE4ctp9xm+Z5kY/pzYaCHRFeyVhojxlrm+46y68HA6hr0TcwEssoxNiDEUJQjfPZ/RYA==}
@@ -824,8 +818,6 @@ snapshots:
       color-name: 1.1.4
 
   color-name@1.1.4: {}
-
-  core-js@3.42.0: {}
 
   debug@4.4.0(supports-color@8.1.1):
     dependencies:
