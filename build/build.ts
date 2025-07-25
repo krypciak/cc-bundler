@@ -1,39 +1,88 @@
 import * as esbuild from 'esbuild'
 import * as fs from 'fs'
-import * as zlib from 'zlib'
 import AdmZip from 'adm-zip'
 
-async function writeDistFile(path: string, data: Uint8Array | string) {
-    const promises: Promise<void>[] = []
-    promises.push(fs.promises.writeFile(path, data))
-    if (gzipCompression) {
-        const compPath = `${path}.gz`
-        const func = async () => {
-            const buf = await new Promise<Buffer>((resolve, reject) => {
-                zlib.gzip(data, (error: Error | null, result: Buffer) => {
-                    if (error) reject(error)
-                    else resolve(result)
-                })
+const commonOptions: esbuild.BuildOptions = {
+    format: 'esm',
+    platform: 'browser',
+    target: 'es2022',
+
+    write: false,
+    bundle: true,
+    minify: false,
+    sourcemap: 'inline',
+    // drop: ['debugger' /*'console'*/],
+} as const
+
+const isWatch = process.argv[2] === 'watch'
+const distDir = '../dist'
+
+function donePlugin(outfile: string): esbuild.Plugin {
+    return {
+        name: 'done plugin',
+        setup(build) {
+            build.onEnd(async res => {
+                let code = res.outputFiles![0]?.text
+                if (!code) return // when compile errors
+
+                await fs.promises.writeFile(outfile, code)
+
+                const bytes = code.length
+                const kb = bytes / 1024
+                console.log(outfile, `${kb.toFixed(1)}kb`)
             })
-            await fs.promises.writeFile(compPath, buf)
-        }
-        promises.push(func())
+        },
     }
-    await Promise.all(promises)
 }
 
-async function watch(ctx: esbuild.BuildContext) {
-    await ctx.watch()
-}
-async function build(ctx: esbuild.BuildContext) {
-    await ctx.rebuild()
-    process.exit()
+function main(): esbuild.BuildOptions {
+    const outfile = `${distDir}/crosscode.js`
+    return {
+        entryPoints: ['../src/main.ts'],
+
+        ...commonOptions,
+
+        plugins: [
+            donePlugin(outfile),
+            {
+                name: 'copy-files',
+                setup(build) {
+                    build.onStart(async () => {
+                        const runtimeModDir = '../../ccloader3/dist/runtime'
+                        await fs.promises.stat(runtimeModDir)
+                        const zip = new AdmZip()
+                        zip.addLocalFolder(runtimeModDir)
+                        const buf = await zip.toBufferPromise()
+                        const dataBase64 = buf.toString('base64')
+                        const json = { data: dataBase64 }
+                        fs.promises.writeFile('../tmp/runtime.json', JSON.stringify(json))
+                    })
+                    build.onEnd(async () => {
+                        await Promise.all([
+                            fs.promises.cp('./index.html', `${distDir}/index.html`),
+                            fs.promises.cp('../../favicon.png', `${distDir}/favicon.png`),
+                            fs.promises.cp('../lib/socket.io.min.js', `${distDir}/socket.io.js`),
+                        ])
+                    })
+                },
+            },
+        ],
+    }
 }
 
-const gzipCompression: boolean = false
+function ccmodServiceWorker(): esbuild.BuildOptions {
+    return {
+        entryPoints: ['../src/service-worker.ts'],
 
-async function run() {
-    const distDir = '../dist'
+        ...commonOptions,
+
+        plugins: [donePlugin(`${distDir}/dist-ccmod-service-worker.js`)],
+    }
+}
+
+const modules: Array<() => esbuild.BuildOptions> = [main, ccmodServiceWorker]
+
+async function run(): Promise<void> {
     try {
         const files = await fs.promises.readdir(distDir)
         for (const file of files) {
@@ -44,67 +93,21 @@ async function run() {
     }
     await fs.promises.mkdir(distDir, { recursive: true })
 
-    const outIndexPath = `${distDir}/index.html`
-
-    let buildI = 0
-    const plugin: esbuild.Plugin = {
-        name: 'print',
-        setup(build) {
-            build.onStart(async () => {
-                console.log()
-                console.log('building...')
-
-                const runtimeModDir = '../../ccloader3/dist/runtime'
-                await fs.promises.stat(runtimeModDir)
-                const zip = new AdmZip()
-                zip.addLocalFolder(runtimeModDir)
-                const buf = await zip.toBufferPromise()
-                const dataBase64 = buf.toString('base64')
-                const json = { data: dataBase64 }
-                fs.promises.writeFile('../tmp/runtime.json', JSON.stringify(json))
+    if (isWatch) {
+        console.clear()
+        await Promise.all(
+            modules.map(async module => {
+                const ctx = await esbuild.context(module())
+                await ctx.watch()
             })
-            build.onEnd(async res => {
-                const code = res.outputFiles![0]?.text
-                if (!code) return
-
-                await Promise.all([
-                    writeDistFile(outIndexPath, await fs.promises.readFile('./index.html')),
-                    writeDistFile(`${distDir}/favicon.png`, await fs.promises.readFile('../../favicon.png')),
-                    writeDistFile(
-                        `${distDir}/socket.io.js`,
-                        await fs.promises.readFile('../lib/socket.io.min.js', 'utf8')
-                    ),
-                    writeDistFile(`${distDir}/crosscode.js`, code),
-                    writeDistFile(
-                        `${distDir}/dist-ccmod-service-worker.js`,
-                        await fs.promises.readFile('../../ccloader3/dist-ccmod-service-worker.js')
-                    ),
-                ])
-
-                const stat = await fs.promises.stat(outIndexPath)
-                const mb = stat.size / 1_048_576
-                console.log('build done, index.html size:', mb.toFixed(2), 'MB')
-                buildI++
+        )
+    } else {
+        await Promise.all(
+            modules.map(async module => {
+                await esbuild.build(module())
             })
-        },
-    }
-
-    const ctx = await esbuild.context({
-        entryPoints: ['../src/main.ts'],
-        bundle: true,
-        target: 'es2022',
-        format: 'esm',
-        write: false,
-        minify: false,
-        sourcemap: 'inline',
-        // drop: ['debugger' /*'console'*/],
-        plugins: [plugin],
-    })
-
-    if (process.argv[2] == 'build') {
-        await build(ctx)
-    } else if (process.argv[2] == 'watch') {
-        await watch(ctx)
+        )
+        process.exit() // because esbuild keeps the process alive for some reason
     }
 }
-await run()
+run()

@@ -6,10 +6,6 @@ import './localstoarge-default'
 
 import { addFetchHandler } from '../../ccloader3/packages/core/src/service-worker-bridge'
 
-declare global {
-    var ccbundler: boolean
-}
-
 async function setup() {
     if (navigator.serviceWorker.controller) {
         showLoadScreen()

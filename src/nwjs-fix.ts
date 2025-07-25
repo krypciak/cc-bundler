@@ -92,6 +92,9 @@ export function requireFix() {
     }
 }
 
+declare global {
+    var ccbundler: boolean
+}
 window.ccbundler = true
 
 window.global = window
