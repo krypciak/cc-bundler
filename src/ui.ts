@@ -87,7 +87,7 @@ export async function updateUI() {
     }
 }
 
-export async function updateStorageInfoLabel() {
+export async function updateStorageInfoLabel(mountedCount?: number) {
     if (isMounted) {
         let fileCountStr: string = '???'
         try {
@@ -107,7 +107,9 @@ export async function updateStorageInfoLabel() {
 
         clearButton.disabled = mbUsed < 1
     } else {
-        storageInfoLabel.innerHTML = `Mounting...<br /> <wbr />`
+        if (mountedCount) {
+            storageInfoLabel.innerHTML = `Mounting... ${mountedCount ?? ''}<br /> <wbr />`
+        }
         clearButton.disabled = false
     }
 }

@@ -10,6 +10,7 @@ import type {
 
 import { dirname, basename } from 'path-browserify'
 import { OpfsDirent, OpfsStats, constants } from './fs-misc'
+import { updateStorageInfoLabel } from './ui'
 
 export async function getUint8ArrayFromFile(file: {
     bytes?(): Promise<Uint8Array>
@@ -32,40 +33,18 @@ export async function init() {
 const pathToFileHandle: Map<string, FileSystemFileHandle> = new Map()
 const pathToDirHandle: Map<string, FileSystemDirectoryHandle> = new Map()
 
-function cleanPath(path: string): string {
-    if (path.startsWith('.')) path = path.substring(1)
-    if (path.startsWith('/')) path = path.substring(1)
-    if (path.endsWith('/')) path = path.slice(0, -1)
-    return path
-}
-
-function getFileHandle(path: string): FileSystemFileHandle | undefined {
-    return pathToFileHandle.get(path)
-}
-
-function getDirHandle(path: string): FileSystemDirectoryHandle | undefined {
-    return pathToDirHandle.get(path)
-}
-
-async function forEach(
-    dir: FileSystemDirectoryHandle,
-    fileFunc: (file: FileSystemFileHandle, path: string) => void,
-    dirFunc: (dir: FileSystemDirectoryHandle, path: string) => void,
-    path = ''
-) {
-    for await (const [name, handle] of dir.entries()) {
-        const newPath = path + name
-        if (handle.kind == 'file') {
-            const handle = await dir.getFileHandle(name)
-            fileFunc(handle, newPath)
-        } else if (handle.kind == 'directory') {
-            const handle = await dir.getDirectoryHandle(name)
-            dirFunc(handle, newPath)
-
-            await forEach(handle, fileFunc, dirFunc, newPath + '/')
-        }
-    }
-}
+const mustLoadFiles: Set<string> = new Set([
+    'ccloader3/metadata.json',
+    'ccloader-user-config.js',
+    'assets/extension/readme.txt',
+    'assets/extension/fish-gear/fish-gear.json',
+    'assets/extension/flying-hedgehag/flying-hedgehag.json',
+    'assets/extension/manlea/manlea.json',
+    'assets/extension/ninja-skin/ninja-skin.json',
+    'assets/extension/post-game/post-game.json',
+    'assets/extension/scorpion-robo/scorpion-robo.json',
+    'assets/extension/snowman-tank/snowman-tank.json',
+])
 
 async function buildQuickPathLookupMap() {
     pathToFileHandle.clear()
@@ -79,8 +58,68 @@ async function buildQuickPathLookupMap() {
         },
         (dir, path) => {
             pathToDirHandle.set(path, dir)
-        }
+            updateStorageInfoLabel(pathToFileHandle.size + pathToDirHandle.size)
+        },
+        path => mustLoadFiles.has(path)
     )
+}
+
+function cleanPath(path: string): string {
+    if (path.startsWith('.')) path = path.substring(1)
+    if (path.startsWith('/')) path = path.substring(1)
+    if (path.endsWith('/')) path = path.slice(0, -1)
+    return path
+}
+
+function getFileHandleSync(path: string): FileSystemFileHandle {
+    let handle = pathToFileHandle.get(path)
+    if (!handle) {
+        const msg = `opfs: getFileHandleSync when file not preloaded!: ${path}`
+        console.warn(msg)
+        throw new Error(msg)
+    }
+    return handle
+}
+
+async function getFileHandle(path: string): Promise<FileSystemFileHandle | undefined> {
+    let handle = pathToFileHandle.get(path)
+    if (handle) return handle
+
+    const parent = getParentDirHandle(path)
+    const fileName = basename(path)
+    handle = await parent.getFileHandle(fileName)
+    pathToFileHandle.set(path, handle)
+
+    return handle
+}
+
+function getDirHandle(path: string): FileSystemDirectoryHandle | undefined {
+    return pathToDirHandle.get(path)
+}
+
+async function forEach(
+    dir: FileSystemDirectoryHandle,
+    fileFunc: (file: FileSystemFileHandle, path: string) => void,
+    dirFunc: (dir: FileSystemDirectoryHandle, path: string) => void,
+    fileFilter?: (path: string) => boolean,
+    path = ''
+) {
+    const promises: Promise<void>[] = []
+    for await (const [name, handle] of dir.entries()) {
+        const newPath = path + name
+        if (handle.kind == 'file') {
+            if (fileFilter && fileFilter(newPath)) {
+                const handle = await dir.getFileHandle(name)
+                fileFunc(handle, newPath)
+            }
+        } else if (handle.kind == 'directory') {
+            const handle = await dir.getDirectoryHandle(name)
+            dirFunc(handle, newPath)
+
+            promises.push(forEach(handle, fileFunc, dirFunc, fileFilter, newPath + '/'))
+        }
+    }
+    await Promise.all(promises)
 }
 
 function getParentDirHandle(path: string) {
@@ -93,7 +132,7 @@ function getParentDirHandle(path: string) {
 }
 
 async function touch(path: string): Promise<FileSystemFileHandle> {
-    let handle = getFileHandle(path)
+    let handle = await getFileHandle(path)
     if (handle) return handle
 
     const dir = getParentDirHandle(path)
@@ -144,7 +183,7 @@ async function readFile(path: string, encoding: 'utf-8' | 'utf8'): Promise<strin
 async function readFile(path: string, encoding?: string): Promise<Uint8Array>
 async function readFile(path: string, encoding?: string): Promise<string | Uint8Array> {
     path = cleanPath(path)
-    const handle = getFileHandle(path)
+    const handle = await getFileHandle(path)
     if (!handle) throw new Error(`opfs: file not found: ${path}`)
 
     const file = await handle.getFile()
@@ -245,11 +284,11 @@ async function readdir(
 
 function existsSync(path: string): boolean {
     path = cleanPath(path)
-    return !!(getFileHandle(path) || getDirHandle(path))
+    return !!(getDirHandle(path) || getFileHandleSync(path))
 }
 
 async function exists(path: string): Promise<boolean> {
-    return existsSync(path)
+    return !!((await getFileHandle(path)) || getDirHandle(path))
 }
 
 async function touchDir(path: string): Promise<FileSystemDirectoryHandle> {
@@ -303,16 +342,24 @@ async function access(path: string, _mode?: number): Promise<void> {
 }
 
 function statSync(path: string, opts?: StatOptions): Stats {
+    debugger
     path = cleanPath(path)
-    const handle = getFileHandle(path) || getDirHandle(path)
+    const handle = getDirHandle(path) || getFileHandleSync(path)
     if (!handle) throw new Error(`opfs: stat file or directory not found: ${path}`)
 
     if (opts?.bigint) throw new Error('opfs: stat bigint option not implemented')
 
     return new OpfsStats(handle.kind == 'file')
 }
+
 async function stat(path: string, opts?: StatOptions): Promise<Stats> {
-    return statSync(path, opts)
+    path = cleanPath(path)
+    const handle = (await getFileHandle(path)) || getDirHandle(path)
+    if (!handle) throw new Error(`opfs: stat file or directory not found: ${path}`)
+
+    if (opts?.bigint) throw new Error('opfs: stat bigint option not implemented')
+
+    return new OpfsStats(handle.kind == 'file')
 }
 
 async function rm(path: string, options?: RmOptions): Promise<void> {
@@ -324,7 +371,7 @@ async function rm(path: string, options?: RmOptions): Promise<void> {
     const recursive = options?.recursive
     const force = options?.force
 
-    const handle = getFileHandle(path) || getDirHandle(path)
+    const handle = (await getFileHandle(path)) || getDirHandle(path)
     if (!handle) {
         if (force) return
         throw new Error(`opfs: file not found: ${path}`)
@@ -350,7 +397,7 @@ async function rmdir(path: string, options?: RmDirOptions): Promise<void> {
     if (options?.maxRetries) throw new Error(`opfs: rm options.maxRetries not supported`)
     if (options?.retryDelay) throw new Error(`opfs: rm options.retryDelay not supported`)
 
-    const fileHandle = getFileHandle(path)
+    const fileHandle = await getFileHandle(path)
     if (fileHandle) throw new Error(`opfs: cannot rmdir a file: ${path}`)
 
     await rm(path, { recursive: true })
