@@ -89,10 +89,10 @@ export async function updateUI() {
 
 export async function updateStorageInfoLabel(mountedCount?: number) {
     if (isMounted) {
-        let fileCountStr: string = '???'
+        let dirCountStr: string = '???'
         try {
-            const count = fs.fileCount() - 1
-            fileCountStr = count.toString()
+            const count = fs.dirCount() - 1
+            dirCountStr = count.toString()
         } catch (e) {}
 
         const stats = await fs.usage()
@@ -103,7 +103,7 @@ export async function updateStorageInfoLabel(mountedCount?: number) {
         const gbAvail = (stats.quota ?? 0) / 1000 / 1000 / 1000
         const availText = `${Math.floor(gbAvail)} GB quota`
 
-        storageInfoLabel.innerHTML = `${usedText} / ${availText} <br> Files: ${fileCountStr}`
+        storageInfoLabel.innerHTML = `${usedText} / ${availText} <br> Directories: ${dirCountStr}`
 
         clearButton.disabled = mbUsed < 1
     } else {
