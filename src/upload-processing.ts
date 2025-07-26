@@ -1,4 +1,4 @@
-import { updateUI, updateUploadStatusLabel } from './ui'
+import { updateUploadStatusLabel } from './ui'
 import { path as paths } from './nwjs-fix'
 import { fs } from './fs-proxy'
 import { type Unzipped, unzipSync } from 'fflate/browser'
@@ -170,6 +170,4 @@ export async function uploadCrossCode(filesRaw: FileList) {
 
     const toCopyFiles = await filesToCopy(files)
     await copyFiles(toCopyFiles, fetchRateLimit)
-
-    updateUI()
 }

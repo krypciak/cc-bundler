@@ -4,9 +4,14 @@ import { uploadCrossCode } from './upload-processing'
 import type { ChangelogFileData } from 'ultimate-crosscode-typedefs/file-types/changelog'
 
 declare global {
+    const bundleTitleScreen: HTMLDivElement
+
     const storageInfoLabel: HTMLDivElement
     const uploadStatusLabel: HTMLDivElement
-    const gameInfoLabel: HTMLDivElement
+    const ccloaderInfoLabel: HTMLDivElement
+
+    const dirInputButton: HTMLButtonElement
+    const archiveInputButton: HTMLButtonElement
 
     const dirInput: HTMLInputElement
     const archiveInput: HTMLInputElement
@@ -15,11 +20,12 @@ declare global {
     const runButton: HTMLButtonElement
 }
 
-function updateElementsEnabled() {
-    const isEnabled = isMounted
+let isClearing = false
+let isUploading = false
 
-    dirInput.disabled = !isEnabled
-    archiveInput.disabled = !isEnabled
+function updateElementsEnabled() {
+    dirInput.disabled = dirInputButton.disabled = !isMounted || isClearing || isUploading
+    archiveInput.disabled = archiveInputButton.disabled = !isMounted || isClearing || isUploading
 }
 
 async function loadVersion(): Promise<string | undefined> {
@@ -48,12 +54,12 @@ async function loadVersion(): Promise<string | undefined> {
     return `v${version}-${hotfix}`
 }
 
-async function updateGameInfo() {
+async function updateCCLoaderInfo() {
     let gameVersionStr = 'loading...'
     let ccloaderVersionStr = 'loading...'
 
     if (isMounted) {
-        gameInfoLabel.style.visibility = 'inherit'
+        ccloaderInfoLabel.style.visibility = 'inherit'
 
         const gameVersion = await loadVersion()
         runButton.disabled = !gameVersion
@@ -61,16 +67,24 @@ async function updateGameInfo() {
 
         ccloaderVersionStr = ccloaderVersion!
     } else {
-        gameInfoLabel.style.visibility = 'hidden'
+        ccloaderInfoLabel.style.visibility = 'hidden'
     }
 
-    gameInfoLabel.innerHTML = `CrossCode: ${gameVersionStr} <br /> CCLoader: ${ccloaderVersionStr}`
+    ccloaderInfoLabel.innerHTML = `CrossCode: ${gameVersionStr}<br />CCLoader: ${ccloaderVersionStr}`
 }
 
 export async function updateUI() {
+    bundleTitleScreen.style.display = 'unset'
+
     updateStorageInfoLabel()
+    updateCCLoaderInfo()
     updateElementsEnabled()
-    updateGameInfo()
+
+    if (isClearing) {
+        clearButton.innerHTML = 'Clearing...'
+    } else {
+        clearButton.innerHTML = 'Clear storage'
+    }
 }
 
 export async function updateStorageInfoLabel() {
@@ -90,13 +104,18 @@ export async function updateStorageInfoLabel() {
         const availText = `${Math.floor(gbAvail)} GB quota`
 
         storageInfoLabel.innerHTML = `${usedText} / ${availText} <br> Files: ${fileCountStr}`
+
+        clearButton.disabled = mbUsed < 1
     } else {
-        storageInfoLabel.innerHTML = `Mounting... <br> <wbr>`
+        storageInfoLabel.innerHTML = `Mounting...<br /> <wbr />`
+        clearButton.disabled = false
     }
 }
 
 export async function updateUploadStatusLabel(operation: string, fileCount?: number, allFilesCount?: number) {
     const getText = () => {
+        if (isClearing) return ''
+
         if (allFilesCount === undefined) {
             if (fileCount === undefined) {
                 return operation
@@ -111,19 +130,40 @@ export async function updateUploadStatusLabel(operation: string, fileCount?: num
     uploadStatusLabel.textContent = getText()
 }
 
-export function showLoadScreen() {
+async function onClearStorageClick() {
+    isClearing = true
+    updateUI()
+    await clearStorage()
+    isClearing = false
+    updateUI()
+    clearButton.innerHTML = 'Cleared!'
+}
+
+async function onUpload(files: FileList) {
+    isUploading = true
+    await uploadCrossCode(files)
+    isUploading = false
+    updateUI()
+}
+
+function onRun() {
+    bundleTitleScreen.style.display = 'none'
+    run()
+}
+
+export function initLoadScreen() {
     function upload(this: HTMLInputElement) {
         if (this.files?.length ?? 0 > 0) {
-            uploadCrossCode(this.files!)
+            onUpload(this.files!)
         }
     }
 
     dirInput.addEventListener('change', upload, false)
     archiveInput.addEventListener('change', upload, false)
 
-    clearButton.onclick = () => clearStorage()
+    clearButton.onclick = () => onClearStorageClick()
 
-    runButton.onclick = () => run()
+    runButton.onclick = () => onRun()
 
     updateUI()
 }

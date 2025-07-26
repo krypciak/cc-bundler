@@ -1,14 +1,14 @@
 import * as fsProxy from './fs-proxy'
 import { requireFix } from './nwjs-fix'
 import { audioWarningFix } from './audio-warning-fix'
-import { showLoadScreen } from './ui'
+import { initLoadScreen } from './ui'
 import './localstoarge-default'
 
 import { addFetchHandler } from '../../ccloader3/packages/core/src/service-worker-bridge'
 
 async function setup() {
     if (navigator.serviceWorker.controller) {
-        showLoadScreen()
+        initLoadScreen()
         requireFix()
 
         await fsProxy.preloadInit()
