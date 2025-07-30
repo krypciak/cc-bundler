@@ -151,6 +151,50 @@
                 color: #aaa;
                 margin: 10px 0;
             }
+
+            #autorunCheckbox,
+            label[for='autorunCheckbox'] {
+                cursor: pointer;
+                user-select: none;
+            }
+
+            .checkbox-wrapper {
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                margin-top: 10px;
+                justify-content: center;
+            }
+
+            #autorunCheckbox {
+                appearance: none;
+                width: 20px;
+                height: 20px;
+                border: 2px solid #ccc;
+                border-radius: 4px;
+                background-color: transparent;
+                transition:
+                    background-color 0.2s,
+                    border-color 0.2s;
+                position: relative;
+            }
+
+            #autorunCheckbox:checked {
+                background-color: #0d63ec;
+                border-color: #0d63ec;
+            }
+
+            #autorunCheckbox:checked::after {
+                content: '';
+                position: absolute;
+                left: 4px;
+                top: 0px;
+                width: 6px;
+                height: 12px;
+                border: solid white;
+                border-width: 0 2px 2px 0;
+                transform: rotate(45deg);
+            }
         </style>
     </head>
     <body>
@@ -209,6 +253,11 @@
 
             <button id="clearButton" class="bundlerButton">Clear storage</button>
             <button id="runButton" class="bundlerButton" disabled>Run</button>
+
+            <div class="checkbox-wrapper">
+                <label for="autorunCheckbox">Autorun on page load</label>
+                <input type="checkbox" id="autorunCheckbox" />
+            </div>
         </div>
     </body>
 </html>

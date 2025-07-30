@@ -1,4 +1,5 @@
 import { fs } from './fs-proxy'
+import { exit } from './autorun'
 
 import path from 'path-browserify'
 export { path }
@@ -33,7 +34,7 @@ export const nwGui = {
                     document.exitFullscreen()
                 },
                 close() {
-                    location.reload()
+                    exit()
                 },
             } as NWJS_Helpers.win
         },

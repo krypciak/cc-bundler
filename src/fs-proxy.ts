@@ -24,5 +24,5 @@ export async function preloadInit() {
     await fs.promises.mkdir(nwGui.App.dataPath, { recursive: true })
 
     isMounted = true
-    updateUI()
+    await updateUI()
 }

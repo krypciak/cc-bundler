@@ -1,3 +1,4 @@
+import { getAutorun, setAutorun } from './autorun'
 import { isMounted, clearStorage, fs, ccloaderVersion } from './fs-proxy'
 import { run } from './main'
 import { uploadCrossCode, uploadSave } from './upload-processing'
@@ -20,6 +21,8 @@ declare global {
 
     const clearButton: HTMLButtonElement
     const runButton: HTMLButtonElement
+
+    const autorunCheckbox: HTMLInputElement
 }
 
 let isClearing = false
@@ -76,20 +79,6 @@ async function updateCCLoaderInfo() {
     ccloaderInfoLabel.innerHTML = `CrossCode: ${gameVersionStr}<br />CCLoader: ${ccloaderVersionStr}`
 }
 
-export async function updateUI() {
-    bundleTitleScreen.style.display = 'unset'
-
-    updateStorageInfoLabel()
-    updateCCLoaderInfo()
-    updateElementsEnabled()
-
-    if (isClearing) {
-        clearButton.innerHTML = 'Clearing...'
-    } else {
-        clearButton.innerHTML = 'Clear storage'
-    }
-}
-
 export async function updateStorageInfoLabel(mountedCount?: number) {
     if (isMounted) {
         let dirCountStr: string = '???'
@@ -135,6 +124,20 @@ export async function updateUploadStatusLabel(operation: string, fileCount?: num
     uploadStatusLabel.textContent = getText()
 }
 
+function updateClearButton() {
+    if (isClearing) {
+        clearButton.innerHTML = 'Clearing...'
+    } else {
+        clearButton.innerHTML = 'Clear storage'
+    }
+}
+
+export async function updateUI() {
+    bundleTitleScreen.style.display = 'unset'
+
+    await Promise.all([updateStorageInfoLabel(), updateCCLoaderInfo(), updateElementsEnabled(), updateClearButton()])
+}
+
 async function onClearStorageClick() {
     isClearing = true
     updateUI()
@@ -163,7 +166,7 @@ async function onSaveUpload(files: FileList) {
     updateUI()
 }
 
-function onRun() {
+function onRunClick() {
     bundleTitleScreen.style.display = 'none'
     run()
 }
@@ -187,7 +190,14 @@ export function initLoadScreen() {
 
     clearButton.onclick = () => onClearStorageClick()
 
-    runButton.onclick = () => onRun()
+    runButton.onclick = () => onRunClick()
+
+    autorunCheckbox.addEventListener('change', () => {
+        setAutorun(autorunCheckbox.checked ? 'on' : 'off')
+    })
+    document.addEventListener('DOMContentLoaded', () => {
+        autorunCheckbox.checked = getAutorun() != 'off'
+    })
 
     updateUI()
 }
