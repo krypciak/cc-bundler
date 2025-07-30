@@ -15,6 +15,10 @@ export async function startHttpServer() {
         showDotfiles: false,
         showDir: 'false',
         before: [handleFunction],
+        https: {
+            cert: './cert/localhost+2.pem',
+            key: './cert/localhost+2-key.pem',
+        },
     })
     const port = 8080
     console.log('http server listening to', port)

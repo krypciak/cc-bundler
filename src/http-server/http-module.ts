@@ -22,16 +22,21 @@ async function fetchData(url: string): Promise<Uint8Array> {
     return data
 }
 
-const updateInputLocationsEveryMs = 1000 * 5 // 1000 * 60 * 60 // hour
+const updateInputLocationsEveryMs = 1000 * 60 * 60 // hour
 let lastInputLocationsFetched = 0
 const validUrlSet: Set<string> = new Set()
 
 async function addAllowedDb(url: string) {
     validUrlSet.add(`${url}/npDatabase.min.json`)
 
-    const inputLocations: InputLocations = await (await fetch(`${url}/input-locations.json`)).json()
-    for (const { url } of inputLocations) {
-        validUrlSet.add(url)
+    const inputLocationsUrl = `${url}/input-locations.json`
+    try {
+        const inputLocations: InputLocations = await (await fetch(inputLocationsUrl)).json()
+        for (const { url } of inputLocations) {
+            validUrlSet.add(url)
+        }
+    } catch (e) {
+        console.error('error while fetching database:', inputLocationsUrl, 'error:', e)
     }
 }
 
