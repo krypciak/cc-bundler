@@ -4,7 +4,7 @@
         <title>CrossCode</title>
 
         <!-- <meta name="viewport" content="width=320, initial-scale=0.5, maximum-scale=0.5, user-scalable=0" /> -->
-        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
 
         <meta charset="UTF-8" />
         <title>CrossCode</title>
@@ -97,8 +97,9 @@
 
                 padding: 40px 30px;
 
-                width: calc(100% - 80px);
+                width: 76%;
                 max-width: 320px;
+                min-width: 290px;
             }
 
             .bundlerButton {
@@ -117,11 +118,6 @@
                     transform 0.1s;
             }
 
-            .infoText {
-                margin-bottom: 12px;
-                color: #cccccc;
-            }
-
             .bundlerButton:hover:not(:disabled) {
                 background-color: #0f77f4;
                 transform: translateY(-1px);
@@ -131,6 +127,11 @@
                 background-color: #0d63ec77;
                 color: #999999;
                 cursor: not-allowed;
+            }
+
+            .infoText {
+                margin-bottom: 12px;
+                color: #cccccc;
             }
 
             #labelWrapper {
@@ -195,6 +196,36 @@
                 border-width: 0 2px 2px 0;
                 transform: rotate(45deg);
             }
+
+            @media screen and (max-height: 600px) {
+                #bundleTitleScreen {
+                    padding: 20px 30px;
+                }
+
+                .infoText {
+                    margin-bottom: 4px;
+                }
+
+                #labelWrapper {
+                    font-size: 14px;
+                    line-height: 1;
+                }
+
+                #uploadStatusLabel {
+                    font-size: 12px;
+                    margin: 2px 0;
+                }
+
+                .bundlerButton {
+                    font-size: 14px;
+                    padding: 8px 18px;
+                    margin: 6px 0px;
+                }
+
+                .checkbox-wrapper {
+                    margin-top: 5px;
+                }
+            }
         </style>
     </head>
     <body>
@@ -212,12 +243,7 @@
 
             <!-- Directory Upload -->
             <div class="file-upload-wrapper">
-                <button
-                    id="dirInputButton"
-                    class="bundlerButton"
-                    onclick="document.getElementById('dirInput').click()"
-                    disabled
-                >
+                <button id="dirInputButton" class="bundlerButton" onclick="dirInput.click()" disabled>
                     Select game assets directory
                 </button>
                 <input id="dirInput" style="display: none" type="file" multiple directory webkitdirectory disabled />
@@ -225,12 +251,7 @@
 
             <!-- Archive Upload -->
             <div class="file-upload-wrapper">
-                <button
-                    id="archiveInputButton"
-                    class="bundlerButton"
-                    onclick="document.getElementById('archiveInput').click()"
-                    disabled
-                >
+                <button id="archiveInputButton" class="bundlerButton" onclick="archiveInput.click()" disabled>
                     Select game assets zip archive
                 </button>
                 <input id="archiveInput" style="display: none" type="file" accept=".zip" disabled />
@@ -238,12 +259,7 @@
 
             <!-- Save Upload -->
             <div class="file-upload-wrapper">
-                <button
-                    id="saveInputButton"
-                    class="bundlerButton"
-                    onclick="document.getElementById('saveInput').click()"
-                    disabled
-                >
+                <button id="saveInputButton" class="bundlerButton" onclick="saveInput.click()" disabled>
                     Select game save
                 </button>
                 <input id="saveInput" style="display: none" type="file" accept=".save" disabled />
