@@ -143,6 +143,7 @@ async function onClearStorageClick() {
 
 async function onUpload(files: FileList) {
     isUploading = true
+    updateElementsEnabled()
     await uploadCrossCode(files)
     isUploading = false
     updateUI()
