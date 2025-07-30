@@ -1,6 +1,5 @@
 import * as fsProxy from './fs-proxy'
 import { requireFix } from './nwjs-fix'
-import { audioWarningFix } from './audio-warning-fix'
 import { initLoadScreen } from './ui'
 import './localstoarge-default'
 
@@ -8,11 +7,17 @@ import { addFetchHandler } from '../../ccloader3/packages/core/src/service-worke
 import { checkAutorun } from './autorun'
 
 async function setup() {
+    if (!navigator.serviceWorker) {
+        storageInfoLabel.innerHTML = 'Service Workers not supported! <br> Cannot continue'
+        return
+    }
+
     if (navigator.serviceWorker.controller) {
         initLoadScreen()
         requireFix()
 
         await fsProxy.preloadInit()
+        await window.update()
 
         checkAutorun()
     } else {
@@ -28,6 +33,4 @@ export async function run() {
 
     const modloader = await import('../../ccloader3/packages/core/src/modloader')
     await modloader.boot()
-
-    audioWarningFix()
 }
