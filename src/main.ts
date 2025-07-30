@@ -20,7 +20,7 @@ setup()
 
 export async function run() {
     addFetchHandler(['assets', 'ccloader3'], async path => {
-        return (await fsProxy.fs.promises.readFile(path)).buffer
+        return await fsProxy.fs.promises.readFile(path)
     })
 
     const modloader = await import('../../ccloader3/packages/core/src/modloader')

@@ -23,6 +23,13 @@ export async function getUint8ArrayFromFile(file: {
     }
 }
 
+function throwErrorWithCode(msg: string, code: string): never {
+    const err = new Error(msg)
+    // @ts-expect-error
+    err.code = code
+    throw err
+}
+
 let fsRoot: FileSystemDirectoryHandle
 
 export async function init() {
@@ -87,8 +94,10 @@ async function getFileHandle(path: string): Promise<FileSystemFileHandle | undef
 
     const parent = getParentDirHandle(path)
     const fileName = basename(path)
-    handle = await parent.getFileHandle(fileName)
-    pathToFileHandle.set(path, handle)
+    try {
+        handle = await parent.getFileHandle(fileName)
+        pathToFileHandle.set(path, handle)
+    } catch (e) {}
 
     return handle
 }
@@ -126,7 +135,7 @@ function getParentDirHandle(path: string) {
     const parent = cleanPath(dirname(path))
 
     const parentHandle = getDirHandle(parent)
-    if (!parentHandle) throw new Error(`opfs: directory parent doesn't exist: ${path}`)
+    if (!parentHandle) throwErrorWithCode(`opfs: directory parent doesn't exist: ${path}`, 'ENOENT')
 
     return parentHandle
 }
@@ -180,24 +189,29 @@ async function usage(): Promise<StorageEstimate> {
 }
 
 async function readFile(path: string, encoding: 'utf-8' | 'utf8'): Promise<string>
-async function readFile(path: string, encoding?: string): Promise<Uint8Array>
-async function readFile(path: string, encoding?: string): Promise<string | Uint8Array> {
+async function readFile(path: string, encoding: 'uint8array'): Promise<ArrayBuffer>
+async function readFile(path: string, encoding?: string): Promise<ArrayBuffer>
+async function readFile(path: string, encoding?: string): Promise<string | ArrayBuffer | Uint8Array> {
     path = cleanPath(path)
     const handle = await getFileHandle(path)
-    if (!handle) throw new Error(`opfs: file not found: ${path}`)
+    if (!handle) {
+        throwErrorWithCode(`opfs: file not found: ${path}`, 'ENOENT')
+    }
 
     const file = await handle.getFile()
 
     if (encoding == 'utf-8' || encoding == 'utf8') {
         return file.text()
-    } else {
+    } else if (encoding == 'uint8array') {
         return getUint8ArrayFromFile(file)
+    } else {
+        return file.arrayBuffer()
     }
 }
 
 async function writeFile(
     path: string,
-    data: string | NodeJS.ArrayBufferView,
+    data: string | NodeJS.ArrayBufferView | ArrayBuffer,
     options?: ObjectEncodingOptions | BufferEncoding | null
 ): Promise<void> {
     path = cleanPath(path)
@@ -246,7 +260,7 @@ async function readdir(
 ): Promise<string[] | Dirent[]> {
     path = cleanPath(path)
     const handle = getDirHandle(path)
-    if (!handle) throw new Error(`opfs: directory not found: ${path}`)
+    if (!handle) throwErrorWithCode(`opfs: directory not found: ${path}`, 'ENOENT')
 
     const recursive = typeof options == 'object' && options?.recursive
     const withFileTypes = typeof options == 'object' && options?.withFileTypes
@@ -288,7 +302,12 @@ function existsSync(path: string): boolean {
 }
 
 async function exists(path: string): Promise<boolean> {
-    return !!((await getFileHandle(path)) || getDirHandle(path))
+    path = cleanPath(path)
+    try {
+        return !!((await getFileHandle(path)) || getDirHandle(path))
+    } catch (e) {
+        return false
+    }
 }
 
 async function touchDir(path: string): Promise<FileSystemDirectoryHandle> {
@@ -330,22 +349,21 @@ async function mkdir(path: string, options?: MakeDirectoryOptions | null): Promi
 
         return firstCreated
     } else {
-        if (getDirHandle(path)) throw new Error(`opfs: directory already exists: ${path}`)
+        if (getDirHandle(path)) throwErrorWithCode(`opfs: directory already exists: ${path}`, 'EEXIST')
 
         await touchDir(path)
     }
 }
 
 async function access(path: string, _mode?: number): Promise<void> {
-    if (!(await exists(path))) throw new Error(`opfs: access error (file doesn't exist): ${path}`)
+    if (!(await exists(path))) throwErrorWithCode(`opfs: access error (file doesn't exist): ${path}`, 'ENOENT')
     return
 }
 
 function statSync(path: string, opts?: StatOptions): Stats {
-    debugger
     path = cleanPath(path)
     const handle = getDirHandle(path) || getFileHandleSync(path)
-    if (!handle) throw new Error(`opfs: stat file or directory not found: ${path}`)
+    if (!handle) throwErrorWithCode(`opfs: stat file or directory not found: ${path}`, 'ENOENT')
 
     if (opts?.bigint) throw new Error('opfs: stat bigint option not implemented')
 
@@ -355,7 +373,7 @@ function statSync(path: string, opts?: StatOptions): Stats {
 async function stat(path: string, opts?: StatOptions): Promise<Stats> {
     path = cleanPath(path)
     const handle = (await getFileHandle(path)) || getDirHandle(path)
-    if (!handle) throw new Error(`opfs: stat file or directory not found: ${path}`)
+    if (!handle) throwErrorWithCode(`opfs: stat file or directory not found: ${path}`, 'ENOENT')
 
     if (opts?.bigint) throw new Error('opfs: stat bigint option not implemented')
 
@@ -374,12 +392,12 @@ async function rm(path: string, options?: RmOptions): Promise<void> {
     const handle = (await getFileHandle(path)) || getDirHandle(path)
     if (!handle) {
         if (force) return
-        throw new Error(`opfs: file not found: ${path}`)
+        throwErrorWithCode(`opfs: file not found: ${path}`, 'ENOENT')
     }
 
     if (handle.kind == 'directory' && !recursive) {
         if ((await Array.fromAsync(handle.keys())).length > 0) {
-            throw new Error(`opfs: cannot remove non empty directory without recursive: ${path}`)
+            throwErrorWithCode(`opfs: cannot remove non empty directory without recursive: ${path}`, 'ENOTEMPTY')
         }
     }
     await removeFileOrDirectory(path, handle)
@@ -387,7 +405,7 @@ async function rm(path: string, options?: RmOptions): Promise<void> {
 
 async function unlink(path: string): Promise<void> {
     const dirHandle = getDirHandle(path)
-    if (dirHandle) throw new Error(`opfs: cannot unlink a directory: ${path}`)
+    if (dirHandle) throwErrorWithCode(`opfs: cannot unlink a directory: ${path}`, 'EISDIR')
     return rm(path)
 }
 
@@ -398,7 +416,7 @@ async function rmdir(path: string, options?: RmDirOptions): Promise<void> {
     if (options?.retryDelay) throw new Error(`opfs: rm options.retryDelay not supported`)
 
     const fileHandle = await getFileHandle(path)
-    if (fileHandle) throw new Error(`opfs: cannot rmdir a file: ${path}`)
+    if (fileHandle) throwErrorWithCode(`opfs: cannot rmdir a file: ${path}`, 'ENOTDIR')
 
     await rm(path, { recursive: true })
 }
@@ -471,4 +489,4 @@ export const fs = {
 }
 
 // const fsa: typeof import('fs') = undefined as any
-// fsa.promises.rmdir()
+// fsa.promises.writeFile("hi", data)
