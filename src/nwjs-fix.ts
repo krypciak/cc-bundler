@@ -17,7 +17,7 @@ const stream = {}
 const http = {}
 const https = {}
 
-const nwGui = {
+export const nwGui = {
     App: {
         dataPath: '/nwjsData',
         argv: [],

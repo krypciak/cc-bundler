@@ -1,9 +1,9 @@
 import { updateUploadStatusLabel } from './ui'
-import { path as paths } from './nwjs-fix'
+import { nwGui, path as paths } from './nwjs-fix'
 import { fs } from './fs-proxy'
 import { type Unzipped, unzipSync } from 'fflate/browser'
 
-interface FileEntry {
+export interface FileEntry {
     path: string
     uint8Array(): Promise<Uint8Array>
 }
@@ -121,12 +121,13 @@ async function zipToFileEntryList(zipData: Uint8Array, addPrefix = ''): Promise<
 
 import runtimeModJson from '../tmp/runtime.json'
 import { getUint8ArrayFromFile } from './opfs'
+import { getRuntimeModFiles } from './runtime-mod'
 
 async function loadRuntimeModData(): Promise<Uint8Array> {
     return Uint8Array.from(atob(runtimeModJson.data), c => c.charCodeAt(0))
 }
 
-async function getRuntimeModFiles(): Promise<FileEntry[]> {
+async function getCCLoader3RuntimeModFiles(): Promise<FileEntry[]> {
     const data = await loadRuntimeModData()
     const runtimeModFiles = await zipToFileEntryList(data, 'ccloader3/dist/runtime/')
     return runtimeModFiles
@@ -166,8 +167,14 @@ export async function uploadCrossCode(filesRaw: FileList) {
         return
     }
 
+    files.push(...(await getCCLoader3RuntimeModFiles()))
     files.push(...(await getRuntimeModFiles()))
 
     const toCopyFiles = await filesToCopy(files)
     await copyFiles(toCopyFiles, fetchRateLimit)
+}
+
+export async function uploadSave(file: File) {
+    const files = [fileEntryFromFile(file, `${nwGui.App.dataPath}/cc.save`)]
+    await copyFiles(files, false)
 }

@@ -123,7 +123,7 @@
             }
 
             .bundlerButton:hover:not(:disabled) {
-                background-color: #0F77F4;
+                background-color: #0f77f4;
                 transform: translateY(-1px);
             }
 
@@ -190,6 +190,19 @@
                     Select game assets zip archive
                 </button>
                 <input id="archiveInput" style="display: none" type="file" accept=".zip" disabled />
+            </div>
+
+            <!-- Save Upload -->
+            <div class="file-upload-wrapper">
+                <button
+                    id="saveInputButton"
+                    class="bundlerButton"
+                    onclick="document.getElementById('saveInput').click()"
+                    disabled
+                >
+                    Select game save
+                </button>
+                <input id="saveInput" style="display: none" type="file" accept=".save" disabled />
             </div>
 
             <div id="uploadStatusLabel" class="infoText"><wbr /></div>

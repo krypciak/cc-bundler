@@ -1,6 +1,6 @@
 import { isMounted, clearStorage, fs, ccloaderVersion } from './fs-proxy'
 import { run } from './main'
-import { uploadCrossCode } from './upload-processing'
+import { uploadCrossCode, uploadSave } from './upload-processing'
 import type { ChangelogFileData } from 'ultimate-crosscode-typedefs/file-types/changelog'
 
 declare global {
@@ -12,9 +12,11 @@ declare global {
 
     const dirInputButton: HTMLButtonElement
     const archiveInputButton: HTMLButtonElement
+    const saveInputButton: HTMLButtonElement
 
     const dirInput: HTMLInputElement
     const archiveInput: HTMLInputElement
+    const saveInput: HTMLInputElement
 
     const clearButton: HTMLButtonElement
     const runButton: HTMLButtonElement
@@ -26,6 +28,7 @@ let isUploading = false
 function updateElementsEnabled() {
     dirInput.disabled = dirInputButton.disabled = !isMounted || isClearing || isUploading
     archiveInput.disabled = archiveInputButton.disabled = !isMounted || isClearing || isUploading
+    saveInput.disabled = saveInputButton.disabled = !isMounted || isClearing || isUploading
 }
 
 async function loadVersion(): Promise<string | undefined> {
@@ -91,7 +94,7 @@ export async function updateStorageInfoLabel(mountedCount?: number) {
     if (isMounted) {
         let dirCountStr: string = '???'
         try {
-            const count = fs.dirCount() - 1
+            const count = Math.max(0, fs.dirCount() - 3)
             dirCountStr = count.toString()
         } catch (e) {}
 
@@ -149,6 +152,17 @@ async function onUpload(files: FileList) {
     updateUI()
 }
 
+async function onSaveUpload(files: FileList) {
+    const file = files[0]
+    if (!file) return
+
+    isUploading = true
+    updateElementsEnabled()
+    await uploadSave(file)
+    isUploading = false
+    updateUI()
+}
+
 function onRun() {
     bundleTitleScreen.style.display = 'none'
     run()
@@ -163,6 +177,13 @@ export function initLoadScreen() {
 
     dirInput.addEventListener('change', upload, false)
     archiveInput.addEventListener('change', upload, false)
+    saveInput.addEventListener(
+        'change',
+        function () {
+            onSaveUpload(this.files!)
+        },
+        false
+    )
 
     clearButton.onclick = () => onClearStorageClick()
 
