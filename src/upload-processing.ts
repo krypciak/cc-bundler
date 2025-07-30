@@ -178,15 +178,3 @@ export async function uploadSave(file: File) {
     const files = [fileEntryFromFile(file, `${nwGui.App.dataPath}/cc.save`)]
     await copyFiles(files, false)
 }
-
-declare global {
-    var update: () => Promise<void>
-}
-window.update = async () => {
-    const files: FileEntry[] = []
-
-    files.push(...(await getCCLoader3RuntimeModFiles()))
-    files.push(...(await getRuntimeModFiles()))
-
-    await copyFiles(files, false)
-}

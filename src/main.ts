@@ -17,7 +17,6 @@ async function setup() {
         requireFix()
 
         await fsProxy.preloadInit()
-        await window.update()
 
         checkAutorun()
     } else {
