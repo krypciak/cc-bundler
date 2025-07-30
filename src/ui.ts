@@ -32,6 +32,10 @@ function updateElementsEnabled() {
     dirInput.disabled = dirInputButton.disabled = !isMounted || isClearing || isUploading
     archiveInput.disabled = archiveInputButton.disabled = !isMounted || isClearing || isUploading
     saveInput.disabled = saveInputButton.disabled = !isMounted || isClearing || isUploading
+    if (isClearing) {
+        runButton.disabled = true
+        clearButton.disabled = true
+    }
 }
 
 async function loadVersion(): Promise<string | undefined> {
@@ -64,7 +68,7 @@ async function updateCCLoaderInfo() {
     let gameVersionStr = 'loading...'
     let ccloaderVersionStr = 'loading...'
 
-    if (isMounted) {
+    if (isMounted && !isClearing) {
         ccloaderInfoLabel.style.visibility = 'inherit'
 
         const gameVersion = await loadVersion()
@@ -80,7 +84,7 @@ async function updateCCLoaderInfo() {
 }
 
 export async function updateStorageInfoLabel(mountedCount?: number) {
-    if (isMounted) {
+    if (isMounted && !isClearing) {
         let dirCountStr: string = '???'
         try {
             const count = Math.max(0, fs.dirCount() - 3)
@@ -136,6 +140,10 @@ export async function updateUI() {
     bundleTitleScreen.style.display = 'unset'
 
     await Promise.all([updateStorageInfoLabel(), updateCCLoaderInfo(), updateElementsEnabled(), updateClearButton()])
+}
+
+export function wait(ms: number): Promise<void> {
+    return new Promise(resolve => setTimeout(resolve, ms))
 }
 
 async function onClearStorageClick() {
