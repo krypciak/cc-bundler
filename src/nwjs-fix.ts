@@ -59,6 +59,11 @@ export const nwGui = {
             } satisfies Partial<NWJS_Helpers.clip> as unknown as NWJS_Helpers.clip
         },
     } satisfies Partial<nw.Clipboard> as unknown as nw.Clipboard,
+    Shell: {
+        openExternal(url) {
+            window.open(url, '_blank')?.focus()
+        },
+    } satisfies Partial<nw.Shell> as unknown as nw.Shell,
 } as const satisfies Partial<typeof nw>
 window.nw = nwGui as typeof nw
 
