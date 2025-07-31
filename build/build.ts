@@ -9,8 +9,8 @@ const commonOptions: esbuild.BuildOptions = {
 
     write: false,
     bundle: true,
-    minify: false,
-    sourcemap: 'inline',
+    minify: true,
+    // sourcemap: 'inline',
     // drop: ['debugger' /*'console'*/],
 } as const
 
@@ -25,7 +25,11 @@ function donePlugin(outfile: string): esbuild.Plugin {
                 let code = res.outputFiles![0]?.text
                 if (!code) return // when compile errors
 
-                await fs.promises.writeFile(outfile, code)
+                version++
+                await Promise.all([
+                    fs.promises.writeFile(`${distDir}/version`, version.toString()),
+                    fs.promises.writeFile(outfile, code),
+                ])
 
                 const bytes = code.length
                 const kb = bytes / 1024
@@ -42,6 +46,12 @@ async function copyRuntimeCCMod() {
     zip.addLocalFolder(runtimeModDir)
     zip.writeZipPromise('../dist/runtime.ccmod')
 }
+
+let version: number = 0
+try {
+    const versionStr = await fs.promises.readFile('../dist/version')
+    version = Number(versionStr)
+} catch (e) {}
 
 function main(): esbuild.BuildOptions {
     const outfile = `${distDir}/crosscode.js`

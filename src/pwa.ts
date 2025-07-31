@@ -1,4 +1,6 @@
 export function checkPWA() {
+    return
+
     // This variable will save the event for later use.
     let deferredPrompt: Event
     window.addEventListener('beforeinstallprompt', (e: Event) => {

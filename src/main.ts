@@ -5,8 +5,15 @@ import { initLoadScreen } from './ui'
 import { checkAutorun } from './autorun'
 import { checkPWA } from './pwa'
 import './localstoarge-default'
+import type { VersionResp } from './service-worker/offline-cache-proxy'
 
 async function setup() {
+    // trigger service worker update check
+    fetch('/version').then(async resp => {
+        const data: VersionResp = await resp.json()
+        if (data.updated && data.previousVersion !== undefined) location.reload()
+    })
+
     if (!navigator.serviceWorker) {
         storageInfoLabel.innerHTML = 'Service Workers not supported! <br> Cannot continue'
         return
