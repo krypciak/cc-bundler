@@ -209,9 +209,8 @@ export function initLoadScreen() {
     autorunCheckbox.addEventListener('change', () => {
         setAutorun(autorunCheckbox.checked ? 'on' : 'off')
     })
-    document.addEventListener('DOMContentLoaded', () => {
-        autorunCheckbox.checked = getAutorun() != 'off'
-    })
+
+    autorunCheckbox.checked = getAutorun() != 'off'
 
     updateUI()
 }

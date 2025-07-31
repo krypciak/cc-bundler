@@ -1,7 +1,8 @@
 const autorunKey = 'cc-bundler-autorun'
 type Autorun = 'on' | 'off' | 'one-time-off'
+
 export function isAutorunOn() {
-    return localStorage[autorunKey] == 'on'
+    return getAutorun() == 'on'
 }
 export function getAutorun(): Autorun {
     return localStorage[autorunKey] ?? 'off'

@@ -1,4 +1,4 @@
-import { addFetchHandler } from '../../ccloader3/packages/core/src/service-worker-bridge'
+import { loadServiceWorker, addFetchHandler } from '../../ccloader3/packages/core/src/service-worker-bridge'
 import * as fsProxy from './fs/fs-proxy'
 import { requireFix } from './nwjs-fix'
 import { initLoadScreen } from './ui'
@@ -11,7 +11,7 @@ async function setup() {
     // trigger service worker update check
     fetch('/version').then(async resp => {
         const data: VersionResp = await resp.json()
-        if (data.updated && data.previousVersion !== undefined) {
+        if (data.updated && data.previousVersion != undefined) {
             location.reload()
         }
     })
@@ -26,6 +26,8 @@ async function setup() {
         return
     }
 
+    await loadServiceWorker()
+
     if (navigator.serviceWorker.controller) {
         initLoadScreen()
         requireFix()
@@ -35,8 +37,6 @@ async function setup() {
         if (checkAutorun()) return
 
         checkPWA()
-    } else {
-        run()
     }
 }
 setup()
