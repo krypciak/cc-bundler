@@ -1,0 +1,13 @@
+{
+    "id": "cc-bundler-runtime",
+    "title": "cc-bundler-runtime",
+    "version": "1.0.0",
+    "description": "",
+    "repository": "https://github.com/krypciak/cc-bundler",
+    "tags": ["base"],
+    "authors": ["krypek"],
+    "dependencies": {
+        "ccloader": ">=3.4.2-alpha"
+    },
+    "plugin": "plugin.js"
+}

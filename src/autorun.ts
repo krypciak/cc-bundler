@@ -1,5 +1,5 @@
 const autorunKey = 'cc-bundler-autorun'
-type Autorun = 'on' | 'off' | 'one-time-off'
+export type Autorun = 'on' | 'off' | 'one-time-off'
 
 export function isAutorunOn() {
     return getAutorun() == 'on'

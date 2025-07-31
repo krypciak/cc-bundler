@@ -17,7 +17,7 @@ const commonOptions: esbuild.BuildOptions = {
 const isWatch = process.argv[2] === 'watch'
 const distDir = '../dist'
 
-function donePlugin(outfile: string): esbuild.Plugin {
+function donePlugin(outfile: string, noWrite?: boolean): esbuild.Plugin {
     return {
         name: 'done plugin',
         setup(build) {
@@ -28,7 +28,7 @@ function donePlugin(outfile: string): esbuild.Plugin {
                 version++
                 await Promise.all([
                     fs.promises.writeFile(`${distDir}/version`, version.toString()),
-                    fs.promises.writeFile(outfile, code),
+                    noWrite ? undefined : fs.promises.writeFile(outfile, code),
                 ])
 
                 const bytes = code.length
@@ -39,12 +39,12 @@ function donePlugin(outfile: string): esbuild.Plugin {
     }
 }
 
-async function copyRuntimeCCMod() {
+async function copyCCLoader3RuntimeCCMod() {
     const runtimeModDir = '../../ccloader3/dist/runtime'
     await fs.promises.stat(runtimeModDir)
     const zip = new AdmZip()
     zip.addLocalFolder(runtimeModDir)
-    zip.writeZipPromise('../dist/runtime.zip')
+    zip.writeZipPromise('../dist/ccloader3-runtime.zip')
 }
 
 let version: number = 0
@@ -74,7 +74,7 @@ function main(): esbuild.BuildOptions {
                             ),
                             fs.promises.cp('../lib/socket.io.min.js', `${distDir}/socket.io.js`),
                             fs.promises.cp('../../ccloader3/main.css', `${distDir}/ccloader3-main.css`),
-                            copyRuntimeCCMod(),
+                            copyCCLoader3RuntimeCCMod(),
                         ])
                     })
                 },
@@ -93,7 +93,33 @@ function ccmodServiceWorker(): esbuild.BuildOptions {
     }
 }
 
-const modules: Array<() => esbuild.BuildOptions> = [main, ccmodServiceWorker]
+function runtimeMod(): esbuild.BuildOptions {
+    return {
+        entryPoints: ['../src/runtime-mod/plugin.ts'],
+
+        ...commonOptions,
+
+        plugins: [
+            {
+                name: 'zip',
+                setup(build) {
+                    build.onEnd(async res => {
+                        let code = res.outputFiles![0]?.text
+                        if (!code) return // when compile errors
+
+                        const zip = new AdmZip()
+                        zip.addFile('ccmod.json', await fs.promises.readFile('../src/runtime-mod/ccmod.json'))
+                        zip.addFile('plugin.js', Buffer.from(code))
+                        zip.writeZipPromise(`${distDir}/bundler-runtime.zip`)
+                    })
+                },
+            },
+            donePlugin('../dist/bundler-runtime.zip', true),
+        ],
+    }
+}
+
+const modules: Array<() => esbuild.BuildOptions> = [main, ccmodServiceWorker, runtimeMod]
 
 async function run(): Promise<void> {
     try {

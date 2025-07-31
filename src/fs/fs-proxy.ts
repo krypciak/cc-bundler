@@ -2,7 +2,6 @@ import metadata from '../../../ccloader3/metadata.json'
 import { updateUI } from '../ui'
 import { nwGui } from '../nwjs-fix'
 import { copyFiles, zipToFileEntryList } from '../upload-processing'
-import { getRuntimeModFiles } from '../runtime-mod'
 
 import { init, fs } from './opfs'
 import { FileEntry, fileEntryFromJson, getUint8Array } from '../utils'
@@ -27,14 +26,15 @@ export async function preloadInit() {
     await updateUI()
 }
 
-async function loadRuntimeModData(): Promise<Uint8Array> {
-    const resp = await fetch('runtime.zip')
-    return getUint8Array(resp)
+export async function getCCLoader3RuntimeModFiles(): Promise<FileEntry[]> {
+    const data = await getUint8Array(await fetch('ccloader3-runtime.zip'))
+    const runtimeModFiles = await zipToFileEntryList(data, 'ccloader3/dist/runtime/')
+    return runtimeModFiles
 }
 
-export async function getCCLoader3RuntimeModFiles(): Promise<FileEntry[]> {
-    const data = await loadRuntimeModData()
-    const runtimeModFiles = await zipToFileEntryList(data, 'ccloader3/dist/runtime/')
+export async function getRuntimeModFiles(): Promise<FileEntry[]> {
+    const data = await getUint8Array(await fetch('bundler-runtime.zip'))
+    const runtimeModFiles = await zipToFileEntryList(data, 'assets/mods/cc-bundler-runtime/')
     return runtimeModFiles
 }
 
