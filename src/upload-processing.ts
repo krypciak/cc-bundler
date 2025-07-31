@@ -1,8 +1,7 @@
 import { updateUploadStatusLabel } from './ui'
 import { nwGui, path as paths } from './nwjs-fix'
-import { fs, getCCLoader3RuntimeModFiles } from './fs/fs-proxy'
+import { fs, getInternalFileList } from './fs/fs-proxy'
 import { type Unzipped, unzipSync } from 'fflate/browser'
-import { getRuntimeModFiles } from './runtime-mod'
 import { FileEntry, fileEntryFromFile } from './utils'
 
 function getParentDirs(files: FileEntry[]): string[] {
@@ -21,7 +20,9 @@ function getParentDirs(files: FileEntry[]): string[] {
 async function filesToCopy(filesUnfiltered: FileEntry[]) {
     const files = filesUnfiltered.filter(
         ({ path }) =>
-            (path.startsWith('assets') || path.startsWith('ccloader3/dist/runtime')) &&
+            (path.startsWith('assets') ||
+                path.startsWith('ccloader3/dist/runtime') ||
+                path == 'ccloader3/metadata.json') &&
             !path.startsWith('assets/modules')
     )
 
@@ -136,8 +137,7 @@ export async function uploadCrossCode(filesRaw: FileList) {
         return
     }
 
-    files.push(...(await getCCLoader3RuntimeModFiles()))
-    files.push(...(await getRuntimeModFiles()))
+    files.push(...(await getInternalFileList()))
 
     const toCopyFiles = await filesToCopy(files)
     await copyFiles(toCopyFiles, fetchRateLimit)

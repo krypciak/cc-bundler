@@ -24,10 +24,9 @@ async function respond(event: FetchEvent): Promise<Response> {
             const version = parseInt(versionStr)
 
             if (currentVersion != version) {
-                console.log('updating from', currentVersion, 'to', version)
                 currentVersion = version
 
-                caches.delete(cacheName)
+                await caches.delete(cacheName)
                 updated = true
             }
         } catch (e) {

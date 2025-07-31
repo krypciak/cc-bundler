@@ -42,11 +42,16 @@ function getCCLoader3MetadataFile(): FileEntry {
     return fileEntryFromJson('ccloader3/metadata.json', metadata)
 }
 
-export async function copyInternalFiles() {
+export async function getInternalFileList(): Promise<FileEntry[]> {
     const files: FileEntry[] = []
     files.push(...(await getCCLoader3RuntimeModFiles()))
     files.push(...(await getRuntimeModFiles()))
     files.push(getCCLoader3MetadataFile())
 
+    return files
+}
+
+export async function copyInternalFiles() {
+    const files = await getInternalFileList()
     await copyFiles(files, false)
 }

@@ -11,7 +11,9 @@ async function setup() {
     // trigger service worker update check
     fetch('/version').then(async resp => {
         const data: VersionResp = await resp.json()
-        if (data.updated && data.previousVersion !== undefined) location.reload()
+        if (data.updated && data.previousVersion !== undefined) {
+            location.reload()
+        }
     })
 
     if (!navigator.serviceWorker) {

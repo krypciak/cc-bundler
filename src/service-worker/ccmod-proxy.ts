@@ -50,7 +50,7 @@ let validPathPrefixes: string[] | undefined
 
 self.addEventListener('message', event => {
     if (Array.isArray(event.data)) {
-        validPathPrefixes = event.data
+        validPathPrefixes = event.data.map(path => path + '/')
     } else {
         const packet: ServiceWorkerPacket = event.data
         const resolve = waitingFor.get(packet.path)!
