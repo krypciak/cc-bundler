@@ -11,24 +11,7 @@ import type {
 import { dirname, basename } from 'path-browserify'
 import { OpfsDirent, OpfsStats, constants } from './fs-misc'
 import { updateStorageInfoLabel } from './ui'
-
-export async function getUint8ArrayFromFile(file: {
-    bytes?(): Promise<Uint8Array>
-    arrayBuffer(): Promise<ArrayBuffer>
-}): Promise<Uint8Array> {
-    if (file.bytes) {
-        return file.bytes()
-    } else {
-        return new Uint8Array(await file.arrayBuffer())
-    }
-}
-
-function throwErrorWithCode(msg: string, code: string): never {
-    const err = new Error(msg)
-    // @ts-expect-error
-    err.code = code
-    throw err
-}
+import { getUint8Array, throwErrorWithCode } from './utils'
 
 let fsRoot: FileSystemDirectoryHandle
 
@@ -205,7 +188,7 @@ async function readFile(path: string, encoding?: string): Promise<string | Array
     if (encoding == 'utf-8' || encoding == 'utf8') {
         return file.text()
     } else if (encoding == 'uint8array') {
-        return getUint8ArrayFromFile(file)
+        return getUint8Array(file)
     } else {
         return file.arrayBuffer()
     }

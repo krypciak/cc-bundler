@@ -1,10 +1,11 @@
 import metadata from '../../ccloader3/metadata.json'
 import { updateUI } from './ui'
 import { nwGui } from './nwjs-fix'
-import { FileEntry, zipToFileEntryList } from './upload-processing'
+import { copyFiles, zipToFileEntryList } from './upload-processing'
 import { getRuntimeModFiles } from './runtime-mod'
 
-import { init, fs, getUint8ArrayFromFile as getUint8Array } from './opfs'
+import { init, fs } from './opfs'
+import { FileEntry, fileEntryFromJson, getUint8Array } from './utils'
 export { fs }
 
 export async function clearStorage() {
@@ -20,8 +21,6 @@ export async function preloadInit() {
     await init()
 
     ccloaderVersion = metadata.version
-    await fs.promises.mkdir('ccloader3', { recursive: true })
-    await fs.promises.writeFile('ccloader3/metadata.json', JSON.stringify(metadata))
     await fs.promises.mkdir(nwGui.App.dataPath, { recursive: true })
 
     isMounted = true
@@ -39,8 +38,15 @@ export async function getCCLoader3RuntimeModFiles(): Promise<FileEntry[]> {
     return runtimeModFiles
 }
 
+function getCCLoader3MetadataFile(): FileEntry {
+    return fileEntryFromJson('ccloader3/metadata.json', metadata)
+}
+
 export async function copyInternalFiles() {
     const files: FileEntry[] = []
     files.push(...(await getCCLoader3RuntimeModFiles()))
     files.push(...(await getRuntimeModFiles()))
+    files.push(getCCLoader3MetadataFile())
+
+    await copyFiles(files, false)
 }

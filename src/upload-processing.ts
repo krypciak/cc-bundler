@@ -2,27 +2,8 @@ import { updateUploadStatusLabel } from './ui'
 import { nwGui, path as paths } from './nwjs-fix'
 import { fs, getCCLoader3RuntimeModFiles } from './fs-proxy'
 import { type Unzipped, unzipSync } from 'fflate/browser'
-import { getUint8ArrayFromFile } from './opfs'
 import { getRuntimeModFiles } from './runtime-mod'
-
-export interface FileEntry {
-    path: string
-    uint8Array(): Promise<Uint8Array>
-}
-
-function fileEntryFromFile(file: File, addPrefix = ''): FileEntry {
-    return {
-        path: addPrefix + file.webkitRelativePath,
-        async uint8Array() {
-            try {
-                return getUint8ArrayFromFile(file)
-            } catch (e) {
-                console.error(e)
-                return new Uint8Array()
-            }
-        },
-    }
-}
+import { FileEntry, fileEntryFromFile } from './utils'
 
 function getParentDirs(files: FileEntry[]): string[] {
     const dirs = new Set<string>()
