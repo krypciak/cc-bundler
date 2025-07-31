@@ -24,7 +24,6 @@
         "fflate": "^0.8.2",
         "http-server": "^14.1.1",
         "node": "^23.11.0",
-        "node-fetch-cache": "^5.0.2",
         "path-browserify": "^1.0.1",
         "semver": "^7.7.1",
         "ultimate-crosscode-typedefs": "github:krypciak/ultimate-crosscode-typedefs"

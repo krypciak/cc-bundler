@@ -1,19 +1,13 @@
 import type { InputLocations } from 'ccmoddb/build/src/types'
 import type { IncomingMessage, ServerResponse } from 'http'
 import type { createServer } from 'http-server'
-import NodeFetchCache, { MemoryCache } from 'node-fetch-cache'
 
 let allowedDbs: string[] = []
 export function setAllowedDbs(dbs: string[]) {
     allowedDbs = dbs
 }
 
-const fetchWithCache = NodeFetchCache.create({
-    shouldCacheResponse: response => response.ok,
-    cache: new MemoryCache({
-        ttl: 1000 * 60 * 3, // 3 days
-    }),
-})
+const fetchWithCache = fetch
 
 async function fetchData(url: string): Promise<Uint8Array> {
     const resp = await fetchWithCache(url)
