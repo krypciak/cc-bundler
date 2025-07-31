@@ -9,8 +9,8 @@ const commonOptions: esbuild.BuildOptions = {
 
     write: false,
     bundle: true,
-    minify: true,
-    // sourcemap: 'inline',
+    minify: false,
+    sourcemap: 'inline',
     // drop: ['debugger' /*'console'*/],
 } as const
 
@@ -44,7 +44,7 @@ async function copyRuntimeCCMod() {
     await fs.promises.stat(runtimeModDir)
     const zip = new AdmZip()
     zip.addLocalFolder(runtimeModDir)
-    zip.writeZipPromise('../dist/runtime.ccmod')
+    zip.writeZipPromise('../dist/runtime.zip')
 }
 
 let version: number = 0

@@ -28,7 +28,7 @@ export async function preloadInit() {
 }
 
 async function loadRuntimeModData(): Promise<Uint8Array> {
-    const resp = await fetch('runtime.ccmod')
+    const resp = await fetch('runtime.zip')
     return getUint8Array(resp)
 }
 
