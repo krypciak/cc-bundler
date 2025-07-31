@@ -16,7 +16,7 @@
     "background_color": "#080808",
     "scope": "/",
     "lang": "en",
-    "orientation": "landscape",
+    "orientation": "any",
     "description": "Run CrossCode in the browser",
     "categories": ["entertainment", "games"],
     "screenshots": []
