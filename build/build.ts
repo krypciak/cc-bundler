@@ -59,8 +59,9 @@ function main(): esbuild.BuildOptions {
                     })
                     build.onEnd(async () => {
                         await Promise.all([
-                            fs.promises.cp('./index.html', `${distDir}/index.html`),
-                            fs.promises.cp('../../favicon.png', `${distDir}/favicon.png`),
+                            ...(await fs.promises.readdir('./assets')).map(file =>
+                                fs.promises.cp(`./assets/${file}`, `${distDir}/${file}`)
+                            ),
                             fs.promises.cp('../lib/socket.io.min.js', `${distDir}/socket.io.js`),
                         ])
                     })

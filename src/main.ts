@@ -1,14 +1,18 @@
+import { addFetchHandler } from '../../ccloader3/packages/core/src/service-worker-bridge'
 import * as fsProxy from './fs-proxy'
 import { requireFix } from './nwjs-fix'
 import { initLoadScreen } from './ui'
-import './localstoarge-default'
-
-import { addFetchHandler } from '../../ccloader3/packages/core/src/service-worker-bridge'
 import { checkAutorun } from './autorun'
+import { checkPWA } from './pwa'
+import './localstoarge-default'
 
 async function setup() {
     if (!navigator.serviceWorker) {
         storageInfoLabel.innerHTML = 'Service Workers not supported! <br> Cannot continue'
+        return
+    }
+    if (!navigator.storage) {
+        storageInfoLabel.innerHTML = 'Storage API not supported! <br> Cannot continue'
         return
     }
 
@@ -18,7 +22,9 @@ async function setup() {
 
         await fsProxy.preloadInit()
 
-        checkAutorun()
+        if (checkAutorun()) return
+
+        checkPWA()
     } else {
         run()
     }

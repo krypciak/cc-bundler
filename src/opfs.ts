@@ -35,6 +35,8 @@ let fsRoot: FileSystemDirectoryHandle
 export async function init() {
     fsRoot = await navigator.storage.getDirectory()
     await buildQuickPathLookupMap()
+
+    await navigator.storage.persist?.()
 }
 
 const pathToFileHandle: Map<string, FileSystemFileHandle> = new Map()

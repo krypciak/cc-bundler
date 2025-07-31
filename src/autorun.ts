@@ -15,9 +15,14 @@ export function exit() {
     location.reload()
 }
 
-export function checkAutorun() {
-    if (isAutorunOn()) runButton.click()
-    else if (getAutorun() == 'one-time-off') {
+export function checkAutorun(): boolean {
+    if (isAutorunOn()) {
+        runButton.click()
+        return true
+    }
+
+    if (getAutorun() == 'one-time-off') {
         setAutorun('on')
     }
+    return false
 }
