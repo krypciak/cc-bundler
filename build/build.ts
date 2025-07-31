@@ -35,6 +35,14 @@ function donePlugin(outfile: string): esbuild.Plugin {
     }
 }
 
+async function copyRuntimeCCMod() {
+    const runtimeModDir = '../../ccloader3/dist/runtime'
+    await fs.promises.stat(runtimeModDir)
+    const zip = new AdmZip()
+    zip.addLocalFolder(runtimeModDir)
+    zip.writeZipPromise('../dist/runtime.ccmod')
+}
+
 function main(): esbuild.BuildOptions {
     const outfile = `${distDir}/crosscode.js`
     return {
@@ -47,16 +55,6 @@ function main(): esbuild.BuildOptions {
             {
                 name: 'copy-files',
                 setup(build) {
-                    build.onStart(async () => {
-                        const runtimeModDir = '../../ccloader3/dist/runtime'
-                        await fs.promises.stat(runtimeModDir)
-                        const zip = new AdmZip()
-                        zip.addLocalFolder(runtimeModDir)
-                        const buf = await zip.toBufferPromise()
-                        const dataBase64 = buf.toString('base64')
-                        const json = { data: dataBase64 }
-                        fs.promises.writeFile('../tmp/runtime.json', JSON.stringify(json))
-                    })
                     build.onEnd(async () => {
                         await Promise.all([
                             ...(await fs.promises.readdir('./assets')).map(file =>
@@ -64,6 +62,7 @@ function main(): esbuild.BuildOptions {
                             ),
                             fs.promises.cp('../lib/socket.io.min.js', `${distDir}/socket.io.js`),
                             fs.promises.cp('../../ccloader3/main.css', `${distDir}/ccloader3-main.css`),
+                            copyRuntimeCCMod(),
                         ])
                     })
                 },

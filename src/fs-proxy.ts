@@ -1,6 +1,10 @@
+import metadata from '../../ccloader3/metadata.json'
 import { updateUI } from './ui'
+import { nwGui } from './nwjs-fix'
+import { FileEntry, zipToFileEntryList } from './upload-processing'
+import { getRuntimeModFiles } from './runtime-mod'
 
-import { init, fs } from './opfs'
+import { init, fs, getUint8ArrayFromFile as getUint8Array } from './opfs'
 export { fs }
 
 export async function clearStorage() {
@@ -12,9 +16,6 @@ export async function clearStorage() {
 export let isMounted = false
 export let ccloaderVersion: string | undefined
 
-import metadata from '../../ccloader3/metadata.json'
-import { nwGui } from './nwjs-fix'
-
 export async function preloadInit() {
     await init()
 
@@ -25,4 +26,21 @@ export async function preloadInit() {
 
     isMounted = true
     await updateUI()
+}
+
+async function loadRuntimeModData(): Promise<Uint8Array> {
+    const resp = await fetch('runtime.ccmod')
+    return getUint8Array(resp)
+}
+
+export async function getCCLoader3RuntimeModFiles(): Promise<FileEntry[]> {
+    const data = await loadRuntimeModData()
+    const runtimeModFiles = await zipToFileEntryList(data, 'ccloader3/dist/runtime/')
+    return runtimeModFiles
+}
+
+export async function copyInternalFiles() {
+    const files: FileEntry[] = []
+    files.push(...(await getCCLoader3RuntimeModFiles()))
+    files.push(...(await getRuntimeModFiles()))
 }

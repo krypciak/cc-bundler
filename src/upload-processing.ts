@@ -1,7 +1,9 @@
 import { updateUploadStatusLabel } from './ui'
 import { nwGui, path as paths } from './nwjs-fix'
-import { fs } from './fs-proxy'
+import { fs, getCCLoader3RuntimeModFiles } from './fs-proxy'
 import { type Unzipped, unzipSync } from 'fflate/browser'
+import { getUint8ArrayFromFile } from './opfs'
+import { getRuntimeModFiles } from './runtime-mod'
 
 export interface FileEntry {
     path: string
@@ -63,7 +65,7 @@ async function mkdirs(dirs: string[]) {
     updateUploadStatusLabel(label, dirs.length, dirs.length)
 }
 
-async function copyFiles(toCopyFiles: FileEntry[], fetchRateLimit: boolean) {
+export async function copyFiles(toCopyFiles: FileEntry[], fetchRateLimit: boolean) {
     const dirs = getParentDirs(toCopyFiles)
     await mkdirs(dirs)
 
@@ -106,7 +108,7 @@ async function copyFiles(toCopyFiles: FileEntry[], fetchRateLimit: boolean) {
     updateUploadStatusLabel('done, uploaded', toCopyFiles.length)
 }
 
-async function zipToFileEntryList(zipData: Uint8Array, addPrefix = ''): Promise<FileEntry[]> {
+export async function zipToFileEntryList(zipData: Uint8Array, addPrefix = ''): Promise<FileEntry[]> {
     updateUploadStatusLabel('uncompressing zip')
     const unzipped: Unzipped = unzipSync(zipData)
     return Object.entries(unzipped)
@@ -117,20 +119,6 @@ async function zipToFileEntryList(zipData: Uint8Array, addPrefix = ''): Promise<
             },
         }))
         .filter(({ path }) => !path.endsWith('/'))
-}
-
-import runtimeModJson from '../tmp/runtime.json'
-import { getUint8ArrayFromFile } from './opfs'
-import { getRuntimeModFiles } from './runtime-mod'
-
-async function loadRuntimeModData(): Promise<Uint8Array> {
-    return Uint8Array.from(atob(runtimeModJson.data), c => c.charCodeAt(0))
-}
-
-async function getCCLoader3RuntimeModFiles(): Promise<FileEntry[]> {
-    const data = await loadRuntimeModData()
-    const runtimeModFiles = await zipToFileEntryList(data, 'ccloader3/dist/runtime/')
-    return runtimeModFiles
 }
 
 export async function uploadCrossCode(filesRaw: FileList) {
