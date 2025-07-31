@@ -1,13 +1,4 @@
-import type { ServiceWorkerPacket } from '../../ccloader3/packages/core/src/service-worker-bridge'
-import { handle } from './mod-download-proxy'
-
-self.addEventListener('activate', () => {
-    void self.clients.claim()
-})
-
-self.addEventListener('install', () => {
-    void self.skipWaiting()
-})
+import type { ServiceWorkerPacket } from '../../../ccloader3/packages/core/src/service-worker-bridge'
 
 const CONTENT_TYPES: Record<string, string> = {
     css: 'text/css',
@@ -72,8 +63,6 @@ self.addEventListener('fetch', (event: FetchEvent) => {
     if (!validPathPrefixes) {
         return
     }
-
-    if (handle(event)) return
 
     const { request } = event
     const path = decodeURI(new URL(request.url).pathname)

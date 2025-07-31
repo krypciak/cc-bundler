@@ -72,7 +72,7 @@ function main(): esbuild.BuildOptions {
 
 function ccmodServiceWorker(): esbuild.BuildOptions {
     return {
-        entryPoints: ['../src/service-worker.ts'],
+        entryPoints: ['../src/service-worker/service-worker.ts'],
 
         ...commonOptions,
 
