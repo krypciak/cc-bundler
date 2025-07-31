@@ -63,6 +63,7 @@ function main(): esbuild.BuildOptions {
                                 fs.promises.cp(`./assets/${file}`, `${distDir}/${file}`)
                             ),
                             fs.promises.cp('../lib/socket.io.min.js', `${distDir}/socket.io.js`),
+                            fs.promises.cp('../../ccloader3/main.css', `${distDir}/ccloader3-main.css`),
                         ])
                     })
                 },
