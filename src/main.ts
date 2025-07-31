@@ -17,7 +17,8 @@ async function setup() {
     })
 
     if (!navigator.serviceWorker) {
-        storageInfoLabel.innerHTML = 'Service Workers not supported! <br> Cannot continue'
+        storageInfoLabel.innerHTML =
+            'Service Workers not supported! <br> Cannot continue <br> (Make sure you connect with https!)'
         return
     }
     if (!navigator.storage) {
