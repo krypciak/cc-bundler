@@ -158,7 +158,13 @@ async function onClearStorageClick() {
 async function onUpload(files: FileList) {
     isUploading = true
     updateElementsEnabled()
-    await uploadCrossCode(files)
+    try {
+        await uploadCrossCode(files)
+    } catch (e) {
+        console.error(e)
+        const str = (e as Error).toString()
+        updateUploadStatusLabel(str)
+    }
     isUploading = false
     updateUI()
 }
