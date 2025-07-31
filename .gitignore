@@ -6,3 +6,6 @@ tmp
 tmp.js
 temp.js
 cert
+*.png~
+*.kra~
+*.kra
