@@ -1,5 +1,5 @@
 import { addFetchHandler } from '../../ccloader3/packages/core/src/service-worker-bridge'
-import * as fsProxy from './fs-proxy'
+import * as fsProxy from './fs/fs-proxy'
 import { requireFix } from './nwjs-fix'
 import { initLoadScreen } from './ui'
 import { checkAutorun } from './autorun'

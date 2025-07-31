@@ -1,11 +1,11 @@
-import metadata from '../../ccloader3/metadata.json'
-import { updateUI } from './ui'
-import { nwGui } from './nwjs-fix'
-import { copyFiles, zipToFileEntryList } from './upload-processing'
-import { getRuntimeModFiles } from './runtime-mod'
+import metadata from '../../../ccloader3/metadata.json'
+import { updateUI } from '../ui'
+import { nwGui } from '../nwjs-fix'
+import { copyFiles, zipToFileEntryList } from '../upload-processing'
+import { getRuntimeModFiles } from '../runtime-mod'
 
 import { init, fs } from './opfs'
-import { FileEntry, fileEntryFromJson, getUint8Array } from './utils'
+import { FileEntry, fileEntryFromJson, getUint8Array } from '../utils'
 export { fs }
 
 export async function clearStorage() {

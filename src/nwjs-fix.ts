@@ -1,4 +1,4 @@
-import { fs } from './fs-proxy'
+import { fs } from './fs/fs-proxy'
 import { exit } from './autorun'
 
 import path from 'path-browserify'

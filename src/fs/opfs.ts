@@ -10,8 +10,8 @@ import type {
 
 import { dirname, basename } from 'path-browserify'
 import { OpfsDirent, OpfsStats, constants } from './fs-misc'
-import { updateStorageInfoLabel } from './ui'
-import { getUint8Array, throwErrorWithCode } from './utils'
+import { updateStorageInfoLabel } from '../ui'
+import { getUint8Array, throwErrorWithCode } from '../utils'
 
 let fsRoot: FileSystemDirectoryHandle
 

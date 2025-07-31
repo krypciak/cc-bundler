@@ -1,5 +1,5 @@
 import { getAutorun, setAutorun } from './autorun'
-import { isMounted, clearStorage, fs, ccloaderVersion } from './fs-proxy'
+import { isMounted, clearStorage, fs, ccloaderVersion } from './fs/fs-proxy'
 import { run } from './main'
 import { uploadCrossCode, uploadSave } from './upload-processing'
 import type { ChangelogFileData } from 'ultimate-crosscode-typedefs/file-types/changelog'

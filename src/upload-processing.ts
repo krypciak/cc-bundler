@@ -1,6 +1,6 @@
 import { updateUploadStatusLabel } from './ui'
 import { nwGui, path as paths } from './nwjs-fix'
-import { fs, getCCLoader3RuntimeModFiles } from './fs-proxy'
+import { fs, getCCLoader3RuntimeModFiles } from './fs/fs-proxy'
 import { type Unzipped, unzipSync } from 'fflate/browser'
 import { getRuntimeModFiles } from './runtime-mod'
 import { FileEntry, fileEntryFromFile } from './utils'
