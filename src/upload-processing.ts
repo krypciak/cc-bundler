@@ -23,7 +23,12 @@ async function filesToCopy(filesUnfiltered: FileEntry[]) {
             (path.startsWith('assets') ||
                 path.startsWith('ccloader3/dist/runtime') ||
                 path == 'ccloader3/metadata.json') &&
-            !path.startsWith('assets/modules')
+            !path.startsWith('assets/modules') &&
+            !path.includes('.git') &&
+            !path.endsWith('.ts') &&
+            !path.includes('node_modules') &&
+            !path.includes('simplify') &&
+            !path.includes('ccloader-version-display')
     )
 
     const existsArr: boolean[] = await Promise.all(files.map(file => fs.promises.exists(file.path)))
