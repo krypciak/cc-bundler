@@ -9,18 +9,21 @@ export interface VersionResp {
 }
 
 async function respond(event: FetchEvent): Promise<Response> {
-    const cachedResponse = await caches.match(event.request)
+    const request = event.request
+    const cachedResponse = await caches.match(request)
     if (cachedResponse) return cachedResponse
 
-    const url = event.request.url
+    let url = request.url
     const path = decodeURI(new URL(url).pathname)
+
+    if (path == '/details' || path == '/icon' || path.startsWith('/socket.io/')) return fetch(request)
 
     if (path == '/version') {
         const previousVersion = currentVersion
 
         let updated: boolean = false
         try {
-            const resp = await fetch(event.request, { cache: 'no-cache' })
+            const resp = await fetch(request, { cache: 'no-cache' })
             const versionStr = await resp.text()
             const version = parseInt(versionStr)
 
@@ -45,11 +48,11 @@ async function respond(event: FetchEvent): Promise<Response> {
         })
     }
 
-    const fetchReq = await fetch(event.request, { cache: 'no-cache' })
+    const fetchReq = await fetch(request, { cache: 'no-cache' })
     const responseClone = fetchReq.clone()
 
     caches.open(cacheName).then(cache => {
-        cache.put(event.request, responseClone)
+        cache.put(request, responseClone)
     })
     return fetchReq
 }
