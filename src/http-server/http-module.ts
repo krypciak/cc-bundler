@@ -9,10 +9,9 @@ export function setAllowedDbs(dbs: string[]) {
 
 const fetchWithCache = fetch
 
-async function fetchData(url: string): Promise<Uint8Array> {
+async function fetchData(url: string): Promise<ArrayBuffer> {
     const resp = await fetchWithCache(url)
-    const data = new Uint8Array(await resp.arrayBuffer())
-
+    const data = await resp.arrayBuffer()
     return data
 }
 
@@ -51,7 +50,7 @@ function checkUrl(url: string | undefined): url is string {
     return validUrlSet.has(url)
 }
 
-async function sha256(data: Uint8Array): Promise<string> {
+async function sha256(data: ArrayBuffer): Promise<string> {
     const hashBuffer = await crypto.subtle.digest('SHA-256', data)
     const hashArray = Array.from(new Uint8Array(hashBuffer))
     const result = hashArray.map(b => b.toString(16).padStart(2, '0')).join('')
