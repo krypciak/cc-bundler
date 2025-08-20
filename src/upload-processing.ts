@@ -72,7 +72,7 @@ export async function copyFiles(toCopyFiles: FileEntry[], fetchRateLimit: boolea
             await waitPromises[i]
             const buffer = await file.uint8Array()
 
-            await fs.promises.writeFile(file.path, buffer)
+            await fs.promises.writeFile(file.path, buffer.buffer as FileSystemWriteChunkType)
             updateUploadStatusLabel('copying', ++filesCopied, toCopyFiles.length)
 
             runNext(i)

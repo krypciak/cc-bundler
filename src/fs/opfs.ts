@@ -196,7 +196,7 @@ async function readFile(path: string, encoding?: string): Promise<string | Array
 
 async function writeFile(
     path: string,
-    data: string | NodeJS.ArrayBufferView | ArrayBuffer,
+    data: FileSystemWriteChunkType,
     options?: ObjectEncodingOptions | BufferEncoding | null
 ): Promise<void> {
     path = cleanPath(path)
