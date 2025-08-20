@@ -1,13 +1,5 @@
 import type { ServiceWorker } from '../../../ccloader3/packages/core/src/service-worker-bridge'
 
-self.addEventListener('activate', () => {
-    void self.clients.claim()
-})
-
-self.addEventListener('install', () => {
-    void self.skipWaiting()
-})
-
 const CONTENT_TYPES: Record<string, string> = {
     css: 'text/css',
     js: 'text/javascript',
@@ -40,14 +32,12 @@ async function requestAndAwaitAck(
     })
 }
 
-let validPathPrefixes: string[] | null
+let validPathPrefixes: string[] = ['/assets/', '/ccloader3/']
 
 self.addEventListener('message', event => {
     const packet: ServiceWorker.Outgoing.Packet = event.data
 
-    if (packet.type === 'ValidPathPrefixes') {
-        validPathPrefixes = packet.validPathPrefixes
-    } else {
+    if (packet.type == 'Data') {
         waitingFor.get(packet.path)?.(packet)
         waitingFor.delete(packet.path)
     }

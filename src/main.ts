@@ -1,5 +1,5 @@
-import { loadServiceWorker, addFetchHandler } from '../../ccloader3/packages/core/src/service-worker-bridge'
-import { fs, getInternalFileList, preloadInit } from './fs/fs-proxy'
+import { loadServiceWorker } from '../../ccloader3/packages/core/src/service-worker-bridge'
+import { getInternalFileList, preloadInit } from './fs/fs-proxy'
 import { requireFix } from './nwjs-fix'
 import { initLoadScreen } from './ui'
 import { checkAutorun } from './autorun'
@@ -7,6 +7,7 @@ import { checkPWA } from './pwa'
 import './localstoarge-default'
 import type { VersionResp } from './service-worker/offline-cache-proxy'
 import { copyFiles } from './upload-processing'
+import { initOpfsProxyBridge } from './opfs-proxy-bridge'
 
 const runtimeModsDirtyKey = 'cc-bundler-runtime-mods-dirty'
 
@@ -31,6 +32,7 @@ async function setup() {
     }
 
     await loadServiceWorker()
+    initOpfsProxyBridge()
 
     if (navigator.serviceWorker.controller) {
         initLoadScreen()
@@ -46,10 +48,6 @@ async function setup() {
 setup()
 
 export async function run() {
-    addFetchHandler(['assets', 'ccloader3'], path => {
-        return fs.promises.readFile(path)
-    })
-
     if (localStorage[runtimeModsDirtyKey] == 'true') {
         await copyFiles(await getInternalFileList(), false)
         localStorage[runtimeModsDirtyKey] = 'false'
