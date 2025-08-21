@@ -102,7 +102,7 @@ async function forEach(
     for await (const [name, handle] of dir.entries()) {
         const newPath = path + name
         if (handle.kind == 'file') {
-            if (fileFilter && fileFilter(newPath)) {
+            if (!fileFilter || fileFilter(newPath)) {
                 const handle = await dir.getFileHandle(name)
                 fileFunc(handle, newPath)
             }
