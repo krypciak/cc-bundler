@@ -10,7 +10,7 @@ export async function startHttpServer() {
 
     const httpServer = createServer({
         root: './dist',
-        cache: 60 * 60 * 24,
+        cache: -1,
         cors: true,
         showDotfiles: false,
         showDir: 'false',

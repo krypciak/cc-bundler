@@ -27,15 +27,29 @@ export async function preloadInit() {
 }
 
 export async function getCCLoader3RuntimeModFiles(): Promise<FileEntry[]> {
-    const data = await getUint8Array(await fetch('ccloader3-runtime.zip'))
-    const runtimeModFiles = await zipToFileEntryList(data, 'ccloader3/dist/runtime/')
-    return runtimeModFiles
+    try {
+        const resp = await fetch('ccloader3-runtime.zip')
+        if (resp.status != 200) throw new Error(`bad status: ${resp.status}`)
+        const data = await getUint8Array(resp)
+        const runtimeModFiles = await zipToFileEntryList(data, 'ccloader3/dist/runtime/')
+        return runtimeModFiles
+    } catch (e) {
+        console.error('unable to fetch ccloader3 runtime files!', e)
+        return []
+    }
 }
 
 export async function getRuntimeModFiles(): Promise<FileEntry[]> {
-    const data = await getUint8Array(await fetch('bundler-runtime.zip'))
-    const runtimeModFiles = await zipToFileEntryList(data, 'assets/mods/cc-bundler-runtime/')
-    return runtimeModFiles
+    try {
+        const resp = await fetch('bundler-runtime.zip')
+        if (resp.status != 200) throw new Error(`bad status: ${resp.status}`)
+        const data = await getUint8Array(resp)
+        const runtimeModFiles = await zipToFileEntryList(data, 'assets/mods/cc-bundler-runtime/')
+        return runtimeModFiles
+    } catch (e) {
+        console.error('unable to fetch runtime files!', e)
+        return []
+    }
 }
 
 function getCCLoader3MetadataFile(): FileEntry {

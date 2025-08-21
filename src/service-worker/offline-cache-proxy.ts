@@ -16,7 +16,8 @@ async function respond(event: FetchEvent): Promise<Response> {
     let url = request.url
     const path = decodeURI(new URL(url).pathname)
 
-    if (path == '/details' || path == '/icon' || path.startsWith('/socket.io/')) return fetch(request)
+    if (path == '/details' || path == '/icon' || path.startsWith('/socket.io/') || path.startsWith('/cdn-cgi/'))
+        return fetch(request)
 
     if (path == '/version') {
         const previousVersion = currentVersion
@@ -24,6 +25,7 @@ async function respond(event: FetchEvent): Promise<Response> {
         let updated: boolean = false
         try {
             const resp = await fetch(request, { cache: 'no-cache' })
+            if (resp.status !== 200) throw new Error(`bad status: ${resp.status}`)
             const versionStr = await resp.text()
             const version = parseInt(versionStr)
 
@@ -49,11 +51,13 @@ async function respond(event: FetchEvent): Promise<Response> {
     }
 
     const fetchReq = await fetch(request, { cache: 'no-cache' })
-    const responseClone = fetchReq.clone()
+    if (fetchReq.status == 200) {
+        const responseClone = fetchReq.clone()
 
-    caches.open(cacheName).then(cache => {
-        cache.put(request, responseClone)
-    })
+        caches.open(cacheName).then(cache => {
+            cache.put(request, responseClone)
+        })
+    }
     return fetchReq
 }
 
