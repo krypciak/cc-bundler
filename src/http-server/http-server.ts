@@ -20,7 +20,7 @@ export async function startHttpServer() {
             key: './cert/localhost+2-key.pem',
         },
     })
-    const port = 8080
+    const port = 33405
     console.log('http server listening to', port)
     httpServer.listen(port)
 }
