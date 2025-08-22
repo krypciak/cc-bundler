@@ -1,9 +1,11 @@
 import type { IncomingMessage, ServerResponse } from 'http'
-import { spawn } from 'child_process'
-import { zip } from 'fflate'
-import type { AsyncZippable } from 'fflate'
-import * as fs from 'fs'
+import type { AsyncZippable } from 'fflate/browser'
 import type { HandleFunction } from './http-module-mod-proxy'
+import type { Dirent } from 'fs'
+
+const fs: typeof import('fs') = (0, eval)("require('fs')")
+
+let zip: (typeof import('fflate'))['zip']
 
 interface LiveModConfig {
     id: string
@@ -26,6 +28,7 @@ function concatBuffersIntoUint8Array(arrays: Buffer[]): Uint8Array {
 }
 
 async function buildPluginJs(mod: LiveModConfig): Promise<Uint8Array> {
+    const { spawn }: typeof import('child_process') = require('child_process')
     const process = spawn(mod.buildCmd, mod.buildArguments, { cwd: mod.repoPath })
 
     const buffers: Buffer[] = []
@@ -56,7 +59,7 @@ async function fsExists(path: string) {
 }
 
 async function buildMod(mod: LiveModConfig): Promise<Uint8Array> {
-    type AssetEntry = { path: string; data: Buffer }
+    type AssetEntry = { path: string; data: Uint8Array }
 
     const iconPath = `${mod.repoPath}/icon/icon.png`
     const [pluginJs, iconData, licenseData, ccmodData, assetsFiles] = await Promise.all([
@@ -65,12 +68,12 @@ async function buildMod(mod: LiveModConfig): Promise<Uint8Array> {
         fs.promises.readFile(`${mod.repoPath}/LICENSE`),
         fs.promises.readFile(`${mod.repoPath}/ccmod.json`),
         new Promise<AssetEntry[]>(async resolve => {
-            const assets: fs.Dirent[] = (
+            const assets: Dirent[] = (
                 await fs.promises
                     .readdir(`${mod.repoPath}/assets`, { recursive: true, withFileTypes: true })
                     .catch(_e => {
                         resolve([])
-                        return [] as fs.Dirent[]
+                        return [] as Dirent[]
                     })
             ).filter(dirent => dirent.isFile())
 
@@ -79,7 +82,8 @@ async function buildMod(mod: LiveModConfig): Promise<Uint8Array> {
                     const path = `${dirent.parentPath}/${dirent.name}`
 
                     const assetPath = `${path.substring(path.lastIndexOf('assets/') + 'assets/'.length)}`
-                    return { path: assetPath, data: await fs.promises.readFile(path) }
+                    const buffer = await fs.promises.readFile(path)
+                    return { path: assetPath, data: new Uint8Array(buffer.buffer) }
                 })
             )
             resolve(files)
@@ -112,11 +116,13 @@ async function buildMod(mod: LiveModConfig): Promise<Uint8Array> {
 
     const zipTree: AsyncZippable = {
         'plugin.js': pluginJs,
-        icon: iconData ? { 'icon.png': iconData } : {},
-        LICENSE: licenseData,
-        'ccmod.json': ccmodData,
+        icon: iconData ? { 'icon.png': new Uint8Array(iconData.buffer) } : {},
+        LICENSE: new Uint8Array(licenseData.buffer),
+        'ccmod.json': new Uint8Array(ccmodData.buffer),
         assets: assetsTree,
     }
+
+    zip ??= (await import('fflate/node')).zip
 
     return new Promise<Uint8Array>((resolve, reject) => {
         zip(zipTree, {}, (err, data) => {
