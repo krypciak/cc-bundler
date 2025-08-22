@@ -48,13 +48,20 @@ async function buildPluginJs(mod: LiveModConfig): Promise<Uint8Array> {
 
     return concatBuffersIntoUint8Array(buffers)
 }
+async function fsExists(path: string) {
+    return await fs.promises.access(path).then(
+        () => true,
+        () => false
+    )
+}
 
 async function buildMod(mod: LiveModConfig): Promise<Uint8Array> {
     type AssetEntry = { path: string; data: Buffer }
 
+    const iconPath = `${mod.repoPath}/icon/icon.png`
     const [pluginJs, iconData, licenseData, ccmodData, assetsFiles] = await Promise.all([
         buildPluginJs(mod),
-        fs.promises.readFile(`${mod.repoPath}/icon/icon.png`),
+        (await fsExists(iconPath)) ? fs.promises.readFile(iconPath) : undefined,
         fs.promises.readFile(`${mod.repoPath}/LICENSE`),
         fs.promises.readFile(`${mod.repoPath}/ccmod.json`),
         new Promise<AssetEntry[]>(async resolve => {
@@ -105,7 +112,7 @@ async function buildMod(mod: LiveModConfig): Promise<Uint8Array> {
 
     const zipTree: AsyncZippable = {
         'plugin.js': pluginJs,
-        icon: { 'icon.png': iconData },
+        icon: iconData ? { 'icon.png': iconData } : {},
         LICENSE: licenseData,
         'ccmod.json': ccmodData,
         assets: assetsTree,

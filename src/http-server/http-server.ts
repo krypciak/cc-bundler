@@ -14,35 +14,35 @@ export async function startHttpServer() {
     await updateValidUrlSet()
 
     setModConfigs([
-        {
-            id: 'cc-multibakery',
-            repoPath: '/home/krypek/home/Programming/crosscode/instances/cc-server/assets/mods/cc-multibakery',
-            buildCmd: 'bun',
-            buildArguments: [
-                'build.ts',
-                'build',
-                // 'minifySyntax=true',
-                // 'minifyWhitespace=true',
-                'physics=false',
-                'browser=true',
-                'target=es2024',
-                'extraTreeShaking=true',
-                'noWrite=true',
-            ],
-        },
-        {
-            id: 'cc-instanceinator',
-            repoPath: '/home/krypek/home/Programming/crosscode/instances/cc-server/assets/mods/cc-instanceinator',
-            buildCmd: 'esbuild',
-            buildArguments: [
-                '--target=es2018',
-                '--format=esm',
-                '--platform=node',
-                '--bundle',
-                '--sourcemap=inline',
-                'src/plugin.ts',
-            ],
-        },
+        // {
+        //     id: 'cc-multibakery',
+        //     repoPath: '/home/krypek/home/Programming/crosscode/instances/cc-server/assets/mods/cc-multibakery',
+        //     buildCmd: 'bun',
+        //     buildArguments: [
+        //         'build.ts',
+        //         'build',
+        //         // 'minifySyntax=true',
+        //         // 'minifyWhitespace=true',
+        //         'physics=false',
+        //         'browser=true',
+        //         'target=es2024',
+        //         'extraTreeShaking=true',
+        //         'noWrite=true',
+        //     ],
+        // },
+        // {
+        //     id: 'cc-instanceinator',
+        //     repoPath: '/home/krypek/home/Programming/crosscode/instances/cc-server/assets/mods/cc-instanceinator',
+        //     buildCmd: 'esbuild',
+        //     buildArguments: [
+        //         '--target=es2018',
+        //         '--format=esm',
+        //         '--platform=node',
+        //         '--bundle',
+        //         '--sourcemap=inline',
+        //         'src/plugin.ts',
+        //     ],
+        // },
     ])
     startWatchingMods()
 
