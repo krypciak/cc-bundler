@@ -48,6 +48,6 @@ export function initOpfsProxyBridge() {
     /* prevent service worker from going to sleep */
     /* insert evil laughter */
     setInterval(() => {
-        fetch('/assets/data/credits/end.json')
+        fetch('/ping.txt')
     }, 20e3)
 }

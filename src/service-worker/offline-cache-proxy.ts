@@ -16,6 +16,8 @@ async function respond(event: FetchEvent): Promise<Response> {
     let url = request.url
     const path = decodeURI(new URL(url).pathname)
 
+    if (path == '/ping.txt') return new Response('', { status: 200 })
+
     if (path == '/details' || path == '/icon' || path.startsWith('/socket.io/') || path.startsWith('/cdn-cgi/'))
         return fetch(request)
 
