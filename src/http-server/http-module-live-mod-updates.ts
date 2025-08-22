@@ -169,6 +169,17 @@ export const handleFunction: HandleFunction = async (req: IncomingMessage, res: 
             const matches = url.match(/\?id=(.+)/)
             const modId = decodeURI(matches?.[1] ?? '')
 
+            if (modId == 'list') {
+                const json = JSON.stringify(Object.keys(mods))
+                res.writeHead(200, {
+                    'Content-Type': 'application/json',
+                })
+                res.write(json)
+                res.end()
+
+                return
+            }
+
             const mod = mods[modId]
             if (!mod) {
                 res.writeHead(404, {})

@@ -181,7 +181,6 @@ async function onSaveUpload(files: FileList) {
 }
 
 function onRunClick() {
-    bundleTitleScreen.style.display = 'none'
     run()
 }
 

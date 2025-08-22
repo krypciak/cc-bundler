@@ -18,7 +18,13 @@ async function respond(event: FetchEvent): Promise<Response> {
 
     if (path == '/ping.txt') return new Response('', { status: 200 })
 
-    if (path == '/details' || path == '/icon' || path.startsWith('/socket.io/') || path.startsWith('/cdn-cgi/'))
+    if (
+        path == '/details' ||
+        path == '/icon' ||
+        path.startsWith('/socket.io/') ||
+        path.startsWith('/cdn-cgi/') ||
+        path.startsWith('/liveModUpdate')
+    )
         return fetch(request)
 
     if (path == '/version') {

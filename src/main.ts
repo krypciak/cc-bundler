@@ -8,6 +8,7 @@ import './localstoarge-default'
 import type { VersionResp } from './service-worker/offline-cache-proxy'
 import { copyFiles } from './upload-processing'
 import { initOpfsProxyBridge } from './opfs-proxy-bridge'
+import { updateLiveMods } from './live-mods'
 
 const runtimeModsDirtyKey = 'cc-bundler-runtime-mods-dirty'
 
@@ -52,6 +53,10 @@ export async function run() {
         await copyFiles(await getInternalFileList(), false)
         localStorage[runtimeModsDirtyKey] = 'false'
     }
+
+    await updateLiveMods()
+
+    bundleTitleScreen.style.display = 'none'
 
     const modloader = await import('../../ccloader3/packages/core/src/modloader')
     await modloader.boot()
