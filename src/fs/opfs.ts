@@ -173,10 +173,14 @@ async function usage(): Promise<StorageEstimate> {
     return navigator.storage.estimate()
 }
 
+async function readFile(path: string, options?: { encoding: 'utf-8' | 'utf8' }): Promise<string>
 async function readFile(path: string, encoding: 'utf-8' | 'utf8'): Promise<string>
 async function readFile(path: string, encoding: 'uint8array'): Promise<ArrayBuffer>
 async function readFile(path: string, encoding?: string): Promise<ArrayBuffer>
-async function readFile(path: string, encoding?: string): Promise<string | ArrayBuffer | Uint8Array> {
+async function readFile(
+    path: string,
+    options?: string | { encoding?: string }
+): Promise<string | ArrayBuffer | Uint8Array> {
     path = cleanPath(path)
     const handle = await getFileHandle(path)
     if (!handle) {
@@ -184,6 +188,8 @@ async function readFile(path: string, encoding?: string): Promise<string | Array
     }
 
     const file = await handle.getFile()
+
+    const encoding = !options ? undefined : ((typeof options == 'string' ? options : options?.encoding) ?? 'binary')
 
     if (encoding == 'utf-8' || encoding == 'utf8') {
         return file.text()
