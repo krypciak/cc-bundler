@@ -9,6 +9,9 @@
         "httpServer": "node --experimental-strip-types src/http-server/http-server.ts"
     },
     "devDependencies": {
+        "@capacitor/android": "^7.4.3",
+        "@capacitor/cli": "^7.4.3",
+        "@capacitor/core": "^7.4.3",
         "@jspm/core": "^2.1.0",
         "@types/adm-zip": "^0.5.7",
         "@types/http-server": "^0.12.4",
@@ -26,10 +29,14 @@
         "node": "^23.11.0",
         "path-browserify": "^1.0.1",
         "semver": "^7.7.1",
-        "ultimate-crosscode-typedefs": "github:krypciak/ultimate-crosscode-typedefs",
-        "typescript": "^5.9.2"
+        "typescript": "^5.9.2",
+        "ultimate-crosscode-typedefs": "github:krypciak/ultimate-crosscode-typedefs"
     },
     "pnpm": {
-        "onlyBuiltDependencies": ["esbuild", "node"]
+        "onlyBuiltDependencies": [
+            "esbuild",
+            "node",
+            "sharp"
+        ]
     }
 }
