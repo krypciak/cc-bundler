@@ -49,6 +49,7 @@ async function copyCCLoader3RuntimeCCMod() {
 
 let version: number = 0
 try {
+    await fs.promises.mkdir(distDir, { recursive: true })
     const versionStr = await fs.promises.readFile('../dist/version')
     version = Number(versionStr)
 } catch (e) {}
@@ -130,7 +131,6 @@ async function run(): Promise<void> {
     } catch (e) {
         console.log(e)
     }
-    await fs.promises.mkdir(distDir, { recursive: true })
 
     if (isWatch) {
         console.clear()
