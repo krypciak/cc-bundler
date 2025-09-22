@@ -54,8 +54,8 @@ export async function startHttpServer() {
         showDir: 'false',
         before: [modProxyHandle, liveModUpdatesHandle],
         https: {
-            cert: './cert/localhost+2.pem',
-            key: './cert/localhost+2-key.pem',
+            cert: './cert/localhost+1.pem',
+            key: './cert/localhost+1-key.pem',
         },
     })
     const port = 33405
