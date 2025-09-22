@@ -3,8 +3,10 @@ import type { AsyncZippable } from 'fflate/browser'
 import type { HandleFunction } from './http-module-mod-proxy'
 import type { Dirent } from 'fs'
 
-const fs: typeof import('fs') = 'require' in global ? (0, eval)("require('fs')") : await import('fs')
-
+let fs: typeof import('fs')
+;(async () => {
+    fs = 'require' in global ? (0, eval)("require('fs')") : await import('fs')
+})()
 let zip: (typeof import('fflate'))['zip']
 
 interface LiveModConfig {
