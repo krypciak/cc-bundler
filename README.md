@@ -33,4 +33,5 @@ pnpm run httpServer
 npx cap sync
 cd android
 ./gradlew build
+# ls **.apk
 ```
