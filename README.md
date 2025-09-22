@@ -13,6 +13,24 @@ cd cc-bundler
 pnpm install
 pnpm run build # pnpm run watch
 # should produce ./dist
+```
 
+### Running http server
+
+```bash
+# you need to generate https certificates
+mkdir -p ./cert
+cd ./cert
+mkcert localhost 127.0.0.1
+cd ..
 pnpm run httpServer
+```
+
+
+### Building android app
+
+```bash
+npx cap sync
+cd android
+./gradlew build
 ```
