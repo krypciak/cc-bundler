@@ -34,9 +34,12 @@ let isClearing = false
 let isUploading = false
 
 function updateElementsEnabled() {
-    dirInput.disabled = dirInputButton.disabled = !isMounted || isClearing || isUploading
-    archiveInput.disabled = archiveInputButton.disabled = !isMounted || isClearing || isUploading
-    saveInput.disabled = saveInputButton.disabled = !isMounted || isClearing || isUploading
+    const inputDisalbed = !isMounted || isClearing || isUploading
+    dirInput.disabled = dirInputButton.disabled = inputDisalbed
+    archiveInput.disabled = archiveInputButton.disabled = inputDisalbed
+    saveInput.disabled = saveInputButton.disabled = inputDisalbed
+    fsButton.disabled = inputDisalbed
+
     if (isClearing) {
         runButton.disabled = true
         clearButton.disabled = true
@@ -144,13 +147,7 @@ function updateClearButton() {
 export async function updateUI() {
     bundleTitleScreen.style.display = 'unset'
 
-    await Promise.all([
-        updateStorageInfoLabel(),
-        updateCCLoaderInfo(),
-        updateElementsEnabled(),
-        updateClearButton(),
-        initFileExplorer(),
-    ])
+    await Promise.all([updateStorageInfoLabel(), updateCCLoaderInfo(), updateElementsEnabled(), updateClearButton()])
 }
 
 export function wait(ms: number): Promise<void> {
