@@ -157,6 +157,9 @@ label[for='autorunCheckbox'] {
 #fsDiv {
     width: 100%;
     height: 100%;
+    padding-top: 3rem;
+    padding-bottom: 2rem;
+    box-sizing: border-box;
     display: none;
     flex-direction: column;
 }
