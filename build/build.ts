@@ -75,7 +75,7 @@ function main(): esbuild.BuildOptions {
                             ),
                             fs.promises.cp('../lib/socket.io.min.js', `${distDir}/socket.io.js`),
                             fs.promises.cp('../../ccloader3/main.css', `${distDir}/ccloader3-main.css`),
-                            fs.promises.cp('../node_modules/js-fileexplorer/file-explorer/file-explorer.css', `${distDir}/file-explorer.css`),
+                            fs.promises.cp('./assets/file-explorer.css', `${distDir}/file-explorer.css`),
                             fs.promises.cp('../node_modules/js-fileexplorer/file-explorer/fileexplorer_sprites.png', `${distDir}/fileexplorer_sprites.png`),
                             copyCCLoader3RuntimeCCMod(),
                         ])
