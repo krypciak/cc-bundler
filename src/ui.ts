@@ -3,6 +3,7 @@ import { isMounted, clearStorage, fs, ccloaderVersion } from './fs/fs-proxy'
 import { run } from './main'
 import { uploadCrossCode, uploadSave } from './upload-processing'
 import type { ChangelogFileData } from 'ultimate-crosscode-typedefs/file-types/changelog'
+import { initFileExplorer } from './file-explorer'
 
 declare global {
     const bundleTitleScreen: HTMLDivElement
@@ -11,6 +12,8 @@ declare global {
     const uploadStatusLabel: HTMLDivElement
     const ccloaderInfoLabel: HTMLDivElement
 
+    const fsButton: HTMLButtonElement
+    const fsDiv: HTMLDivElement
     const dirInputButton: HTMLButtonElement
     const archiveInputButton: HTMLButtonElement
     const saveInputButton: HTMLButtonElement
@@ -139,7 +142,13 @@ function updateClearButton() {
 export async function updateUI() {
     bundleTitleScreen.style.display = 'unset'
 
-    await Promise.all([updateStorageInfoLabel(), updateCCLoaderInfo(), updateElementsEnabled(), updateClearButton()])
+    await Promise.all([
+        updateStorageInfoLabel(),
+        updateCCLoaderInfo(),
+        updateElementsEnabled(),
+        updateClearButton(),
+        initFileExplorer(),
+    ])
 }
 
 export function wait(ms: number): Promise<void> {
@@ -210,6 +219,14 @@ export function initLoadScreen() {
     })
 
     autorunCheckbox.checked = getAutorun() != 'off'
+
+    fsButton.onclick = () => {
+        if (fsDiv.style.display == 'none') {
+            fsDiv.style.display = 'block'
+        } else {
+            fsDiv.style.display = 'none'
+        }
+    }
 
     updateUI()
 }

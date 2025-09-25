@@ -2,6 +2,7 @@ import type { IncomingMessage, ServerResponse } from 'http'
 import type { AsyncZippable } from 'fflate/browser'
 import type { HandleFunction } from './http-module-mod-proxy'
 import type { Dirent } from 'fs'
+import { buildZipTreeRecursive } from '../fs/fs-misc.ts'
 
 let fs: typeof import('fs')
 ;(async () => {
@@ -92,29 +93,7 @@ async function buildMod(mod: LiveModConfig): Promise<Uint8Array> {
         }),
     ])
 
-    function buildTreeRecursive(entries: AssetEntry[], currentPath: string = ''): AsyncZippable {
-        const tree: AsyncZippable = {}
-
-        const baseDirs: Record<string, AssetEntry[]> = {}
-
-        for (const entry of entries) {
-            const path = entry.path.substring(currentPath.length)
-            const slashIndex = path.indexOf('/')
-            if (slashIndex == -1) {
-                tree[path] = entry.data
-            } else {
-                const baseDir = path.substring(0, slashIndex)
-                ;(baseDirs[baseDir] ??= []).push(entry)
-            }
-        }
-
-        for (const dir in baseDirs) {
-            tree[dir] = buildTreeRecursive(baseDirs[dir], currentPath + '/' + dir)
-        }
-
-        return tree
-    }
-    const assetsTree = buildTreeRecursive(assetsFiles)
+    const assetsTree = buildZipTreeRecursive(assetsFiles)
 
     const zipTree: AsyncZippable = {
         'plugin.js': pluginJs,

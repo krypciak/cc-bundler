@@ -1,6 +1,9 @@
+import type { AsyncZippable } from 'fflate'
 import type { Dirent, Stats } from 'fs'
 
 class DirentBase {
+    file: boolean
+
     isFile(): boolean {
         return this.file
     }
@@ -23,18 +26,20 @@ class DirentBase {
         return false
     }
 
-    public constructor(private file: boolean) {}
+    public constructor(file: boolean) {
+        this.file = file
+    }
 }
 
 export class OpfsDirent extends DirentBase implements Dirent {
     path: string
-    constructor(
-        file: boolean,
-        public name: string,
-        public parentPath: string
-    ) {
+    name: string
+    parentPath: string
+
+    constructor(file: boolean, name: string, parentPath: string) {
         super(file)
-        this.path = parentPath
+        this.name = name
+        this.parentPath = this.path = parentPath
     }
 }
 
@@ -118,7 +123,11 @@ export const constants = {
     COPYFILE_FICLONE_FORCE: 4,
 }
 
-export async function throttleTasks<T>(dataArray: T[], task: (data: T, i: number) => Promise<void>, atOnce: number = 100) {
+export async function throttleTasks<T, R>(
+    dataArray: T[],
+    task: (data: T, i: number) => Promise<R>,
+    atOnce: number = 100
+): Promise<Awaited<R>[]> {
     const waitResolves: (() => void)[] = []
     const waitPromises = dataArray.map(
         (_, i) =>
@@ -131,9 +140,11 @@ export async function throttleTasks<T>(dataArray: T[], task: (data: T, i: number
         dataArray.map(async (data, i) => {
             await waitPromises[i]
 
-            await task(data, i)
+            const ret = await task(data, i)
 
             runNext(i)
+
+            return ret
         })
     )
 
@@ -146,5 +157,29 @@ export async function throttleTasks<T>(dataArray: T[], task: (data: T, i: number
         waitResolves[i]()
     }
 
-    await taskPromises
+    return taskPromises
+}
+
+type TreeEntry = { path: string; data: Uint8Array }
+export function buildZipTreeRecursive(entries: TreeEntry[], currentPath: string = ''): AsyncZippable {
+    const tree: AsyncZippable = {}
+
+    const baseDirs: Record<string, TreeEntry[]> = {}
+
+    for (const entry of entries) {
+        const path = entry.path.substring(currentPath.length)
+        const slashIndex = path.indexOf('/')
+        if (slashIndex == -1) {
+            tree[path] = entry.data
+        } else {
+            const baseDir = path.substring(0, slashIndex)
+            ;(baseDirs[baseDir] ??= []).push(entry)
+        }
+    }
+
+    for (const dir in baseDirs) {
+        tree[dir] = buildZipTreeRecursive(baseDirs[dir], currentPath + '/' + dir)
+    }
+
+    return tree
 }
