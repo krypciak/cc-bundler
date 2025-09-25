@@ -3,6 +3,7 @@ import { nwGui, path as paths } from './nwjs-fix'
 import { fs, getInternalFileList } from './fs/fs-proxy'
 import { type Unzipped, unzipSync } from 'fflate/browser'
 import { FileEntry, fileEntryFromFile } from './utils'
+import { throttleTasks } from './fs/fs-misc'
 
 function getParentDirs(files: FileEntry[]): string[] {
     const dirs = new Set<string>()
@@ -58,39 +59,18 @@ export async function copyFiles(toCopyFiles: FileEntry[], fetchRateLimit: boolea
 
     updateUploadStatusLabel('copying', 0, toCopyFiles.length)
 
-    const waitResolves: (() => void)[] = []
-    const waitPromises = toCopyFiles.map(
-        (_, i) =>
-            new Promise<void>(resolve => {
-                waitResolves[i] = resolve
-            })
-    )
-
     let filesCopied = 0
-    const copyPromises = Promise.all(
-        toCopyFiles.map(async (file, i) => {
-            await waitPromises[i]
+    const atOnce = fetchRateLimit ? undefined : 1000
+    await throttleTasks(
+        toCopyFiles,
+        async file => {
             const buffer = await file.uint8Array()
 
             await fs.promises.writeFile(file.path, buffer.buffer as FileSystemWriteChunkType)
             updateUploadStatusLabel('copying', ++filesCopied, toCopyFiles.length)
-
-            runNext(i)
-        })
+        },
+        atOnce
     )
-
-    const runNext = (i: number) => {
-        const next = waitResolves[i + atOnce]
-        next?.()
-    }
-
-    const atOnce = fetchRateLimit ? 100 : 1000
-
-    for (let i = 0; i < Math.min(atOnce, toCopyFiles.length); i++) {
-        waitResolves[i]()
-    }
-
-    await copyPromises
 
     updateUploadStatusLabel('done, uploaded', toCopyFiles.length)
 }

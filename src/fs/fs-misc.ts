@@ -27,13 +27,14 @@ class DirentBase {
 }
 
 export class OpfsDirent extends DirentBase implements Dirent {
+    path: string
     constructor(
         file: boolean,
         public name: string,
-        public parentPath: string,
-        public path: string
+        public parentPath: string
     ) {
         super(file)
+        this.path = parentPath
     }
 }
 
@@ -115,4 +116,35 @@ export const constants = {
     COPYFILE_FICLONE: 2,
     UV_FS_COPYFILE_FICLONE_FORCE: 4,
     COPYFILE_FICLONE_FORCE: 4,
+}
+
+export async function throttleTasks<T>(dataArray: T[], task: (data: T, i: number) => Promise<void>, atOnce: number = 100) {
+    const waitResolves: (() => void)[] = []
+    const waitPromises = dataArray.map(
+        (_, i) =>
+            new Promise<void>(resolve => {
+                waitResolves[i] = resolve
+            })
+    )
+
+    const taskPromises = Promise.all(
+        dataArray.map(async (data, i) => {
+            await waitPromises[i]
+
+            await task(data, i)
+
+            runNext(i)
+        })
+    )
+
+    const runNext = (i: number) => {
+        const next = waitResolves[i + atOnce]
+        next?.()
+    }
+
+    for (let i = 0; i < Math.min(atOnce, dataArray.length); i++) {
+        waitResolves[i]()
+    }
+
+    await taskPromises
 }

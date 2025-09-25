@@ -9,7 +9,7 @@ import type {
 } from 'fs'
 
 import { dirname, basename } from 'path-browserify'
-import { OpfsDirent, OpfsStats, constants } from './fs-misc'
+import { OpfsDirent, OpfsStats, constants, throttleTasks } from './fs-misc'
 import { updateStorageInfoLabel } from '../ui'
 import { getUint8Array, throwErrorWithCode } from '../utils'
 
@@ -60,6 +60,7 @@ function cleanPath(path: string): string {
     if (path.startsWith('.')) path = path.substring(1)
     if (path.startsWith('/')) path = path.substring(1)
     if (path.endsWith('/')) path = path.slice(0, -1)
+    path = path.replaceAll(/\.\//g, '')
     return path
 }
 
@@ -257,7 +258,9 @@ async function readdir(
     const withFileTypes = typeof options == 'object' && options?.withFileTypes
 
     function entriesToDirents(entries: [string, FileSystemHandle][]): OpfsDirent[] {
-        return entries.map(([name, file]) => new OpfsDirent(file.kind == 'file', name, path + '/' + name, path))
+        return entries.map(([path, file]) => {
+            return new OpfsDirent(file.kind == 'file', basename(path), dirname(path))
+        })
     }
 
     if (recursive) {
@@ -412,9 +415,39 @@ async function rmdir(path: string, options?: RmDirOptions): Promise<void> {
     await rm(path, { recursive: true })
 }
 
-async function rename(oldPath: string, newPath: string): Promise<void> {
-    const data = await readFile(oldPath)
-    await Promise.all([writeFile(newPath, data), rm(oldPath)])
+async function cp(srcPath: string, destPath: string, options?: { recursive?: boolean }) {
+    srcPath = cleanPath(srcPath)
+    destPath = cleanPath(destPath)
+
+    const recursive = typeof options == 'object' && options?.recursive
+
+    const srcHandle = (await getFileHandle(srcPath)) || getDirHandle(srcPath)
+    if (!srcHandle) throwErrorWithCode(`opfs: file not found: ${srcPath}`, 'ENOENT')
+    if (srcHandle.kind == 'file') {
+        const data = await readFile(srcPath)
+        await writeFile(destPath, data)
+    } else {
+        if (!recursive)
+            throwErrorWithCode(`opfs: cannot cp a directory: ${srcPath} without the recursive flag`, 'ENOTEMPTY')
+
+        const dirents = await readdir(srcPath, { recursive: true, withFileTypes: true })
+        const dirs = [...new Set(dirents.map(d => d.parentPath).filter(path => path != '.'))].toSorted(
+            (a, b) => a.length - b.length
+        )
+
+        await mkdir(destPath)
+        for (const dirPath of dirs) {
+            await mkdir(destPath + '/' + dirPath)
+        }
+
+        const files = dirents.filter(d => d.isFile()).map(d => d.parentPath + '/' + d.name)
+        await throttleTasks(files, filePath => cp(srcPath + '/' + filePath, destPath + '/' + filePath))
+    }
+}
+
+async function rename(srcPath: string, destPath: string): Promise<void> {
+    await cp(srcPath, destPath, { recursive: true })
+    await rm(srcPath, { recursive: true })
 }
 
 function wrapAsync<D, CB = (err: Error | null, data: D | null) => void>(
@@ -444,6 +477,7 @@ export const fs = {
         rm,
         unlink,
         rmdir,
+        cp,
     },
     readFile: wrapAsync(readFile),
     writeFile: wrapAsync(writeFile),
@@ -468,6 +502,7 @@ export const fs = {
     unlink: wrapAsync(unlink),
 
     rmdir: wrapAsync(rmdir),
+    cp: wrapAsync(cp),
 
     fileCount() {
         return pathToFileHandle.size
