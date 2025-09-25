@@ -221,7 +221,7 @@ export function initLoadScreen() {
 
     fsButton.onclick = () => {
         initFileExplorer()
-        fsDiv.style.display = 'flex'
+        fsDiv.style.display = 'block'
     }
     fsBackButton.onclick = () => {
         fsDiv.style.display = 'none'

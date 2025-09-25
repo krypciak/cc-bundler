@@ -44,6 +44,8 @@ html {
         background-color 0.2s,
         transform 0.1s;
 }
+.bundlerButtonTitle {
+}
 
 .bundlerButton:hover:not(:disabled) {
     background-color: #0f77f4;
@@ -109,7 +111,7 @@ label[for='autorunCheckbox'] {
 
 #autorunCheckbox:checked {
     background-color: #0d63ec;
-    border-color: #0d63ec;
+    border: none;
 }
 
 #autorunCheckbox:checked::after {
@@ -143,7 +145,7 @@ label[for='autorunCheckbox'] {
         margin: 2px 0;
     }
 
-    .bundlerButton {
+    .bundlerButtonTitle {
         font-size: 14px;
         padding: 8px 18px;
         margin: 6px 0px;
@@ -155,15 +157,52 @@ label[for='autorunCheckbox'] {
 }
 
 #fsDiv {
+    position: absolute;
     width: 100%;
     height: 100%;
-    padding-top: 3rem;
-    padding-bottom: 2rem;
+    background-color: black;
     box-sizing: border-box;
     display: none;
-    flex-direction: column;
+    z-index: 9999;
 }
 
 #filemanager {
-    flex: 1;
+    width: 100%;
+    height: 100%;
+    position: relative;
+}
+
+#fsBackButton {
+    position: absolute;
+    top: -3px;
+    right: 25px;
+    width: 80px;
+    max-height: 30px;
+    z-index: 9999;
+    padding: 7px;
+    border-radius: 1px;
+}
+
+.fe_fileexplorer_wrap .fe_fileexplorer_inner_wrap {
+    padding-right: 10px;
+
+    background-color: rgba(255, 255, 255, 0.05) !important;
+    border-radius: 24px;
+    border-color: black !important;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.3) !important;
+}
+.fe_fileexplorer_wrap .fe_fileexplorer_path_wrap {
+    margin-right: 100px !important;
+}
+
+@media screen and (orientation: portrait) {
+    #fsDiv {
+        padding: 50px 10px 32px;
+    }
+}
+
+@media screen and (orientation: landscape) {
+    #fsDiv {
+        padding: 50px 32px 0px;
+    }
 }
