@@ -14,6 +14,8 @@ declare global {
 
     const fsButton: HTMLButtonElement
     const fsDiv: HTMLDivElement
+    const fsBackButton: HTMLButtonElement
+
     const dirInputButton: HTMLButtonElement
     const archiveInputButton: HTMLButtonElement
     const saveInputButton: HTMLButtonElement
@@ -221,11 +223,11 @@ export function initLoadScreen() {
     autorunCheckbox.checked = getAutorun() != 'off'
 
     fsButton.onclick = () => {
-        if (fsDiv.style.display == 'none') {
-            fsDiv.style.display = 'block'
-        } else {
-            fsDiv.style.display = 'none'
-        }
+        initFileExplorer()
+        fsDiv.style.display = 'flex'
+    }
+    fsBackButton.onclick = () => {
+        fsDiv.style.display = 'none'
     }
 
     updateUI()

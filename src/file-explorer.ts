@@ -5,7 +5,7 @@ import { buildZipTreeRecursive, throttleTasks } from './fs/fs-misc'
 import { isMounted } from './fs/fs-proxy'
 
 import { fs } from './fs/opfs'
-import { FileEntry, getUint8Array } from './utils'
+import { getUint8Array } from './utils'
 
 declare global {
     const filemanager: HTMLDivElement

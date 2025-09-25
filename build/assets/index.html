@@ -24,8 +24,6 @@
         <script src="crosscode.js" type="module"></script>
     </head>
     <body>
-        <div id="filemanager" style="height: 50vh; max-height: 400px; position: relative"></div>
-
         <div id="bundleTitleScreen">
             <div id="labelWrapper">
                 <div id="storageInfoLabel" class="infoText">
@@ -40,41 +38,31 @@
 
             <div id="uploadStatusLabel" class="infoText"><wbr /></div>
 
-            <button id="fsButton" class="bundlerButton">Filesystem</button>
-            <div id="fsDiv" style="display: block">
-                <!-- Directory Upload -->
-                <div class="file-upload-wrapper">
-                    <button id="dirInputButton" class="bundlerButton" onclick="dirInput.click()" disabled>
-                        Select game assets directory
-                    </button>
-                    <input
-                        id="dirInput"
-                        style="display: none"
-                        type="file"
-                        multiple
-                        directory
-                        webkitdirectory
-                        disabled
-                    />
-                </div>
+            <!-- Directory Upload -->
+            <div class="file-upload-wrapper">
+                <button id="dirInputButton" class="bundlerButton" onclick="dirInput.click()" disabled>
+                    Select game assets directory
+                </button>
+                <input id="dirInput" style="display: none" type="file" multiple directory webkitdirectory disabled />
+            </div>
 
-                <!-- Archive Upload -->
-                <div class="file-upload-wrapper">
-                    <button id="archiveInputButton" class="bundlerButton" onclick="archiveInput.click()" disabled>
-                        Select game assets zip archive
-                    </button>
-                    <input id="archiveInput" style="display: none" type="file" accept=".zip" disabled />
-                </div>
+            <!-- Archive Upload -->
+            <div class="file-upload-wrapper">
+                <button id="archiveInputButton" class="bundlerButton" onclick="archiveInput.click()" disabled>
+                    Select game assets zip archive
+                </button>
+                <input id="archiveInput" style="display: none" type="file" accept=".zip" disabled />
+            </div>
 
-                <!-- Save Upload -->
-                <div class="file-upload-wrapper">
-                    <button id="saveInputButton" class="bundlerButton" onclick="saveInput.click()" disabled>
-                        Select game save
-                    </button>
-                    <input id="saveInput" style="display: none" type="file" accept=".save" disabled />
-                </div>
+            <!-- Save Upload -->
+            <div class="file-upload-wrapper">
+                <button id="saveInputButton" class="bundlerButton" onclick="saveInput.click()" disabled>
+                    Select game save
+                </button>
+                <input id="saveInput" style="display: none" type="file" accept=".save" disabled />
             </div>
             <br />
+            <button id="fsButton" class="bundlerButton">File explorer</button>
 
             <button id="clearButton" class="bundlerButton">Clear storage</button>
             <button id="runButton" class="bundlerButton" disabled>Run</button>
@@ -83,6 +71,11 @@
                 <label for="autorunCheckbox">Autorun on page load</label>
                 <input type="checkbox" id="autorunCheckbox" />
             </div>
+        </div>
+
+        <div id="fsDiv">
+            <button id="fsBackButton" class="bundlerButton">Back</button>
+            <div id="filemanager"></div>
         </div>
     </body>
 </html>

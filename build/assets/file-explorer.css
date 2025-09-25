@@ -344,16 +344,16 @@ select:-webkit-autofill {
     outline-color: initial;
 }
 .fe_fileexplorer_wrap .fe_fileexplorer_navtool_back {
-    background-image: url("https://127.0.0.1:33405/fileexplorer_sprites.png");
+    background-image: url("fileexplorer_sprites.png");
 }
 .fe_fileexplorer_wrap .fe_fileexplorer_navtool_forward {
-    background-image: url("https://127.0.0.1:33405/fileexplorer_sprites.png");
+    background-image: url("fileexplorer_sprites.png");
 }
 .fe_fileexplorer_wrap .fe_fileexplorer_navtool_history {
-    background-image: url("https://127.0.0.1:33405/fileexplorer_sprites.png");
+    background-image: url("fileexplorer_sprites.png");
 }
 .fe_fileexplorer_wrap .fe_fileexplorer_navtool_up {
-    background-image: url("https://127.0.0.1:33405/fileexplorer_sprites.png");
+    background-image: url("fileexplorer_sprites.png");
 }
 .fe_fileexplorer_wrap .fe_fileexplorer_path_wrap {
     border-bottom-color: var(--darkreader-border-d9d9d9, #3b4042);
@@ -362,7 +362,7 @@ select:-webkit-autofill {
     border-top-color: var(--darkreader-border-d9d9d9, #3b4042);
 }
 .fe_fileexplorer_wrap .fe_fileexplorer_path_icon_inner {
-    background-image: url("https://127.0.0.1:33405/fileexplorer_sprites.png");
+    background-image: url("fileexplorer_sprites.png");
 }
 .fe_fileexplorer_wrap .fe_fileexplorer_path_segments_scroll_wrap::-webkit-scrollbar {
     background-color: transparent;
@@ -378,7 +378,7 @@ select:-webkit-autofill {
     outline-color: initial;
 }
 .fe_fileexplorer_wrap .fe_fileexplorer_path_segment_wrap .fe_fileexplorer_path_opts {
-    background-image: url("https://127.0.0.1:33405/fileexplorer_sprites.png");
+    background-image: url("fileexplorer_sprites.png");
 }
 .fe_fileexplorer_wrap .fe_fileexplorer_path_segment_wrap:hover {
     background-color: var(--darkreader-background-e5f3ff, #1f2223);
@@ -433,25 +433,25 @@ select:-webkit-autofill {
     border-top-color: var(--darkreader-border-dfe7f0, #25394f);
 }
 .fe_fileexplorer_wrap .fe_fileexplorer_folder_tool_new_folder::before {
-    background-image: url("https://127.0.0.1:33405/fileexplorer_sprites.png");
+    background-image: url("fileexplorer_sprites.png");
 }
 .fe_fileexplorer_wrap .fe_fileexplorer_folder_tool_new_file::before {
-    background-image: url("https://127.0.0.1:33405/fileexplorer_sprites.png");
+    background-image: url("fileexplorer_sprites.png");
 }
 .fe_fileexplorer_wrap .fe_fileexplorer_folder_tool_upload::before {
-    background-image: url("https://127.0.0.1:33405/fileexplorer_sprites.png");
+    background-image: url("fileexplorer_sprites.png");
 }
 .fe_fileexplorer_wrap .fe_fileexplorer_folder_tool_download::before {
-    background-image: url("https://127.0.0.1:33405/fileexplorer_sprites.png");
+    background-image: url("fileexplorer_sprites.png");
 }
 .fe_fileexplorer_wrap .fe_fileexplorer_folder_tool_copy::before {
-    background-image: url("https://127.0.0.1:33405/fileexplorer_sprites.png");
+    background-image: url("fileexplorer_sprites.png");
 }
 .fe_fileexplorer_wrap .fe_fileexplorer_folder_tool_paste::before {
-    background-image: url("https://127.0.0.1:33405/fileexplorer_sprites.png");
+    background-image: url("fileexplorer_sprites.png");
 }
 .fe_fileexplorer_wrap .fe_fileexplorer_folder_tool_delete::before {
-    background-image: url("https://127.0.0.1:33405/fileexplorer_sprites.png");
+    background-image: url("fileexplorer_sprites.png");
 }
 .fe_fileexplorer_wrap .fe_fileexplorer_items_scroll_wrap {
     outline-color: initial;
@@ -532,7 +532,7 @@ select:-webkit-autofill {
     color: transparent;
 }
 .fe_fileexplorer_wrap .fe_fileexplorer_item_icon_folder {
-    background-image: url("https://127.0.0.1:33405/fileexplorer_sprites.png");
+    background-image: url("fileexplorer_sprites.png");
 }
 .fe_fileexplorer_wrap .fe_fileexplorer_item_icon_file:not(.fe_fileexplorer_item_icon_file_no_ext)::after {
     background-color: var(--darkreader-background-888888, #5b6367);
