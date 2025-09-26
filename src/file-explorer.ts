@@ -1,11 +1,20 @@
 import { AsyncZippable, zip } from 'fflate/browser'
-import './file-explorer-types'
+import { Filesystem, Directory } from '@capacitor/filesystem'
+import { Capacitor } from '@capacitor/core'
 import * as fe from './file-explorer-types'
 import { buildZipTreeRecursive, throttleTasks } from './fs/fs-misc'
 import { isMounted } from './fs/fs-proxy'
-
 import { fs } from './fs/opfs'
 import { getUint8Array } from './utils'
+import 'core-js/proposals/array-buffer-base64'
+
+declare global {
+    interface Uint8Array {
+        toBase64(): string
+    }
+}
+
+import './file-explorer-types'
 
 declare global {
     const filemanager: HTMLDivElement
@@ -32,20 +41,47 @@ function createEntry(name: string, isDir: boolean): fe.Entry {
     }
 }
 
-function downloadURI(uri: string, name: string) {
-    var link = document.createElement('a')
-    link.download = name
-    link.href = uri
-    link.click()
+async function downloadFile(data: ArrayBuffer, name: string) {
+    if (Capacitor.getPlatform() == 'web') {
+        const uri = URL.createObjectURL(new Blob([data]))
+        var link = document.createElement('a')
+        link.download = name
+        link.href = uri
+        link.click()
+    } else {
+        const base64 = new Uint8Array(data).toBase64()
+
+        const path = {
+            path: name,
+            directory: Directory.Documents,
+        }
+
+        const { uri } = await Filesystem.writeFile({
+            data: base64,
+            ...path,
+        })
+
+        alert(`saved to ${uri}`)
+    }
 }
 
 function zipFiles(zipTree: AsyncZippable) {
     return new Promise<Uint8Array>((resolve, reject) => {
-        zip(zipTree, {}, (err, data) => {
-            if (err) reject(err)
-            else resolve(data)
-        })
+        zip(
+            zipTree,
+            {
+                level: 0,
+            },
+            (err, data) => {
+                if (err) reject(err)
+                else resolve(data)
+            }
+        )
     })
+}
+
+function setMsg(ex: fe.FileExplorer, text: string, timeout?: number) {
+    ex.SetNamedStatusBarText('message', ex.EscapeHTML(text), timeout)
 }
 
 let inited = false
@@ -137,35 +173,26 @@ export function initFileExplorer() {
         async oninitupload(startupload, fileinfo, _queuestarted) {
             startupload(false)
 
-            this.SetNamedStatusBarText(
-                'message',
-                this.EscapeHTML(this.FormatStr(this.Translate('Uploading "{0}"...'), fileinfo.fullPath)),
-                this.settings.messagetimeout! * 5
-            )
+            setMsg(this, this.FormatStr(this.Translate('Uploading "{0}"...'), fileinfo.fullPath))
 
+            const timeout = this.settings.messagetimeout! * 5
             try {
                 const data = await getUint8Array(fileinfo.file)
                 const path = getEntryPath(fileinfo.folder, { name: fileinfo.file.name })
 
                 await fs.promises.writeFile(path, data.buffer as FileSystemWriteChunkType)
 
-                this.SetNamedStatusBarText(
-                    'message',
-                    this.EscapeHTML(this.FormatStr(this.Translate('Uploaded "{0}"'), fileinfo.fullPath)),
-                    this.settings.messagetimeout! * 5
-                )
+                setMsg(this, this.FormatStr(this.Translate('Uploaded "{0}"'), fileinfo.fullPath), timeout)
                 this.RefreshFolders(true)
             } catch (e) {
-                this.SetNamedStatusBarText(
-                    'message',
-                    this.EscapeHTML(
-                        this.FormatStr(this.Translate('Error uploading "{0}" ({1})'), fileinfo.fullPath, `${e}`)
-                    ),
-                    this.settings.messagetimeout! * 5
+                setMsg(
+                    this,
+                    this.FormatStr(this.Translate('Error uploading "{0}" ({1})'), fileinfo.fullPath, `${e}`),
+                    timeout
                 )
             }
         },
-        async oninitdownload(startdownload, folder, _ids, entries) {
+        async oninitdownload(_startdownload, folder, _ids, entries) {
             const files = entries.map(entry => ({
                 type: entry.type,
                 path: getEntryPath(folder, entry),
@@ -175,12 +202,16 @@ export function initFileExplorer() {
             let data!: ArrayBuffer
             let fileName!: string
 
+            setMsg(this, 'Initializng download...')
+
             if (files.length == 1 && files[0].type == 'file') {
                 const file = files[0]
                 const filePath = file.path
                 data = await fs.promises.readFile(filePath, 'uint8array')
                 fileName = file.name
             } else {
+                setMsg(this, 'Traversing file system...')
+                // console.time('fs discovery')
                 const allFilePaths: string[] = (
                     await Promise.all(
                         files.map(async file => {
@@ -196,13 +227,33 @@ export function initFileExplorer() {
                     )
                 ).flat()
 
+                const maxFiles = 500
+                if (Capacitor.getPlatform() != 'web' && allFilePaths.length > maxFiles) {
+                    const msg = `Can only download up to ${maxFiles} files! Tried to download: ${allFilePaths.length}`
+                    alert(msg)
+                    return
+                }
+
+                // console.timeEnd('fs discovery')
+
+                setMsg(this, 'Reading files from file system...')
+                // console.time('fs reading')
                 const treeEntries = await throttleTasks(allFilePaths, async path => {
                     const buffer = await fs.promises.readFile(path, 'uint8array')
                     return { path, data: new Uint8Array(buffer) }
                 })
+                // console.timeEnd('fs reading')
 
+                setMsg(this, 'Building file tree...')
+                // console.time('tree building')
                 const tree = buildZipTreeRecursive(treeEntries)
+                // console.timeEnd('tree building')
+
+                setMsg(this, 'Creating zip...')
+                // console.time('zipping')
                 data = (await zipFiles(tree)).buffer as ArrayBuffer
+                // console.timeEnd('zipping')
+
                 fileName =
                     files
                         .splice(0, 3)
@@ -211,13 +262,15 @@ export function initFileExplorer() {
             }
 
             if (data && fileName) {
-                const blob = new Blob([data], { type: 'application/octet-stream' })
-                const url = URL.createObjectURL(blob)
-
-                downloadURI(url, fileName)
+                setMsg(this, 'Downloading...')
+                try {
+                    await downloadFile(data, fileName)
+                    setMsg(this, 'Done', this.settings.messagetimeout! * 5)
+                } catch (e) {
+                    setMsg(this, 'Download error', this.settings.messagetimeout! * 5)
+                    alert(e)
+                }
             }
-
-            startdownload()
         },
     })
 }
