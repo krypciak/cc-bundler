@@ -15,15 +15,20 @@ function contentType(url: string): string {
     return CONTENT_TYPES[url.substring(url.lastIndexOf('.') + 1)] || 'text/plain'
 }
 
-async function post(data: ServiceWorker.Incoming.Packet): Promise<void> {
+export async function getClient() {
     const clients = await self.clients.matchAll()
     const client = clients[0]
+    return client
+}
+
+async function post(data: ServiceWorker.Incoming.Packet): Promise<void> {
+    const client = await getClient()
     client.postMessage(data)
 }
 
 const waitingFor = new Map<string, (packet: ServiceWorker.Outgoing.DataPacket) => void>()
 
-async function requestAndAwaitAck(
+export async function requestAndAwaitAck(
     packet: ServiceWorker.Incoming.PathPacket
 ): Promise<ServiceWorker.Outgoing.DataPacket> {
     return new Promise<ServiceWorker.Outgoing.DataPacket>(resolve => {
@@ -43,8 +48,8 @@ self.addEventListener('message', event => {
     }
 })
 
-async function requestContents(path: string): Promise<Response> {
-    const { data } = await requestAndAwaitAck({ type: 'Path', path })
+export async function requestContents(packet: ServiceWorker.Incoming.PathPacket): Promise<Response> {
+    const { data } = await requestAndAwaitAck(packet)
 
     if (!data) {
         return new Response(null, { status: 404 })
@@ -52,7 +57,7 @@ async function requestContents(path: string): Promise<Response> {
 
     return new Response(data, {
         headers: {
-            'Content-Type': contentType(path),
+            'Content-Type': contentType(packet.type == 'Path' ? packet.path : ''),
         },
         status: 200,
         statusText: 'ok',
@@ -64,6 +69,6 @@ self.addEventListener('fetch', (event: FetchEvent) => {
     const path = decodeURI(new URL(request.url).pathname)
 
     if (validPathPrefixes?.some(pathPrefix => path.startsWith(pathPrefix))) {
-        event.respondWith(requestContents(path))
+        event.respondWith(requestContents({ type: 'Path', path }))
     }
 })

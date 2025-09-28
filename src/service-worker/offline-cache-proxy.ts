@@ -1,3 +1,5 @@
+import { shouldIgnoreRequestPath } from './ignored-paths'
+
 const cacheName = 'cc-bundler-offline-cache'
 
 let currentVersion: number | undefined
@@ -16,16 +18,7 @@ async function respond(event: FetchEvent): Promise<Response> {
     let url = request.url
     const path = decodeURI(new URL(url).pathname)
 
-    if (path == '/ping.txt') return new Response('', { status: 200 })
-
-    if (
-        path == '/details' ||
-        path == '/icon' ||
-        path.startsWith('/socket.io/') ||
-        path.startsWith('/cdn-cgi/') ||
-        path.startsWith('/liveModUpdate')
-    )
-        return fetch(request)
+    if (shouldIgnoreRequestPath(path)) return fetch(request)
 
     if (path == '/version') {
         const previousVersion = currentVersion

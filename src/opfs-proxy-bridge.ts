@@ -1,3 +1,4 @@
+import { CapacitorHttp, HttpResponse } from '@capacitor/core'
 import type { ServiceWorker } from '../../ccloader3/packages/core/src/service-worker-bridge'
 import { fs } from './fs/opfs'
 
@@ -27,6 +28,25 @@ export function initOpfsProxyBridge() {
                 sendServiceWorkerMessage(responsePacket)
                 return true
             }
+            // @ts-expect-error
+        } else if (packet.type === 'URL') {
+            // @ts-expect-error
+            const url: string = packet.path
+
+            const response: HttpResponse = await CapacitorHttp.get({
+                url,
+                responseType: 'arraybuffer',
+            })
+            const data = Uint8Array.from(atob(response.data), c => c.charCodeAt(0))
+
+            const responsePacket: ServiceWorker.Outgoing.Packet = {
+                type: 'Data',
+                path: url,
+                data,
+            }
+
+            sendServiceWorkerMessage(responsePacket)
+            return true
         }
 
         return false

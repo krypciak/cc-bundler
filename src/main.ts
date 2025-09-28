@@ -3,14 +3,13 @@ import { getInternalFileList, preloadInit } from './fs/fs-proxy'
 import { requireFix } from './nwjs-fix'
 import { initLoadScreen } from './ui'
 import { checkAutorun } from './autorun'
-import { checkPWA } from './pwa'
 import './localstoarge-default'
 import type { VersionResp } from './service-worker/offline-cache-proxy'
 import { copyFiles } from './upload-processing'
 import { initOpfsProxyBridge } from './opfs-proxy-bridge'
 import { updateLiveMods } from './live-mods'
 
-const runtimeModsDirtyKey = 'cc-bundler-runtime-mods-dirty'
+export const runtimeModsDirtyKey = 'cc-bundler-runtime-mods-dirty'
 
 async function setup() {
     // trigger service worker update check
@@ -42,8 +41,6 @@ async function setup() {
         await preloadInit()
 
         if (checkAutorun()) return
-
-        checkPWA()
     }
 }
 setup()

@@ -1,7 +1,17 @@
-import './mod-download-proxy'
+import './keep-alive'
 import './ccmod-proxy'
 import './opfs-proxy'
-import './offline-cache-proxy'
+
+declare global {
+    const WEB: boolean
+}
+
+if (WEB) {
+    import('./mod-download-proxy')
+    import('./offline-cache-proxy')
+} else {
+    import('./capacitor-proxy')
+}
 
 self.addEventListener('activate', () => {
     void self.clients.claim()

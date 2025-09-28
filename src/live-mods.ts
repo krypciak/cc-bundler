@@ -7,7 +7,9 @@ export async function updateLiveMods() {
     try {
         updateUploadStatusLabel('fetching live mods...')
 
-        const resp = await fetch('/liveModUpdate?id=list')
+        const baseUrl = WEB ? '' : 'https://crosscode.krypek.cc'
+
+        const resp = await fetch(baseUrl + '/liveModUpdate?id=list')
         if (resp.status !== 200) throw new Error(`bad status: ${resp.status}`)
         const list: string[] = await resp.json()
         let pathList = list.map(id => ({ id, path: `/assets/mods/${id}.ccmod` }))
@@ -25,7 +27,7 @@ export async function updateLiveMods() {
             pathList.map(async ({ id, path }) => {
                 const ret = {
                     path,
-                    data: getUint8Array(await fetch(`/liveModUpdate?id=${id}`)),
+                    data: getUint8Array(await fetch(baseUrl + `/liveModUpdate?id=${id}`)),
                 }
                 updateLabel()
                 return ret

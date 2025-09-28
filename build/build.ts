@@ -2,6 +2,8 @@ import * as esbuild from 'esbuild'
 import * as fs from 'fs'
 import AdmZip from 'adm-zip'
 
+const isWeb = !process.argv[3] || process.argv[3] == 'web'
+
 const commonOptions: esbuild.BuildOptions = {
     format: 'esm',
     platform: 'browser',
@@ -12,6 +14,10 @@ const commonOptions: esbuild.BuildOptions = {
     minify: false,
     sourcemap: 'inline',
     // drop: ['debugger' /*'console'*/],
+
+    define: {
+        WEB: String(isWeb),
+    },
 } as const
 
 const isWatch = process.argv[2] === 'watch'
@@ -44,7 +50,7 @@ async function copyCCLoader3RuntimeCCMod() {
     await fs.promises.stat(runtimeModDir)
     const zip = new AdmZip()
     zip.addLocalFolder(runtimeModDir)
-    zip.writeZipPromise('../dist/ccloader3-runtime.zip')
+    await zip.writeZipPromise('../dist/ccloader3-runtime.zip')
 }
 
 let version: number = 0
@@ -76,7 +82,10 @@ function main(): esbuild.BuildOptions {
                             fs.promises.cp('../lib/socket.io.min.js', `${distDir}/socket.io.js`),
                             fs.promises.cp('../../ccloader3/main.css', `${distDir}/ccloader3-main.css`),
                             fs.promises.cp('./assets/file-explorer.css', `${distDir}/file-explorer.css`),
-                            fs.promises.cp('../node_modules/js-fileexplorer/file-explorer/fileexplorer_sprites.png', `${distDir}/fileexplorer_sprites.png`),
+                            fs.promises.cp(
+                                '../node_modules/js-fileexplorer/file-explorer/fileexplorer_sprites.png',
+                                `${distDir}/fileexplorer_sprites.png`
+                            ),
                             copyCCLoader3RuntimeCCMod(),
                         ])
                     })

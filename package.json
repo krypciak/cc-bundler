@@ -5,6 +5,7 @@
     "type": "module",
     "scripts": {
         "build": "cd build && bun build.ts build",
+        "buildAndroid": "cd build && bun build.ts build android",
         "watch": "cd build && bun build.ts watch",
         "httpServer": "node --experimental-strip-types src/http-server/http-server.ts"
     },
