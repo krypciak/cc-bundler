@@ -1,4 +1,5 @@
 import type { ServiceWorker } from '../../../ccloader3/packages/core/src/service-worker-bridge'
+import { requestAndAwaitAck, resolveWaitingFor } from './service-worker-util'
 
 self.addEventListener('activate', () => {
     void self.clients.claim()
@@ -23,23 +24,6 @@ function contentType(url: string): string {
     return CONTENT_TYPES[url.substring(url.lastIndexOf('.') + 1)] || 'text/plain'
 }
 
-async function post(data: ServiceWorker.Incoming.Packet): Promise<void> {
-    const clients = await self.clients.matchAll()
-    const client = clients[0]
-    client.postMessage(data)
-}
-
-const waitingFor = new Map<string, (packet: ServiceWorker.Outgoing.DataPacket) => void>()
-
-async function requestAndAwaitAck(
-    packet: ServiceWorker.Incoming.PathPacket
-): Promise<ServiceWorker.Outgoing.DataPacket> {
-    return new Promise<ServiceWorker.Outgoing.DataPacket>(resolve => {
-        waitingFor.set(packet.path, resolve)
-        void post(packet)
-    })
-}
-
 let validPathPrefixes: string[] | null
 
 self.addEventListener('message', event => {
@@ -48,8 +32,7 @@ self.addEventListener('message', event => {
     if (packet.type === 'ValidPathPrefixes') {
         validPathPrefixes = packet.validPathPrefixes
     } else {
-        waitingFor.get(packet.path)?.(packet)
-        waitingFor.delete(packet.path)
+        resolveWaitingFor(packet.path, packet)
     }
 })
 

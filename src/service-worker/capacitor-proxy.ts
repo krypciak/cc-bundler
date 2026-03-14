@@ -1,6 +1,7 @@
-import { getClient, requestContents } from './opfs-proxy'
+import { requestContents } from './opfs-proxy'
 import type { ServiceWorker } from '../../../ccloader3/packages/core/src/service-worker-bridge'
 import { shouldIgnoreRequestPath } from './ignored-paths'
+import { getClient } from './service-worker-util'
 
 function shouldHandleUrl(url: string): boolean {
     const path = decodeURI(new URL(url).pathname)
@@ -12,7 +13,6 @@ function shouldHandleUrl(url: string): boolean {
     )
         return false
 
-    console.log(path, !shouldIgnoreRequestPath(path))
     return !shouldIgnoreRequestPath(path)
 }
 
