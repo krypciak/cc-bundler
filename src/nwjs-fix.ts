@@ -121,6 +121,7 @@ window.process = {
     cwd() {
         return '/'
     },
+    _events: {},
 } as any
 
 window.chrome ??= {}
