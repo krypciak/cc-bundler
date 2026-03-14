@@ -10,6 +10,7 @@ export async function startHttpServer() {
     setAllowedDbs([
         'https://raw.githubusercontent.com/CCDirectLink/CCModDB/stable',
         'https://raw.githubusercontent.com/CCDirectLink/CCModDB/testing',
+        'https://raw.githubusercontent.com/krypciak/CCModDB/multi'
     ])
     await updateValidUrlSet()
 
