@@ -29,6 +29,15 @@ html {
     min-width: 290px;
 }
 
+#githubIcon {
+    position: absolute;
+    top: 30px;
+    right: 25px;
+    width: 48px;
+    height: 48px;
+    cursor: pointer;
+}
+
 .bundlerButton {
     margin: 10px 0;
     padding: 12px 24px;
@@ -129,6 +138,10 @@ label[for='autorunCheckbox'] {
 @media screen and (max-height: 600px) {
     #bundleTitleScreen {
         padding: 20px 30px;
+    }
+
+    #githubIcon {
+        top: 15px;
     }
 
     .infoText {
