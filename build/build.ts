@@ -17,6 +17,7 @@ const commonOptions: esbuild.BuildOptions = {
 
     define: {
         WEB: String(isWeb),
+        LIVEMODS: 'false',
     },
 } as const
 

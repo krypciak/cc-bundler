@@ -3,11 +3,17 @@ import { getInternalFileList, preloadInit } from './fs/fs-proxy'
 import { requireFix } from './nwjs-fix'
 import { initLoadScreen } from './ui'
 import { checkAutorun } from './autorun'
-import './localstoarge-default'
 import type { VersionResp } from './service-worker/offline-cache-proxy'
 import { copyFiles } from './upload-processing'
 import { initOpfsProxyBridge } from './opfs-proxy-bridge'
 import { updateLiveMods } from './live-mods'
+
+import './localstoarge-default'
+
+declare global {
+    const WEB: boolean
+    const LIVEMODS: boolean
+}
 
 export const runtimeModsDirtyKey = 'crosscode-web-runtime-mods-dirty'
 
@@ -51,7 +57,7 @@ export async function run() {
         localStorage[runtimeModsDirtyKey] = 'false'
     }
 
-    await updateLiveMods()
+    if (LIVEMODS) await updateLiveMods()
 
     bundleTitleScreen.style.display = 'none'
 

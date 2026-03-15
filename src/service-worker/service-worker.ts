@@ -2,10 +2,6 @@ import './keep-alive'
 import './ccmod-proxy'
 import './opfs-proxy'
 
-declare global {
-    const WEB: boolean
-}
-
 if (WEB) {
     import('./mod-download-proxy')
     import('./offline-cache-proxy')
