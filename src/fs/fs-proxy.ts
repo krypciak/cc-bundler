@@ -46,7 +46,7 @@ export async function getRuntimeModFiles(): Promise<FileEntry[]> {
         const resp = await fetch('bundler-runtime.zip')
         if (resp.status != 200) throw new Error(`bad status: ${resp.status}`)
         const data = await getUint8Array(resp)
-        const runtimeModFiles = await zipToFileEntryList(data, 'assets/mods/cc-bundler-runtime/')
+        const runtimeModFiles = await zipToFileEntryList(data, 'assets/mods/crosscode-web-runtime/')
         return runtimeModFiles
     } catch (e) {
         console.error('unable to fetch runtime files!', e)

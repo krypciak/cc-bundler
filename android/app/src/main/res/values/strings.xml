@@ -2,6 +2,6 @@
 <resources>
     <string name="app_name">CrossCode</string>
     <string name="title_activity_main">CrossCode</string>
-    <string name="package_name">cc.krypek.ccweb</string>
-    <string name="custom_url_scheme">cc.krypek.ccweb</string>
+    <string name="package_name">cc.krypek.crosscodeweb</string>
+    <string name="custom_url_scheme">cc.krypek.crosscodeweb</string>
 </resources>

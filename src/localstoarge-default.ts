@@ -1,4 +1,4 @@
-localStorage['modEnabled-cc-bundler-runtime'] = true
+localStorage['modEnabled-crosscode-web-runtime'] = true
 
 if (!localStorage['cc.save']) {
     localStorage['cc.save'] =

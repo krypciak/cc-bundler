@@ -9,7 +9,7 @@ import { copyFiles } from './upload-processing'
 import { initOpfsProxyBridge } from './opfs-proxy-bridge'
 import { updateLiveMods } from './live-mods'
 
-export const runtimeModsDirtyKey = 'cc-bundler-runtime-mods-dirty'
+export const runtimeModsDirtyKey = 'crosscode-web-runtime-mods-dirty'
 
 async function setup() {
     // trigger service worker update check

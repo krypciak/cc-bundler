@@ -1,4 +1,4 @@
-const autorunKey = 'cc-bundler-autorun'
+const autorunKey = 'crosscode-web-autorun'
 export type Autorun = 'on' | 'off' | 'one-time-off'
 
 export function isAutorunOn() {

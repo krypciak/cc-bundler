@@ -1,9 +1,9 @@
 {
-    "id": "cc-bundler-runtime",
-    "title": "cc-bundler-runtime",
+    "id": "crosscode-web-runtime",
+    "title": "crosscode-web-runtime",
     "version": "1.0.0",
     "description": "",
-    "repository": "https://github.com/krypciak/cc-bundler",
+    "repository": "https://github.com/krypciak/crosscode-web",
     "tags": ["base"],
     "authors": ["krypek"],
     "dependencies": {

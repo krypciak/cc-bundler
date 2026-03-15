@@ -12,7 +12,7 @@
     ],
     "start_url": "/",
     "display": "fullscreen",
-    "id": "cc-bundler",
+    "id": "crosscode-web",
     "theme_color": "#0d63ec",
     "background_color": "#000000",
     "scope": "/",

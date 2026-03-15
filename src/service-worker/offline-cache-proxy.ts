@@ -1,6 +1,6 @@
 import { shouldIgnoreRequestPath } from './ignored-paths'
 
-const cacheName = 'cc-bundler-offline-cache'
+const cacheName = 'crosscode-web-offline-cache'
 
 let currentVersion: number | undefined
 
