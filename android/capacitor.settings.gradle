@@ -2,6 +2,9 @@
 include ':capacitor-android'
 project(':capacitor-android').projectDir = new File('../node_modules/.pnpm/@capacitor+android@8.2.0_@capacitor+core@8.2.0/node_modules/@capacitor/android/capacitor')
 
+include ':boengli-capacitor-fullscreen'
+project(':boengli-capacitor-fullscreen').projectDir = new File('../node_modules/.pnpm/@boengli+capacitor-fullscreen@0.0.17/node_modules/@boengli/capacitor-fullscreen/android')
+
 include ':capacitor-file-transfer'
 project(':capacitor-file-transfer').projectDir = new File('../node_modules/.pnpm/@capacitor+file-transfer@2.0.4_@capacitor+core@8.2.0/node_modules/@capacitor/file-transfer/android')
 

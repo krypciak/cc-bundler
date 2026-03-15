@@ -8,6 +8,9 @@ importers:
 
   .:
     devDependencies:
+      '@boengli/capacitor-fullscreen':
+        specifier: '=0.0.17'
+        version: 0.0.17
       '@capacitor/android':
         specifier: ^8.2.0
         version: 8.2.0(@capacitor/core@8.2.0)
@@ -91,6 +94,9 @@ importers:
         version: https://codeload.github.com/krypciak/ultimate-crosscode-typedefs/tar.gz/94b282e8cf20cb885027e16457001969227bda74
 
 packages:
+
+  '@boengli/capacitor-fullscreen@0.0.17':
+    resolution: {integrity: sha512-c0scOAz45U7gG/N5h/VFenz9SZtra9KuN3XFTeU0LOyAkktJ6Rnl7vebfyZuEH82U3jA+rUrztpN+gyIWmTJiA==}
 
   '@capacitor/android@8.2.0':
     resolution: {integrity: sha512-XLm5OsWLPfXQxDxzFS7SOdMEgGvW+2c7TGLXkTR2cSKdkWK5Abns4imlT5qghKYhjM9r74IrDkBWg/9ALUGNKQ==}
@@ -1132,6 +1138,8 @@ packages:
     engines: {node: '>=10'}
 
 snapshots:
+
+  '@boengli/capacitor-fullscreen@0.0.17': {}
 
   '@capacitor/android@8.2.0(@capacitor/core@8.2.0)':
     dependencies:
