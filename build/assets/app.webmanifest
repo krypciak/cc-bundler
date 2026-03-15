@@ -11,7 +11,7 @@
         { "src": "icon1024.png", "type": "image/png", "sizes": "1024x1024" }
     ],
     "start_url": "/",
-    "display": "fullscreen",
+    "display": "standalone",
     "id": "crosscode-web",
     "theme_color": "#0d63ec",
     "background_color": "#000000",
