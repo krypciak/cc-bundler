@@ -1,12 +1,4 @@
-import type {
-    Dirent,
-    MakeDirectoryOptions,
-    ObjectEncodingOptions,
-    RmDirOptions,
-    RmOptions,
-    StatOptions,
-    Stats,
-} from 'fs'
+import type { Dirent, MakeDirectoryOptions, ObjectEncodingOptions, RmOptions, StatOptions, Stats } from 'fs'
 
 import { dirname, basename } from 'path-browserify'
 import { OpfsDirent, OpfsStats, constants, throttleTasks } from './fs-misc'
@@ -403,11 +395,8 @@ async function unlink(path: string): Promise<void> {
     return rm(path)
 }
 
-async function rmdir(path: string, options?: RmDirOptions): Promise<void> {
+async function rmdir(path: string): Promise<void> {
     path = cleanPath(path)
-
-    if (options?.maxRetries) throw new Error(`opfs: rm options.maxRetries not supported`)
-    if (options?.retryDelay) throw new Error(`opfs: rm options.retryDelay not supported`)
 
     const fileHandle = await getFileHandle(path)
     if (fileHandle) throwErrorWithCode(`opfs: cannot rmdir a file: ${path}`, 'ENOTDIR')
