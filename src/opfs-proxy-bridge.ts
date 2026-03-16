@@ -40,26 +40,30 @@ export function initOpfsProxyBridge() {
 
             const fileInfo = await Filesystem.getUri({ path, directory: Directory.Cache })
 
-            const downloadResult = await FileTransfer.downloadFile({ path: fileInfo.uri, url })
+            let data: Uint8Array | null = null
+            try {
+                const downloadResult = await FileTransfer.downloadFile({ path: fileInfo.uri, url })
 
-            let data: Uint8Array = new Uint8Array()
-            if (downloadResult?.blob) {
-                /* this shouldn't happen, since result.blob is only set in web view, so never */
-                const arrayBuffer = await downloadResult.blob.arrayBuffer()
-                data = new Uint8Array(arrayBuffer)
-            } else {
-                const contents = await Filesystem.readFile({ path, directory: Directory.Cache })
-
-                if (typeof contents.data === 'string') {
-                    const res = await fetch(`data:application/octet-stream;base64,${contents.data}`)
-                    data = new Uint8Array(await res.arrayBuffer())
-                } else {
-                    const arrayBuffer = await contents.data.arrayBuffer()
+                if (downloadResult?.blob) {
+                    /* this shouldn't happen, since result.blob is only set in web view, so never */
+                    const arrayBuffer = await downloadResult.blob.arrayBuffer()
                     data = new Uint8Array(arrayBuffer)
-                }
-            }
+                } else {
+                    const contents = await Filesystem.readFile({ path, directory: Directory.Cache })
 
-            await Filesystem.deleteFile({ path, directory: Directory.Cache })
+                    if (typeof contents.data === 'string') {
+                        const res = await fetch(`data:application/octet-stream;base64,${contents.data}`)
+                        data = new Uint8Array(await res.arrayBuffer())
+                    } else {
+                        const arrayBuffer = await contents.data.arrayBuffer()
+                        data = new Uint8Array(arrayBuffer)
+                    }
+                }
+
+                await Filesystem.deleteFile({ path, directory: Directory.Cache })
+            } catch (e) {
+                console.log('error while downloading file', e)
+            }
 
             const responsePacket: ServiceWorker.Outgoing.Packet = {
                 type: 'Data',
