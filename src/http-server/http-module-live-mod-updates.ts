@@ -5,9 +5,14 @@ import type { Dirent } from 'fs'
 import { buildZipTreeRecursive } from '../fs/fs-misc.ts'
 
 let fs: typeof import('fs')
+let child_process: typeof import('child_process')
 ;(async () => {
     fs = 'require' in global ? (0, eval)("require('fs')") : await import('fs')
 })()
+;(async () => {
+    child_process = 'require' in global ? (0, eval)("require('child_process')") : await import('child_process')
+})()
+
 let zip: (typeof import('fflate'))['zip']
 
 interface LiveModConfig {
@@ -31,7 +36,7 @@ function concatBuffersIntoUint8Array(arrays: Buffer[]): Uint8Array {
 }
 
 async function buildPluginJs(mod: LiveModConfig): Promise<Uint8Array> {
-    const { spawn }: typeof import('child_process') = require('child_process')
+    const { spawn } = child_process
     const process = spawn(mod.buildCmd, mod.buildArguments, { cwd: mod.repoPath })
 
     const buffers: Buffer[] = []
