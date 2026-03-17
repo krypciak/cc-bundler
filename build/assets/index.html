@@ -46,7 +46,6 @@
 
             <div id="uploadStatusLabel" class="infoText"><wbr /></div>
 
-            <!-- Directory Upload -->
             <div class="file-upload-wrapper">
                 <button
                     id="dirInputButton"
@@ -54,12 +53,11 @@
                     onclick="dirInput.click()"
                     disabled
                 >
-                    Select game assets directory
+                    Import game assets directory
                 </button>
                 <input id="dirInput" style="display: none" type="file" multiple directory webkitdirectory disabled />
             </div>
 
-            <!-- Archive Upload -->
             <div class="file-upload-wrapper">
                 <button
                     id="archiveInputButton"
@@ -67,12 +65,11 @@
                     onclick="archiveInput.click()"
                     disabled
                 >
-                    Select game assets zip archive
+                    Import game assets zip archive
                 </button>
                 <input id="archiveInput" style="display: none" type="file" accept=".zip" disabled />
             </div>
 
-            <!-- Save Upload -->
             <div class="file-upload-wrapper">
                 <button
                     id="saveInputButton"
@@ -80,7 +77,7 @@
                     onclick="saveInput.click()"
                     disabled
                 >
-                    Select game save
+                    Import game save (cc.save)
                 </button>
                 <input id="saveInput" style="display: none" type="file" accept=".save" disabled />
             </div>
