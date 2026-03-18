@@ -17,6 +17,9 @@ const crypto = {}
 const stream = {}
 const http = {}
 const https = {}
+const module = {
+    createRequire: () => window.require,
+}
 
 export const nwGui = {
     App: {
@@ -78,18 +81,25 @@ const greenworks = {
 }
 
 export function requireFix() {
+    const requireMap: Record<string, any> = {
+        fs: fs,
+        path: path,
+        http: http,
+        https: https,
+        crypto: crypto,
+        stream: stream,
+        util: util,
+        'nw.gui': nwGui,
+        events: events,
+        assert: assert,
+        module: module,
+    }
+
     // @ts-expect-error
     window.require = (src: string) => {
-        if (src == 'fs') return fs
-        if (src == 'path') return path
-        if (src == 'http') return http
-        if (src == 'https') return https
-        if (src == 'crypto') return crypto
-        if (src == 'stream') return stream
-        if (src == 'util') return util
-        if (src == 'nw.gui') return nwGui
-        if (src == 'events') return events
-        if (src == 'assert') return assert
+        const fromMap = requireMap[src]
+        if (fromMap) return fromMap
+
         if (src.includes('greenworks')) return greenworks
 
         console.groupCollapsed(`requireFix: unknown module: ${src}`)
