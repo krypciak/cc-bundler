@@ -43,11 +43,13 @@ export async function getCCLoader3RuntimeModFiles(): Promise<FileEntry[]> {
 
 export async function getRuntimeModFiles(): Promise<FileEntry[]> {
     try {
-        const resp = await fetch('bundler-runtime.zip')
+        const resp = await fetch('crosscode-web-runtime.ccmod')
         if (resp.status != 200) throw new Error(`bad status: ${resp.status}`)
-        const data = await getUint8Array(resp)
-        const runtimeModFiles = await zipToFileEntryList(data, 'assets/mods/crosscode-web-runtime/')
-        return runtimeModFiles
+        const ccmodFile: FileEntry = {
+            path: 'assets/mods/crosscode-web-runtime.ccmod',
+            uint8Array: () => getUint8Array(resp),
+        }
+        return [ccmodFile]
     } catch (e) {
         console.error('unable to fetch runtime files!', e)
         return []

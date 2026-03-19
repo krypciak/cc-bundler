@@ -1,8 +1,8 @@
 {
     "id": "crosscode-web-runtime",
-    "title": "crosscode-web-runtime",
+    "title": "CrossCode web",
     "version": "1.0.0",
-    "description": "",
+    "description": "Runtime mod for crosscode-web",
     "repository": "https://github.com/krypciak/crosscode-web",
     "tags": ["base"],
     "authors": ["krypek"],

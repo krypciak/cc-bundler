@@ -123,11 +123,11 @@ function runtimeMod(): esbuild.BuildOptions {
                         const zip = new AdmZip()
                         zip.addFile('ccmod.json', await fs.promises.readFile('../src/runtime-mod/ccmod.json'))
                         zip.addFile('plugin.js', Buffer.from(code))
-                        zip.writeZipPromise(`${distDir}/bundler-runtime.zip`)
+                        zip.writeZipPromise(`${distDir}/crosscode-web-runtime.ccmod`)
                     })
                 },
             },
-            donePlugin('../dist/bundler-runtime.zip', true),
+            donePlugin('../dist/crosscode-web-runtime.ccmod', true),
         ],
     }
 }
