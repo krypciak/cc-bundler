@@ -16,6 +16,7 @@
         "@capacitor/core": "^8.2.0",
         "@capacitor/file-transfer": "^2.0.4",
         "@capacitor/filesystem": "^8.1.2",
+        "@capacitor/haptics": "^8.0.1",
         "@jspm/core": "^2.1.0",
         "@types/adm-zip": "^0.5.7",
         "@types/http-server": "^0.12.4",
@@ -39,13 +40,5 @@
         "semver": "^7.7.4",
         "typescript": "^5.9.3",
         "ultimate-crosscode-typedefs": "github:krypciak/ultimate-crosscode-typedefs"
-    },
-    "pnpm": {
-        "onlyBuiltDependencies": [
-            "core-js",
-            "esbuild",
-            "node",
-            "sharp"
-        ]
     }
 }

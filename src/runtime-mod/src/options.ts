@@ -12,6 +12,13 @@ export function registerOpts() {
             },
             headers: {
                 general: {
+                    hapticFeedback: {
+                        type: 'CHECKBOX',
+                        name: 'Enable Haptic Feedback',
+                        description: 'Vibrate when the screen shakes in-game',
+
+                        init: true,
+                    },
                 },
             },
         },

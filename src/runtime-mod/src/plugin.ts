@@ -2,6 +2,8 @@ import type { PluginClass } from 'ultimate-crosscode-typedefs/modloader/mod'
 import type { Mod1 } from './types'
 import ccmod from '../ccmod.json'
 import { Autorun, getAutorun, setAutorun } from '../../autorun'
+import { registerOpts } from './options'
+import { initVibrationBridge } from './vibration'
 
 export default class CrossCodeWebRuntimeMod implements PluginClass {
     static dir: string
@@ -13,6 +15,13 @@ export default class CrossCodeWebRuntimeMod implements PluginClass {
         CrossCodeWebRuntimeMod.mod = mod
         CrossCodeWebRuntimeMod.mod.isCCL3 = mod.findAllAssets ? true : false
         CrossCodeWebRuntimeMod.mod.isCCModPacked = mod.baseDirectory.endsWith('.ccmod/')
+    }
+
+    prestart() {
+        registerOpts()
+        this.ccSaveFix()
+        this.audioWarningFix()
+        initVibrationBridge()
     }
 
     audioWarningFix() {
@@ -57,11 +66,6 @@ export default class CrossCodeWebRuntimeMod implements PluginClass {
                 return this.parent(data)
             },
         })
-    }
-
-    prestart() {
-        this.ccSaveFix()
-        this.audioWarningFix()
     }
 
     autorunBackup: Autorun = 'off'
