@@ -108,7 +108,7 @@ function ccmodServiceWorker(): esbuild.BuildOptions {
 
 function runtimeMod(): esbuild.BuildOptions {
     return {
-        entryPoints: ['../src/runtime-mod/plugin.ts'],
+        entryPoints: ['../src/runtime-mod/src/plugin.ts'],
 
         ...commonOptions,
 

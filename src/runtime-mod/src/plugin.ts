@@ -1,6 +1,20 @@
-import { Autorun, getAutorun, setAutorun } from '../autorun'
+import type { PluginClass } from 'ultimate-crosscode-typedefs/modloader/mod'
+import type { Mod1 } from './types'
+import ccmod from '../ccmod.json'
+import { Autorun, getAutorun, setAutorun } from '../../autorun'
 
-export default class BundlerRuntimeMod {
+export default class CrossCodeWebRuntimeMod implements PluginClass {
+    static dir: string
+    static mod: Mod1
+    static manifset: typeof import('../ccmod.json') = ccmod
+
+    constructor(mod: Mod1) {
+        CrossCodeWebRuntimeMod.dir = mod.baseDirectory
+        CrossCodeWebRuntimeMod.mod = mod
+        CrossCodeWebRuntimeMod.mod.isCCL3 = mod.findAllAssets ? true : false
+        CrossCodeWebRuntimeMod.mod.isCCModPacked = mod.baseDirectory.endsWith('.ccmod/')
+    }
+
     audioWarningFix() {
         let interacted = false
 
