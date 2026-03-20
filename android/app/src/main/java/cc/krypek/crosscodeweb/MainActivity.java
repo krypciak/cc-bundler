@@ -19,6 +19,7 @@ public class MainActivity extends BridgeActivity {
 
         Rumble rumble = new Rumble(this);
         FileFetch fileFetch = new FileFetch(this);
+        Fullscreen fullscreen = new Fullscreen(this);
 
         WebView webView = getBridge().getWebView();
         if (webView != null) {
@@ -26,6 +27,11 @@ public class MainActivity extends BridgeActivity {
                 @JavascriptInterface
                 public void reportRumble(double strength, double effectDuration) {
                     runOnUiThread(() -> rumble.reportRumble(strength, effectDuration));
+                }
+
+                @JavascriptInterface
+                public void setFullscreen() {
+                    runOnUiThread(() -> fullscreen.enterImmersiveMode());
                 }
 
                 @JavascriptInterface

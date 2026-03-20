@@ -7,7 +7,7 @@ import type { VersionResp } from './service-worker/offline-cache-proxy'
 import { copyFiles } from './upload-processing'
 import { initOpfsProxyBridge } from './opfs-proxy-bridge'
 import { updateLiveMods } from './live-mods'
-import { tryEnterAndroidFullscreen } from './android-fullscreen'
+import { isAndroid, setFullscreenAndroid } from './android-bridge'
 
 import './localstoarge-default'
 
@@ -60,7 +60,8 @@ export async function run() {
 
     if (LIVEMODS) await updateLiveMods()
 
-    if (!WEB) tryEnterAndroidFullscreen()
+
+    if (isAndroid()) setFullscreenAndroid()
 
     bundleTitleScreen.style.display = 'none'
 

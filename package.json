@@ -10,7 +10,6 @@
         "httpServer": "node --experimental-strip-types src/http-server/http-server.ts"
     },
     "devDependencies": {
-        "@boengli/capacitor-fullscreen": "=0.0.17",
         "@capacitor/android": "^8.2.0",
         "@capacitor/cli": "^8.2.0",
         "@capacitor/core": "^8.2.0",
