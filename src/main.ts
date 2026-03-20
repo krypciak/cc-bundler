@@ -3,6 +3,7 @@ import { getInternalFileList, preloadInit } from './fs/fs-proxy'
 import { requireFix } from './nwjs-fix'
 import { initLoadScreen } from './ui'
 import { checkAutorun } from './autorun'
+import type { VersionResp } from './service-worker/offline-cache-proxy'
 import { copyFiles } from './upload-processing'
 import { initOpfsProxyBridge } from './opfs-proxy-bridge'
 import { updateLiveMods } from './live-mods'
@@ -13,9 +14,18 @@ import './localstoarge-default'
 declare global {
     const WEB: boolean
     const LIVEMODS: boolean
+    const DEBUG: boolean
 }
 
 async function setup() {
+    // trigger service worker update check
+    fetch('/version').then(async resp => {
+        const data: VersionResp = await resp.json()
+        if (data.updated && data.previousVersion != undefined) {
+            location.reload()
+        }
+    })
+
     if (!navigator.serviceWorker) {
         storageInfoLabel.innerHTML =
             'Service Workers not supported! <br> Cannot continue <br> (Make sure you connect with https!)'
