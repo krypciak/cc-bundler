@@ -5,6 +5,7 @@ import AdmZip from 'adm-zip'
 const isWatch = process.argv[2] === 'watch'
 const isWeb = !process.argv[3] || process.argv[3] == 'web'
 const isDebug = !process.argv[4] || process.argv[4] == 'debug'
+const enableLiveMods = isDebug
 
 const commonOptions: esbuild.BuildOptions = {
     format: 'esm',
@@ -19,7 +20,8 @@ const commonOptions: esbuild.BuildOptions = {
 
     define: {
         WEB: String(isWeb),
-        LIVEMODS: isDebug ? 'true' : 'false',
+        LIVEMODS: enableLiveMods ? 'true' : 'false',
+        DEBUG: isDebug ? 'true' : 'false',
     },
 } as const
 
@@ -55,7 +57,7 @@ async function copyCCLoader3RuntimeCCMod() {
     await zip.writeZipPromise('../dist/ccloader3-runtime.zip')
 }
 
-let version: number = 0
+let version: number = Date.now()
 try {
     await fs.promises.mkdir(distDir, { recursive: true })
     const versionStr = await fs.promises.readFile('../dist/version')
@@ -147,6 +149,7 @@ async function run(): Promise<void> {
 
     if (isWatch) {
         console.clear()
+        console.log(`debug: ${isDebug} liveMods: ${enableLiveMods}`)
         await Promise.all(
             modules.map(async module => {
                 const ctx = await esbuild.context(module())
