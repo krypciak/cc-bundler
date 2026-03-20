@@ -8,6 +8,9 @@ declare global {
         }
         _crosscodeWebCallbacks: {
             fetchBinary: {
+                pendingCallbacks: Map<string, { resolve: (data: Uint8Array) => void; reject: (error: string) => void }>
+                callbackCounter: number
+
                 success(callbackId: string, data: string): void
                 error(callbackId: string, error: string): void
             }
@@ -35,8 +38,6 @@ export function saveFileAndroid(base64: string, fileName: string): string {
     return result
 }
 
-const pendingCallbacks = new Map<string, { resolve: (data: Uint8Array) => void; reject: (error: string) => void }>()
-
 function base64ToUint8Array(base64: string): Uint8Array {
     const binary = atob(base64)
     const bytes = new Uint8Array(binary.length)
@@ -46,25 +47,25 @@ function base64ToUint8Array(base64: string): Uint8Array {
     return bytes
 }
 
-window._crosscodeWebCallbacks = {
+window._crosscodeWebCallbacks ??= {
     fetchBinary: {
+        pendingCallbacks: new Map(),
+        callbackCounter: 0,
         success(callbackId, data) {
-            pendingCallbacks.get(callbackId)?.resolve(base64ToUint8Array(data))
-            pendingCallbacks.delete(callbackId)
+            this.pendingCallbacks.get(callbackId)?.resolve(base64ToUint8Array(data))
+            this.pendingCallbacks.delete(callbackId)
         },
         error(callbackId, error) {
-            pendingCallbacks.get(callbackId)?.reject(error)
-            pendingCallbacks.delete(callbackId)
+            this.pendingCallbacks.get(callbackId)?.reject(error)
+            this.pendingCallbacks.delete(callbackId)
         },
     },
 }
 
-let callbackCounter = 0
-
 export async function fetchBinaryAndroid(url: string): Promise<Uint8Array> {
     return new Promise((resolve, reject) => {
-        const callbackId = String(++callbackCounter)
-        pendingCallbacks.set(callbackId, { resolve, reject })
+        const callbackId = String(++window._crosscodeWebCallbacks.fetchBinary.callbackCounter)
+        window._crosscodeWebCallbacks.fetchBinary.pendingCallbacks.set(callbackId, { resolve, reject })
         window.CrosscodeWebAndroidNative!.fetchBinary(url, callbackId)
     })
 }
