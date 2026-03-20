@@ -29,7 +29,7 @@ export function setFullscreenAndroid(): void {
 
 export function saveFileAndroid(base64: string, fileName: string): string {
     const result = window.CrosscodeWebAndroidNative!.saveFile(base64, fileName)
-    if (result.startsWith("ERROR: ")) {
+    if (result.startsWith('ERROR: ')) {
         throw new Error(result.substring(7))
     }
     return result
@@ -51,12 +51,10 @@ window._crosscodeWebCallbacks = {
         success(callbackId, data) {
             pendingCallbacks.get(callbackId)?.resolve(base64ToUint8Array(data))
             pendingCallbacks.delete(callbackId)
-            console.timeEnd('download')
         },
         error(callbackId, error) {
             pendingCallbacks.get(callbackId)?.reject(error)
             pendingCallbacks.delete(callbackId)
-            console.timeEnd('download')
         },
     },
 }

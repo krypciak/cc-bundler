@@ -4,6 +4,7 @@ import ccmod from '../ccmod.json'
 import { Autorun, getAutorun, setAutorun } from '../../autorun'
 import { registerOpts } from './options'
 import { initVibrationBridge } from './vibration'
+import { audioWarningFix } from './audio-warning-fix'
 
 export default class CrossCodeWebRuntimeMod implements PluginClass {
     static dir: string
@@ -20,41 +21,8 @@ export default class CrossCodeWebRuntimeMod implements PluginClass {
     prestart() {
         registerOpts()
         this.ccSaveFix()
-        this.audioWarningFix()
+        if (WEB) audioWarningFix()
         initVibrationBridge()
-    }
-
-    audioWarningFix() {
-        let interacted = false
-
-        function onInteraction() {
-            if (!interacted) {
-                interacted = true
-                // @ts-expect-error
-                ig.music?.resume()
-            }
-        }
-        const dom = document.getElementById('game')!
-        dom.addEventListener('mousedown', () => {
-            onInteraction()
-        })
-        dom.addEventListener('touchstart', () => {
-            onInteraction()
-        })
-
-        ig.SoundManager.inject({
-            update() {
-                if (this.context?.context?.state == 'suspended' && !interacted) return
-                this.parent()
-            },
-        })
-
-        const WebAudioBufferGain = ig.WebAudioBufferGain.prototype as ig.WebAudioBufferGain
-        const origPlay = WebAudioBufferGain.play
-        WebAudioBufferGain.play = function (when, offset) {
-            if (!interacted) return
-            return origPlay.call(this, when, offset)
-        }
     }
 
     ccSaveFix() {
