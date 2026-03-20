@@ -2,7 +2,9 @@ import * as esbuild from 'esbuild'
 import * as fs from 'fs'
 import AdmZip from 'adm-zip'
 
+const isWatch = process.argv[2] === 'watch'
 const isWeb = !process.argv[3] || process.argv[3] == 'web'
+const isDebug = !process.argv[4] || process.argv[4] == 'debug'
 
 const commonOptions: esbuild.BuildOptions = {
     format: 'esm',
@@ -11,17 +13,16 @@ const commonOptions: esbuild.BuildOptions = {
 
     write: false,
     bundle: true,
-    minify: false,
-    sourcemap: 'inline',
+    minify: isDebug ? false : true,
+    sourcemap: isDebug ? 'inline' : undefined,
     // drop: ['debugger' /*'console'*/],
 
     define: {
         WEB: String(isWeb),
-        LIVEMODS: 'true',
+        LIVEMODS: isDebug ? 'true' : 'false',
     },
 } as const
 
-const isWatch = process.argv[2] === 'watch'
 const distDir = '../dist'
 
 function donePlugin(outfile: string, noWrite?: boolean): esbuild.Plugin {

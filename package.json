@@ -4,9 +4,11 @@
     "description": "",
     "type": "module",
     "scripts": {
-        "build": "cd build && bun build.ts build",
-        "buildAndroid": "cd build && bun build.ts build android",
-        "watch": "cd build && bun build.ts watch",
+        "build": "cd build && bun build.ts build web debug",
+        "buildRelease": "cd build && bun build.ts build web debug",
+        "buildAndroid": "cd build && bun build.ts build android debug",
+        "buildAndroidRelease": "cd build && bun build.ts build android release",
+        "watch": "cd build && bun build.ts watch web debug",
         "httpServer": "node --experimental-strip-types src/http-server/http-server.ts"
     },
     "devDependencies": {
