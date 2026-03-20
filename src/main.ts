@@ -3,7 +3,6 @@ import { getInternalFileList, preloadInit } from './fs/fs-proxy'
 import { requireFix } from './nwjs-fix'
 import { initLoadScreen } from './ui'
 import { checkAutorun } from './autorun'
-import type { VersionResp } from './service-worker/offline-cache-proxy'
 import { copyFiles } from './upload-processing'
 import { initOpfsProxyBridge } from './opfs-proxy-bridge'
 import { updateLiveMods } from './live-mods'
@@ -16,18 +15,7 @@ declare global {
     const LIVEMODS: boolean
 }
 
-export const runtimeModsDirtyKey = 'crosscode-web-runtime-mods-dirty'
-
 async function setup() {
-    // trigger service worker update check
-    fetch('/version').then(async resp => {
-        const data: VersionResp = await resp.json()
-        if (data.updated && data.previousVersion != undefined) {
-            localStorage[runtimeModsDirtyKey] = 'true'
-            location.reload()
-        }
-    })
-
     if (!navigator.serviceWorker) {
         storageInfoLabel.innerHTML =
             'Service Workers not supported! <br> Cannot continue <br> (Make sure you connect with https!)'
@@ -53,13 +41,9 @@ async function setup() {
 setup()
 
 export async function run() {
-    if (localStorage[runtimeModsDirtyKey] == 'true') {
-        await copyFiles(await getInternalFileList(), false)
-        localStorage[runtimeModsDirtyKey] = 'false'
-    }
+    await copyFiles(await getInternalFileList(), false)
 
     if (LIVEMODS) await updateLiveMods()
-
 
     if (isAndroid()) setFullscreenAndroid()
 

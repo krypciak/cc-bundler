@@ -5,14 +5,12 @@ import { copyFiles, zipToFileEntryList } from '../upload-processing'
 
 import { init, fs } from './opfs'
 import { FileEntry, fileEntryFromJson, getUint8Array } from '../utils'
-import { runtimeModsDirtyKey } from '../main'
 export { fs }
 
 export async function clearStorage() {
     await fs.clearStorage()
 
     await preloadInit()
-    localStorage[runtimeModsDirtyKey] = 'true'
 }
 
 export let isMounted = false

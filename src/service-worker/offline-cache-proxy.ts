@@ -2,14 +2,6 @@ import { shouldIgnoreRequestPath } from './ignored-paths'
 
 const cacheName = 'crosscode-web-offline-cache'
 
-let currentVersion: number | undefined
-
-export interface VersionResp {
-    previousVersion: number | undefined
-    version: number | undefined
-    updated: boolean
-}
-
 async function respond(event: FetchEvent): Promise<Response> {
     const request = event.request
     const cachedResponse = await caches.match(request)
@@ -19,37 +11,6 @@ async function respond(event: FetchEvent): Promise<Response> {
     const path = decodeURI(new URL(url).pathname)
 
     if (shouldIgnoreRequestPath(path)) return fetch(request)
-
-    if (path == '/version') {
-        const previousVersion = currentVersion
-
-        let updated: boolean = false
-        try {
-            const resp = await fetch(request, { cache: 'no-cache' })
-            if (resp.status !== 200) throw new Error(`bad status: ${resp.status}`)
-            const versionStr = await resp.text()
-            const version = parseInt(versionStr)
-
-            if (currentVersion != version) {
-                currentVersion = version
-
-                await caches.delete(cacheName)
-                updated = true
-            }
-        } catch (e) {
-            console.error('ServiceWorker /version fetch failed:', e)
-        }
-
-        const versionResp: VersionResp = {
-            previousVersion,
-            version: currentVersion,
-            updated,
-        }
-
-        return new Response(JSON.stringify(versionResp), {
-            status: 200,
-        })
-    }
 
     const fetchReq = await fetch(request, { cache: 'no-cache' })
     if (fetchReq.status == 200) {
