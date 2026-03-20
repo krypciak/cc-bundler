@@ -6,7 +6,7 @@ if (WEB) {
     import('./mod-download-proxy')
     import('./offline-cache-proxy')
 } else {
-    import('./capacitor-proxy')
+    import('./android-fetch-proxy')
 }
 
 self.addEventListener('activate', () => {
