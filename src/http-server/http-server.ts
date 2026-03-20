@@ -44,6 +44,20 @@ export async function startHttpServer() {
         //         'src/plugin.ts',
         //     ],
         // },
+        {
+            id: 'cc-gamepad-overlay',
+            repoPath: '/home/krypek/home/Programming/repos/cc-gamepad-overlay',
+            buildCmd: 'esbuild',
+            buildArguments: [
+                '--target=es2018',
+                '--format=esm',
+                '--platform=node',
+                '--bundle',
+                '--loader:.css=text',
+                '--sourcemap=inline',
+                'src/plugin.ts',
+            ],
+        },
     ])
     startWatchingMods()
 
