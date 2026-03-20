@@ -1,14 +1,11 @@
-import { FileTransfer } from '@capacitor/file-transfer'
-import { Filesystem, Directory } from '@capacitor/filesystem'
 import type { ServiceWorker } from '../../ccloader3/packages/core/src/service-worker-bridge'
+import { fetchBinaryAndroid } from './android-bridge'
 import { fs } from './fs/opfs'
 
 function sendServiceWorkerMessage(packet: ServiceWorker.Outgoing.Packet): void {
     const { controller } = window.navigator.serviceWorker
     controller?.postMessage(packet)
 }
-
-let tmpDownloadCounter = 0
 
 export function initOpfsProxyBridge() {
     const ccmodOnMessage = navigator.serviceWorker.onmessage
@@ -36,33 +33,13 @@ export function initOpfsProxyBridge() {
             /* this can only happen when WEB=false */
             // @ts-expect-error
             const url: string = packet.path
-            const path = `tmp_download_${tmpDownloadCounter++}`
 
-            const fileInfo = await Filesystem.getUri({ path, directory: Directory.Cache })
-
-            let data: Uint8Array | null = null
+            let data: Uint8Array | null
             try {
-                const downloadResult = await FileTransfer.downloadFile({ path: fileInfo.uri, url })
-
-                if (downloadResult?.blob) {
-                    /* this shouldn't happen, since result.blob is only set in web view, so never */
-                    const arrayBuffer = await downloadResult.blob.arrayBuffer()
-                    data = new Uint8Array(arrayBuffer)
-                } else {
-                    const contents = await Filesystem.readFile({ path, directory: Directory.Cache })
-
-                    if (typeof contents.data === 'string') {
-                        const res = await fetch(`data:application/octet-stream;base64,${contents.data}`)
-                        data = new Uint8Array(await res.arrayBuffer())
-                    } else {
-                        const arrayBuffer = await contents.data.arrayBuffer()
-                        data = new Uint8Array(arrayBuffer)
-                    }
-                }
-
-                await Filesystem.deleteFile({ path, directory: Directory.Cache })
+                data = await fetchBinaryAndroid(url)
             } catch (e) {
-                console.log('error while downloading file', e)
+                // console.error(`error while downloading:`, e)
+                data = null
             }
 
             const responsePacket: ServiceWorker.Outgoing.Packet = {

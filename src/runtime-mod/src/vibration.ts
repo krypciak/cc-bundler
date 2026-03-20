@@ -1,5 +1,6 @@
 import { Haptics, ImpactStyle } from '@capacitor/haptics'
 import { Opts } from './options'
+import { isAndroid, reportRumbleAndroid } from '../../android-bridge'
 
 export function initVibrationBridge() {
     ig.Rumble.RumbleHandle.inject({
@@ -14,16 +15,11 @@ export function initVibrationBridge() {
 }
 
 function reportRumble(strength: number, effectDuration: number) {
-    if (reportRumbleAndroid(strength, effectDuration)) return
-    reportRumbleCapacitor(strength, effectDuration)
-}
-
-function reportRumbleAndroid(strength: number, effectDuration: number): boolean {
-    if (window.CrosscodeWebAndroidNative) {
-        window.CrosscodeWebAndroidNative.reportRumble(strength, effectDuration)
-        return true
+    if (isAndroid()) {
+        reportRumbleAndroid(strength, effectDuration)
+    } else {
+        reportRumbleCapacitor(strength, effectDuration)
     }
-    return false
 }
 
 const MAX_RUMBLE_STRENGTH = 15.0

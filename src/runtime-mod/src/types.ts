@@ -19,13 +19,3 @@ export type Mod1 = Writable<Mod> & {
               runtimeAssets: Record<string, string>
           }
     )
-
-interface CrosscodeWebAndroidNative {
-    reportRumble(strength: number, effectDuration: number): void
-}
-
-declare global {
-    interface Window {
-        CrosscodeWebAndroidNative?: CrosscodeWebAndroidNative
-    }
-}
