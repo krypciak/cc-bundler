@@ -20,6 +20,7 @@ public class Rumble {
         this.vibrator = (Vibrator) context.getSystemService(Context.VIBRATOR_SERVICE);
     }
 
+    // taken from https://gitlab.com/Namnodorel/crossandroid/-/blob/master/app/src/main/java/de/radicalfishgames/crosscode/features/HapticFeedbackFeature.kt#L49
     public void reportRumble(double strength, double effectDuration) {
         try {
             if (strength > 15) {
