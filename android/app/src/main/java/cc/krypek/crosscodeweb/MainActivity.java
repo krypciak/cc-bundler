@@ -20,6 +20,7 @@ public class MainActivity extends BridgeActivity {
         Rumble rumble = new Rumble(this);
         FileFetch fileFetch = new FileFetch(this);
         Fullscreen fullscreen = new Fullscreen(this);
+        FileSave fileSave = new FileSave(this);
 
         WebView webView = getBridge().getWebView();
         if (webView != null) {
@@ -32,6 +33,16 @@ public class MainActivity extends BridgeActivity {
                 @JavascriptInterface
                 public void setFullscreen() {
                     runOnUiThread(() -> fullscreen.enterImmersiveMode());
+                }
+
+                @JavascriptInterface
+                public String saveFile(String base64, String fileName) {
+                    try {
+                        byte[] data = Base64.decode(base64, Base64.NO_WRAP);
+                        return fileSave.saveFile(data, fileName);
+                    } catch (Exception e) {
+                        return "ERROR: " + e.getMessage();
+                    }
                 }
 
                 @JavascriptInterface

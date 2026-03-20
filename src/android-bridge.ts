@@ -4,6 +4,7 @@ declare global {
             reportRumble(strength: number, effectDuration: number): void
             fetchBinary(url: string, callbackId: string): void
             setFullscreen(): void
+            saveFile(base64: string, fileName: string): string
         }
         _crosscodeWebCallbacks: {
             fetchBinary: {
@@ -24,6 +25,14 @@ export function reportRumbleAndroid(strength: number, effectDuration: number) {
 
 export function setFullscreenAndroid(): void {
     window.CrosscodeWebAndroidNative!.setFullscreen()
+}
+
+export function saveFileAndroid(base64: string, fileName: string): string {
+    const result = window.CrosscodeWebAndroidNative!.saveFile(base64, fileName)
+    if (result.startsWith("ERROR: ")) {
+        throw new Error(result.substring(7))
+    }
+    return result
 }
 
 const pendingCallbacks = new Map<string, { resolve: (data: Uint8Array) => void; reject: (error: string) => void }>()

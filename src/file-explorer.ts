@@ -1,11 +1,11 @@
 import { AsyncZippable, zip } from 'fflate/browser'
-import { Filesystem, Directory } from '@capacitor/filesystem'
-import { Capacitor } from '@capacitor/core'
 import * as fe from './file-explorer-types'
 import { buildZipTreeRecursive, throttleTasks } from './fs/fs-misc'
 import { isMounted } from './fs/fs-proxy'
 import { fs } from './fs/opfs'
 import { getUint8Array } from './utils'
+import { isAndroid, saveFileAndroid } from './android-bridge'
+
 import 'core-js/proposals/array-buffer-base64'
 
 declare global {
@@ -42,26 +42,16 @@ function createEntry(name: string, isDir: boolean): fe.Entry {
 }
 
 async function downloadFile(data: ArrayBuffer, name: string) {
-    if (Capacitor.getPlatform() == 'web') {
+    if (isAndroid()) {
+        const base64 = new Uint8Array(data).toBase64()
+        const uri = saveFileAndroid(base64, name)
+        alert(`saved to ${uri}`)
+    } else {
         const uri = URL.createObjectURL(new Blob([data]))
-        var link = document.createElement('a')
+        const link = document.createElement('a')
         link.download = name
         link.href = uri
         link.click()
-    } else {
-        const base64 = new Uint8Array(data).toBase64()
-
-        const path = {
-            path: name,
-            directory: Directory.Documents,
-        }
-
-        const { uri } = await Filesystem.writeFile({
-            data: base64,
-            ...path,
-        })
-
-        alert(`saved to ${uri}`)
     }
 }
 
@@ -228,7 +218,7 @@ export function initFileExplorer() {
                 ).flat()
 
                 const maxFiles = 500
-                if (Capacitor.getPlatform() != 'web' && allFilePaths.length > maxFiles) {
+                if (isAndroid() && allFilePaths.length > maxFiles) {
                     const msg = `Can only download up to ${maxFiles} files! Tried to download: ${allFilePaths.length}`
                     alert(msg)
                     return
