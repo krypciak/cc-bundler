@@ -17,12 +17,6 @@ importers:
       '@capacitor/core':
         specifier: ^8.2.0
         version: 8.2.0
-      '@capacitor/file-transfer':
-        specifier: ^2.0.4
-        version: 2.0.4(@capacitor/core@8.2.0)
-      '@capacitor/filesystem':
-        specifier: ^8.1.2
-        version: 8.1.2(@capacitor/core@8.2.0)
       '@jspm/core':
         specifier: ^2.1.0
         version: 2.1.0
@@ -91,7 +85,7 @@ importers:
         version: 5.9.3
       ultimate-crosscode-typedefs:
         specifier: github:krypciak/ultimate-crosscode-typedefs
-        version: https://codeload.github.com/krypciak/ultimate-crosscode-typedefs/tar.gz/1b5fa0d9b2abbcacf36865cd25a02bab45f28beb
+        version: https://codeload.github.com/krypciak/ultimate-crosscode-typedefs/tar.gz/0d7d7b95ffa5bf7ae88929db3b51cd6b9ab45e38
 
 packages:
 
@@ -107,19 +101,6 @@ packages:
 
   '@capacitor/core@8.2.0':
     resolution: {integrity: sha512-oKaoNeNtH2iIZMDFVrb1atoyRECDGHcfLMunJ5KWN8DtvpVBeeA4c41e20NTuhMxw1cSYbpq2PV2hb+/9CJxlQ==}
-
-  '@capacitor/file-transfer@2.0.4':
-    resolution: {integrity: sha512-tWHcLmUu1SMfQY1KUHLXK63c6rsyrPHAgbWh4eIqyg4B8cyyzVJQC+/T6tLehv262iO7lw0S7ebb/DU9GlNL4A==}
-    peerDependencies:
-      '@capacitor/core': '>=8.0.0'
-
-  '@capacitor/filesystem@8.1.2':
-    resolution: {integrity: sha512-doaaMfGoFR2hWU6aV6u83I+5ZsGyJVq+Gz4r9lMpJzUKMm1eMu0hLnFdV1aXZlU9FlK/RndFrVD8oRZfNOqWgQ==}
-    peerDependencies:
-      '@capacitor/core': '>=8.0.0'
-
-  '@capacitor/synapse@1.0.4':
-    resolution: {integrity: sha512-/C1FUo8/OkKuAT4nCIu/34ny9siNHr9qtFezu4kxm6GY1wNFxrCFWjfYx5C1tUhVGz3fxBABegupkpjXvjCHrw==}
 
   '@esbuild/aix-ppc64@0.27.4':
     resolution: {integrity: sha512-cQPwL2mp2nSmHHJlCyoXgHGhbEPMrEEU5xhkcy3Hs/O7nGZqEpZ2sUtLaL9MORLtDfRvVl2/3PAuEkYZH0Ty8Q==}
@@ -1048,8 +1029,8 @@ packages:
     engines: {node: '>=14.17'}
     hasBin: true
 
-  ultimate-crosscode-typedefs@https://codeload.github.com/krypciak/ultimate-crosscode-typedefs/tar.gz/1b5fa0d9b2abbcacf36865cd25a02bab45f28beb:
-    resolution: {tarball: https://codeload.github.com/krypciak/ultimate-crosscode-typedefs/tar.gz/1b5fa0d9b2abbcacf36865cd25a02bab45f28beb}
+  ultimate-crosscode-typedefs@https://codeload.github.com/krypciak/ultimate-crosscode-typedefs/tar.gz/0d7d7b95ffa5bf7ae88929db3b51cd6b9ab45e38:
+    resolution: {tarball: https://codeload.github.com/krypciak/ultimate-crosscode-typedefs/tar.gz/0d7d7b95ffa5bf7ae88929db3b51cd6b9ab45e38}
     version: 0.0.1
     engines: {node: '>=10.0.0'}
 
@@ -1169,18 +1150,6 @@ snapshots:
   '@capacitor/core@8.2.0':
     dependencies:
       tslib: 2.8.1
-
-  '@capacitor/file-transfer@2.0.4(@capacitor/core@8.2.0)':
-    dependencies:
-      '@capacitor/core': 8.2.0
-      '@capacitor/synapse': 1.0.4
-
-  '@capacitor/filesystem@8.1.2(@capacitor/core@8.2.0)':
-    dependencies:
-      '@capacitor/core': 8.2.0
-      '@capacitor/synapse': 1.0.4
-
-  '@capacitor/synapse@1.0.4': {}
 
   '@esbuild/aix-ppc64@0.27.4':
     optional: true
@@ -2078,7 +2047,7 @@ snapshots:
 
   typescript@5.9.3: {}
 
-  ultimate-crosscode-typedefs@https://codeload.github.com/krypciak/ultimate-crosscode-typedefs/tar.gz/1b5fa0d9b2abbcacf36865cd25a02bab45f28beb:
+  ultimate-crosscode-typedefs@https://codeload.github.com/krypciak/ultimate-crosscode-typedefs/tar.gz/0d7d7b95ffa5bf7ae88929db3b51cd6b9ab45e38:
     dependencies:
       '@types/jquery': 1.10.45
       '@types/node': 25.5.0
